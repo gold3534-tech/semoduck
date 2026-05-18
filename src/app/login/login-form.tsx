@@ -27,10 +27,12 @@ export function LoginForm() {
     const supabase = createBrowserSupabaseClient();
     const redirectUrl = new URL("/auth/callback", getSiteUrl());
     redirectUrl.searchParams.set("next", next);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: redirectUrl.toString() }
     });
+
     if (error) {
       setMessage(error.message);
       setLoading(false);
@@ -55,12 +57,15 @@ export function LoginForm() {
       return;
     }
 
+    const redirectUrl = new URL("/auth/callback", getSiteUrl());
+    redirectUrl.searchParams.set("next", next);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name: nickname || email.split("@")[0] },
-        emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`
+        emailRedirectTo: redirectUrl.toString()
       }
     });
     setLoading(false);
@@ -88,10 +93,10 @@ export function LoginForm() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 rounded-lg bg-cloud p-1">
-        <button className={`min-h-10 rounded-md text-sm font-black ${mode === "signin" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signin")}>
+        <button type="button" className={`min-h-10 rounded-md text-sm font-black ${mode === "signin" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signin")}>
           로그인
         </button>
-        <button className={`min-h-10 rounded-md text-sm font-black ${mode === "signup" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signup")}>
+        <button type="button" className={`min-h-10 rounded-md text-sm font-black ${mode === "signup" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signup")}>
           회원가입
         </button>
       </div>

@@ -1,9 +1,8 @@
 export function getSiteUrl() {
-  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const fallback = typeof window === "undefined" ? "http://localhost:3000" : window.location.origin;
+  const fallback = typeof window === "undefined" ? process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000" : window.location.origin;
 
   try {
-    const url = new URL(configuredUrl || fallback);
+    const url = new URL(fallback);
     if (url.hostname === "0.0.0.0") {
       url.hostname = "localhost";
     }

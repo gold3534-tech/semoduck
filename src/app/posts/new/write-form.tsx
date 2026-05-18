@@ -9,12 +9,24 @@ import { galleries, products } from "@/lib/mock-data";
 
 type TagsResponse = { tags: string[]; category: string };
 type KeywordResponse = { product_keywords: string[] };
+type ExternalSearchResponse = {
+  usedMock: boolean;
+  items: Array<{
+    id: string;
+    title: string;
+    mallName: string;
+    price: number;
+    url: string;
+  }>;
+};
 
 export function WriteForm() {
   const [title, setTitle] = useState("요즘 쿠로미 키링 사고 싶은데 정품 어디서 사?");
   const [content, setContent] = useState("산리오 쿠로미 아크릴 키링 정품 판매처와 예약 특전 있는 곳이 궁금해요.");
   const [tags, setTags] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [externalGoods, setExternalGoods] = useState<ExternalSearchResponse["items"]>([]);
+  const [usedMock, setUsedMock] = useState(false);
   const [loading, setLoading] = useState<"tags" | "keywords" | null>(null);
 
   async function recommendTags() {
@@ -38,6 +50,11 @@ export function WriteForm() {
     });
     const data = (await response.json()) as KeywordResponse;
     setKeywords(data.product_keywords);
+    const firstKeyword = data.product_keywords[0] ?? title;
+    const searchResponse = await fetch(`/api/products/external-search?q=${encodeURIComponent(firstKeyword)}&display=5`);
+    const searchData = (await searchResponse.json()) as ExternalSearchResponse;
+    setExternalGoods(searchData.items);
+    setUsedMock(searchData.usedMock);
     setLoading(null);
   }
 
@@ -105,9 +122,18 @@ export function WriteForm() {
         </Card>
         <Card>
           <h2 className="font-black">관련 굿즈 미리보기</h2>
+          {usedMock && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs font-bold text-amber-700">API 키가 없거나 호출에 실패해 mock 데이터를 표시 중입니다.</p>}
           <div className="mt-3 space-y-2 text-sm font-bold text-slate-600">
-            {products.slice(0, 3).map((product) => (
-              <p key={product.id}>{product.title}</p>
+            {(externalGoods.length ? externalGoods : products.slice(0, 3)).map((product) => (
+              <a
+                key={product.id}
+                href={"url" in product ? product.url : "#"}
+                target={"url" in product ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                className="block rounded-lg bg-cloud p-3 hover:text-berry"
+              >
+                {"mallName" in product ? `${product.title} · ${product.mallName} · ${product.price.toLocaleString("ko-KR")}원` : product.title}
+              </a>
             ))}
           </div>
         </Card>

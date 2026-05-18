@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
-import { products } from "@/lib/mock-data";
+import { searchNaverShopping } from "@/lib/external/naver-shopping";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") ?? "쿠로미 키링";
-  const normalized = products.flatMap((product) =>
-    product.offers.map((offer) => ({
-      productId: product.id,
-      title: product.title,
-      query,
-      source: offer.source,
-      mallName: offer.mallName,
-      price: offer.price,
-      isOfficial: offer.isOfficial,
-      isUsed: offer.isUsed,
-      specialBenefit: offer.specialBenefit ?? null,
-      url: offer.url
-    }))
-  );
+  const display = Number(searchParams.get("display") ?? 8);
+  const naver = await searchNaverShopping(query, Math.min(Math.max(display, 1), 20));
 
-  return NextResponse.json({ items: normalized });
+  return NextResponse.json({
+    query,
+    usedMock: naver.usedMock,
+    error: naver.error ?? null,
+    items: naver.items
+  });
 }
