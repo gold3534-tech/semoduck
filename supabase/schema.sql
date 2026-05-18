@@ -60,6 +60,7 @@ create table public.posts (
   like_count integer not null default 0,
   comment_count integer not null default 0,
   bookmark_count integer not null default 0,
+  image_url text,
   is_deleted boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -87,6 +88,15 @@ create table public.post_tags (
   post_id uuid references public.posts(id) on delete cascade,
   tag_id uuid references public.tags(id) on delete cascade,
   unique (post_id, tag_id)
+);
+
+create table public.post_reactions (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid references public.posts(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  type text not null check (type in ('like', 'bookmark')),
+  created_at timestamptz not null default now(),
+  unique (post_id, user_id, type)
 );
 
 create table public.products (
@@ -134,6 +144,16 @@ create table public.market_items (
   updated_at timestamptz not null default now()
 );
 
+create table public.market_inquiries (
+  id uuid primary key default uuid_generate_v4(),
+  market_item_id uuid references public.market_items(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete set null,
+  content text not null,
+  is_deleted boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table public.link_submissions (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references public.profiles(id) on delete set null,
@@ -163,9 +183,11 @@ alter table public.user_interests enable row level security;
 alter table public.gallery_follows enable row level security;
 alter table public.posts enable row level security;
 alter table public.comments enable row level security;
+alter table public.post_reactions enable row level security;
 alter table public.products enable row level security;
 alter table public.product_offers enable row level security;
 alter table public.market_items enable row level security;
+alter table public.market_inquiries enable row level security;
 alter table public.link_submissions enable row level security;
 alter table public.reports enable row level security;
 
@@ -173,9 +195,13 @@ create policy "profiles readable by owner" on public.profiles for select using (
 create policy "profiles update by owner" on public.profiles for update using (auth.uid() = id);
 create policy "public posts read" on public.posts for select using (is_deleted = false);
 create policy "public comments read" on public.comments for select using (is_deleted = false);
+create policy "own reactions read" on public.post_reactions for select using (auth.uid() = user_id);
+create policy "own reactions insert" on public.post_reactions for insert with check (auth.uid() = user_id);
+create policy "own reactions delete" on public.post_reactions for delete using (auth.uid() = user_id);
 create policy "public products read" on public.products for select using (true);
 create policy "public offers read" on public.product_offers for select using (true);
 create policy "public market read" on public.market_items for select using (status in ('active', 'reserved', 'completed'));
+create policy "public market inquiries read" on public.market_inquiries for select using (is_deleted = false);
 
 create or replace function public.handle_new_user()
 returns trigger

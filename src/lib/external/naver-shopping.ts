@@ -1,4 +1,3 @@
-import { products } from "@/lib/mock-data";
 import type { ProductOffer } from "@/types/domain";
 
 type NaverShoppingItem = {
@@ -6,10 +5,8 @@ type NaverShoppingItem = {
   link: string;
   image: string;
   lprice: string;
-  hprice: string;
   mallName: string;
   productId: string;
-  productType: string;
   brand: string;
   maker: string;
   category1: string;
@@ -40,34 +37,12 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]*>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").trim();
 }
 
-function mockOffers(query: string): NormalizedExternalOffer[] {
-  return products.flatMap((product) =>
-    product.offers
-      .filter((offer) => offer.source === "naver_shopping")
-      .map((offer) => ({
-        id: offer.id,
-        title: `${product.title} mock`,
-        image: product.image,
-        brand: product.brand,
-        category: product.category,
-        source: "naver_shopping",
-        mallName: offer.mallName,
-        price: offer.price,
-        shippingFee: offer.shippingFee,
-        condition: offer.condition,
-        isOfficial: offer.isOfficial,
-        isUsed: offer.isUsed,
-        url: offer.url.includes("query=") ? offer.url : `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(query)}`
-      }))
-  );
-}
-
 export async function searchNaverShopping(query: string, display = 8): Promise<{ items: NormalizedExternalOffer[]; usedMock: boolean; error?: string }> {
   const clientId = process.env.NAVER_CLIENT_ID;
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return { items: mockOffers(query), usedMock: true, error: "NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET이 없습니다." };
+    return { items: [], usedMock: false, error: "네이버 API 키가 설정되지 않았습니다." };
   }
 
   try {
@@ -85,7 +60,7 @@ export async function searchNaverShopping(query: string, display = 8): Promise<{
     });
 
     if (!response.ok) {
-      return { items: mockOffers(query), usedMock: true, error: `Naver API ${response.status}` };
+      return { items: [], usedMock: false, error: `네이버 API 오류 ${response.status}` };
     }
 
     const data = (await response.json()) as NaverShoppingResponse;
@@ -107,7 +82,7 @@ export async function searchNaverShopping(query: string, display = 8): Promise<{
 
     return { items, usedMock: false };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return { items: mockOffers(query), usedMock: true, error: message };
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    return { items: [], usedMock: false, error: message };
   }
 }

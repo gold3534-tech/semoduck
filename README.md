@@ -53,6 +53,33 @@ COUPANG_PARTNER_ID=
 4. SQL Editor에서 `supabase/schema.sql`, `supabase/seed.sql` 순서로 실행합니다.
 5. Supabase URL과 anon key를 `.env.local`에 입력합니다.
 
+## Supabase 데모 데이터 생성
+실제 Supabase Auth 계정, profiles, galleries, products, product_offers, posts, comments, market_items를 한 번에 만들려면 로컬 `.env.local`에 service role key를 추가한 뒤 seed 스크립트를 실행합니다.
+
+```env
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+```bash
+npm.cmd run seed:auth
+```
+
+생성되는 데모 계정:
+
+```txt
+gold3534@gmail.com / admin1234
+gold3534+sanrio@gmail.com / semo1234
+gold3534+pokemon@gmail.com / semo1234
+gold3534+onepiece@gmail.com / semo1234
+gold3534+webtoon@gmail.com / semo1234
+gold3534+bts@gmail.com / semo1234
+gold3534+stellive@gmail.com / semo1234
+gold3534+lol@gmail.com / semo1234
+gold3534+market@gmail.com / semo1234
+```
+
+`SUPABASE_SERVICE_ROLE_KEY`는 로컬 seed용으로만 사용하고 브라우저 코드에 노출하지 않습니다.
+
 ## 테스트 계정
 Supabase Google 로그인을 사용하므로 실제 Google 계정으로 로그인합니다. seed용 관리자 권한은 `profiles.role`을 `admin`으로 변경해 테스트할 수 있습니다.
 

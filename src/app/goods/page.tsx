@@ -1,30 +1,54 @@
-import { ProductCard } from "@/components/product-card";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { products } from "@/lib/mock-data";
+import { GoodsSearch } from "@/app/goods/search";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import type { Product } from "@/types/domain";
 
-export default function GoodsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">굿즈 탐색</p>
-        <h1 className="mt-2 text-3xl font-black">판매처와 특전을 비교해요</h1>
-      </div>
-      <Card className="grid gap-3 md:grid-cols-[1fr_auto]">
-        <input className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="쿠로미 키링, 포토카드 바인더..." />
-        <div className="flex flex-wrap gap-2">
-          {["인기순", "낮은 가격순", "최신순", "찜 많은 순", "공식", "중고"].map((filter, index) => (
-            <Badge key={filter} tone={index === 0 ? "pink" : "gray"}>
-              {filter}
-            </Badge>
-          ))}
-        </div>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </div>
-  );
+async function getProducts(): Promise<Product[]> {
+  const admin = createAdminSupabaseClient();
+  const { data } = await admin
+    .from("products")
+    .select("id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)")
+    .order("created_at", { ascending: false })
+    .limit(9);
+
+  return (data ?? []).map((product) => ({
+    id: product.id,
+    title: product.title,
+    normalizedTitle: product.normalized_title,
+    brand: product.brand ?? "",
+    category: product.category,
+    description: product.description ?? "",
+    image: product.image_url ?? "/placeholder-goods.svg",
+    isOfficialProduct: product.is_official_product ?? false,
+    tags: [product.category, product.brand].filter(Boolean) as string[],
+    gallerySlugs: [],
+    bookmarkCount: product.bookmark_count ?? 0,
+    offers: ((product.product_offers ?? []) as Array<{
+      id: string;
+      source: Product["offers"][number]["source"];
+      mall_name: string;
+      price: number;
+      shipping_fee: number;
+      condition: Product["offers"][number]["condition"];
+      is_official: boolean;
+      is_used: boolean;
+      special_benefit?: string | null;
+      url: string;
+    }>).map((offer) => ({
+      id: offer.id,
+      source: offer.source,
+      mallName: offer.mall_name,
+      price: offer.price,
+      shippingFee: offer.shipping_fee,
+      condition: offer.condition,
+      isOfficial: offer.is_official,
+      isUsed: offer.is_used,
+      specialBenefit: offer.special_benefit ?? undefined,
+      url: offer.url
+    }))
+  }));
+}
+
+export default async function GoodsPage() {
+  const products = await getProducts();
+  return <GoodsSearch products={products} />;
 }

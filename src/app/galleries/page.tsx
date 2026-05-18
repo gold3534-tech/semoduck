@@ -1,32 +1,37 @@
-import { GalleryCard } from "@/components/gallery-card";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { galleries } from "@/lib/mock-data";
+import { GalleryBrowser } from "@/app/galleries/gallery-browser";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import type { Gallery } from "@/types/domain";
 
-export default function GalleriesPage() {
-  const categories = ["전체", "캐릭터", "게임", "애니", "웹툰", "아이돌", "버튜버"];
+async function getGalleries(): Promise<Gallery[]> {
+  const admin = createAdminSupabaseClient();
+  const { data } = await admin
+    .from("galleries")
+    .select("id,name,slug,description,category,thumbnail_url,follower_count,post_count")
+    .order("follower_count", { ascending: false });
+
+  return (data ?? []).map((gallery) => ({
+    id: gallery.id,
+    name: gallery.name,
+    slug: gallery.slug,
+    description: gallery.description,
+    category: gallery.category,
+    thumbnail: gallery.thumbnail_url ?? "/placeholder-goods.svg",
+    followerCount: gallery.follower_count ?? 0,
+    postCount: gallery.post_count ?? 0,
+    tags: [gallery.category].filter(Boolean)
+  }));
+}
+
+export default async function GalleriesPage() {
+  const galleries = await getGalleries();
 
   return (
     <div className="space-y-6">
       <div>
         <p className="text-sm font-black text-berry">갤러리</p>
-        <h1 className="mt-2 text-3xl font-black">팬덤별 이야기가 모이는 곳</h1>
+        <h1 className="mt-2 text-3xl font-black">좋아하는 장르와 굿즈 이야기를 모아봐요</h1>
       </div>
-      <Card className="flex flex-wrap items-center gap-3">
-        <input className="min-h-11 flex-1 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="갤러리 검색" />
-        <div className="flex flex-wrap gap-2">
-          {categories.map((category, index) => (
-            <Badge key={category} tone={index === 0 ? "pink" : "gray"}>
-              {category}
-            </Badge>
-          ))}
-        </div>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {galleries.map((gallery) => (
-          <GalleryCard key={gallery.id} gallery={gallery} />
-        ))}
-      </div>
+      <GalleryBrowser galleries={galleries} />
     </div>
   );
 }

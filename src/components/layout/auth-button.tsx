@@ -1,9 +1,8 @@
 "use client";
 
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function AuthButton() {
@@ -30,24 +29,28 @@ export function AuthButton() {
   }
 
   if (!ready) {
-    return <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-200" />;
+    return <div className="h-9 w-28 animate-pulse rounded-lg bg-slate-200" />;
   }
 
   if (email) {
     return (
-      <Button variant="secondary" onClick={signOut} title={email}>
-        <LogOut size={16} />
-        로그아웃
-      </Button>
+      <div className="flex items-center gap-2">
+        <Link href="/mypage" className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-ink px-3 text-xs font-black text-white">
+          <UserRound size={14} />
+          마이
+        </Link>
+        <button onClick={signOut} title={email} className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white px-3 text-xs font-black text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50">
+          <LogOut size={14} />
+          로그아웃
+        </button>
+      </div>
     );
   }
 
   return (
-    <Link href="/login">
-      <Button>
-        <LogIn size={16} />
-        로그인
-      </Button>
+    <Link href="/login" className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-ink px-3 text-xs font-black text-white">
+      <LogIn size={14} />
+      로그인
     </Link>
   );
 }

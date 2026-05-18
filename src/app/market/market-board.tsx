@@ -1,0 +1,212 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Loader2, MessageCircle, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel } from "@/lib/format";
+import type { Gallery } from "@/types/domain";
+
+type TradeType = "sell" | "exchange" | "transfer" | "giveaway";
+type MarketItem = {
+  id: string;
+  title: string;
+  description: string;
+  trade_type: TradeType;
+  status: "active" | "reserved" | "completed" | "hidden" | "reported";
+  price: number;
+  region: string | null;
+  image_url: string | null;
+  created_at: string;
+  profiles?: { nickname?: string | null } | null;
+  galleries?: { name?: string | null; slug?: string | null } | null;
+};
+
+type FormState = {
+  id?: string;
+  gallerySlug: string;
+  tradeType: TradeType;
+  title: string;
+  description: string;
+  price: string;
+  region: string;
+  imageUrl: string;
+  status: "active" | "reserved" | "completed" | "hidden";
+};
+
+const emptyForm = (gallerySlug = ""): FormState => ({
+  gallerySlug,
+  tradeType: "sell",
+  title: "",
+  description: "",
+  price: "0",
+  region: "",
+  imageUrl: "",
+  status: "active"
+});
+
+export function MarketBoard({ initialItems, galleries }: { initialItems: MarketItem[]; galleries: Gallery[] }) {
+  const [items, setItems] = useState(initialItems.filter((item) => item.trade_type !== "transfer"));
+  const [filter, setFilter] = useState("전체");
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState<FormState>(emptyForm(galleries[0]?.slug ?? ""));
+  const [saving, setSaving] = useState(false);
+
+  const filtered = useMemo(() => {
+    if (filter === "전체") return items;
+    return items.filter((item) => tradeTypeLabel(item.trade_type) === filter || tradeStatusLabel(item.status) === filter);
+  }, [filter, items]);
+
+  async function reload() {
+    const response = await fetch("/api/market", { cache: "no-store" });
+    const data = (await response.json()) as { items?: MarketItem[] };
+    setItems((data.items ?? []).filter((item) => item.trade_type !== "transfer"));
+  }
+
+  async function upload(file: File) {
+    const data = new FormData();
+    data.set("file", file);
+    data.set("bucket", "market-images");
+    const response = await fetch("/api/uploads", { method: "POST", body: data });
+    const result = (await response.json()) as { url?: string; error?: string };
+    if (!response.ok || !result.url) {
+      alert(result.error ?? "이미지 업로드에 실패했습니다.");
+      return;
+    }
+    setForm((current) => ({ ...current, imageUrl: result.url ?? "" }));
+  }
+
+  async function submit() {
+    setSaving(true);
+    const payload = {
+      gallerySlug: form.gallerySlug,
+      tradeType: form.tradeType,
+      title: form.title,
+      description: form.description,
+      price: Number(form.price || 0),
+      region: form.region,
+      imageUrl: form.imageUrl,
+      status: form.status
+    };
+    const response = await fetch(form.id ? `/api/market/${form.id}` : "/api/market", {
+      method: form.id ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    setSaving(false);
+    if (response.status === 401) {
+      location.href = "/login?next=/market";
+      return;
+    }
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      alert(data.error ?? "저장하지 못했습니다.");
+      return;
+    }
+    setFormOpen(false);
+    setForm(emptyForm(galleries[0]?.slug ?? ""));
+    await reload();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("거래 글을 삭제할까요?")) return;
+    const response = await fetch(`/api/market/${id}`, { method: "DELETE" });
+    if (response.status === 401) location.href = "/login?next=/market";
+    if (!response.ok) return;
+    await reload();
+  }
+
+  function edit(item: MarketItem) {
+    setForm({
+      id: item.id,
+      gallerySlug: item.galleries?.slug ?? galleries[0]?.slug ?? "",
+      tradeType: item.trade_type,
+      title: item.title,
+      description: item.description,
+      price: String(item.price),
+      region: item.region ?? "",
+      imageUrl: item.image_url ?? "",
+      status: item.status === "reported" ? "hidden" : item.status
+    });
+    setFormOpen(true);
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {["전체", "판매", "교환", "나눔", "거래 가능", "예약중", "거래완료"].map((item) => (
+            <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-3 py-2 text-sm font-black ${filter === item ? "bg-berry text-white" : "bg-slate-100 text-slate-600 hover:bg-mint/60"}`}>
+              {item}
+            </button>
+          ))}
+        </div>
+        <Button onClick={() => setFormOpen((open) => !open)}>
+          <Plus size={16} />
+          거래 글쓰기
+        </Button>
+      </Card>
+
+      {formOpen ? (
+        <Card className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-3">
+            <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-11 rounded-lg border px-3">
+              {galleries.map((gallery) => <option key={gallery.slug} value={gallery.slug}>{gallery.name}</option>)}
+            </select>
+            <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-11 rounded-lg border px-3">
+              <option value="sell">판매</option>
+              <option value="exchange">교환</option>
+              <option value="giveaway">나눔</option>
+            </select>
+            <input value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="가격" />
+          </div>
+          <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="제목" />
+          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-28 rounded-lg border p-3" placeholder="설명" />
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <input value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="지역 또는 거래 방식" />
+            <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-black ring-1 ring-slate-200">
+              <Upload size={16} />
+              이미지 업로드
+              <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])} />
+            </label>
+          </div>
+          {form.imageUrl ? <p className="text-sm font-bold text-slate-500">이미지 등록됨</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setFormOpen(false)}>취소</Button>
+            <Button onClick={submit} disabled={saving}>{saving ? <Loader2 size={16} className="animate-spin" /> : null} 저장</Button>
+          </div>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((item) => (
+          <Card key={item.id} className="overflow-hidden p-0">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
+            </div>
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
+                <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
+              </div>
+              <Link href={`/market/${item.id}`} className="block text-lg font-black hover:text-berry">{item.title}</Link>
+              <p className="text-2xl font-black">{formatPrice(item.price)}</p>
+              <p className="text-sm font-bold text-slate-500">{item.galleries?.name} · {item.region || "지역 미입력"} · {item.profiles?.nickname ?? "회원"} · {formatDateTime(item.created_at)}</p>
+              <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              <div className="flex gap-2">
+                <Link href={`/market/${item.id}`} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-ink ring-1 ring-slate-200 hover:bg-slate-50">
+                  <MessageCircle size={16} /> 문의
+                </Link>
+                <Button variant="secondary" onClick={() => edit(item)}><Pencil size={16} /></Button>
+                <Button variant="danger" onClick={() => remove(item.id)}><Trash2 size={16} /></Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

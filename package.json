@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "seed:auth": "node scripts/seed-auth-users.mjs",
+    "check:supabase": "node scripts/check-supabase-setup.mjs",
+    "setup:storage": "node scripts/setup-storage-buckets.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

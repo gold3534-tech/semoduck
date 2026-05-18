@@ -24,17 +24,22 @@ export function LoginForm() {
   async function signInWithGoogle() {
     setLoading(true);
     setMessage("");
-    const supabase = createBrowserSupabaseClient();
-    const redirectUrl = new URL("/auth/callback", getSiteUrl());
-    redirectUrl.searchParams.set("next", next);
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const redirectUrl = new URL("/auth/callback", getSiteUrl());
+      redirectUrl.searchParams.set("next", next);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirectUrl.toString() }
-    });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: redirectUrl.toString() }
+      });
 
-    if (error) {
-      setMessage(error.message);
+      if (error) {
+        setMessage(error.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Google 로그인 요청에 실패했습니다.");
       setLoading(false);
     }
   }
@@ -43,45 +48,50 @@ export function LoginForm() {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    const supabase = createBrowserSupabaseClient();
+    try {
+      const supabase = createBrowserSupabaseClient();
 
-    if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        setLoading(false);
+        if (error) {
+          setMessage(error.message);
+          return;
+        }
+        router.push(next);
+        router.refresh();
+        return;
+      }
+
+      const redirectUrl = new URL("/auth/callback", getSiteUrl());
+      redirectUrl.searchParams.set("next", next);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name: nickname || email.split("@")[0] },
+          emailRedirectTo: redirectUrl.toString()
+        }
+      });
       setLoading(false);
+
       if (error) {
         setMessage(error.message);
         return;
       }
-      router.push(next);
-      router.refresh();
-      return;
-    }
 
-    const redirectUrl = new URL("/auth/callback", getSiteUrl());
-    redirectUrl.searchParams.set("next", next);
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name: nickname || email.split("@")[0] },
-        emailRedirectTo: redirectUrl.toString()
+      if (data.session) {
+        router.push(next);
+        router.refresh();
+        return;
       }
-    });
-    setLoading(false);
 
-    if (error) {
-      setMessage(error.message);
-      return;
+      setMessage("회원가입 메일을 확인해 인증을 완료해주세요. Supabase에서 이메일 확인을 끄면 바로 로그인됩니다.");
+    } catch (error) {
+      setLoading(false);
+      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다. Vercel 환경변수를 확인해주세요.");
     }
-
-    if (data.session) {
-      router.push(next);
-      router.refresh();
-      return;
-    }
-
-    setMessage("회원가입 메일을 확인해 인증을 완료해주세요. Supabase에서 이메일 확인을 끄면 바로 로그인됩니다.");
   }
 
   return (

@@ -4,15 +4,14 @@ import Link from "next/link";
 import { Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/layout/auth-button";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const defaultNav = [
   ["홈", "/"],
   ["갤러리", "/galleries"],
-  ["굿즈", "/goods"],
-  ["마켓", "/market"],
-  ["마이", "/mypage"]
+  ["유저거래", "/market"],
+  ["굿즈검색", "/goods"]
 ];
 
 export function SiteHeader() {
@@ -45,7 +44,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="order-last flex w-full items-center gap-2 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-500 md:order-none md:w-72">
+        <div className="order-last flex w-full items-center gap-2 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-500 md:order-none md:w-64">
           <Search size={16} />
           <span>굿즈, 갤러리, 게시글 검색</span>
         </div>
