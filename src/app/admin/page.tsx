@@ -1,17 +1,50 @@
-import { CheckCircle2, Flag, Link2, PackagePlus, ShieldCheck, XCircle } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Flag, Link2, Loader2, PackagePlus, ShieldCheck, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { isAdminEmail } from "@/lib/auth";
 import { products } from "@/lib/mock-data";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export default function AdminPage() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const email = data.user?.email;
+      if (!email) {
+        router.replace("/login?next=/admin");
+        return;
+      }
+      if (!isAdminEmail(email)) {
+        router.replace("/");
+        return;
+      }
+      setReady(true);
+    });
+  }, [router]);
+
+  if (!ready) {
+    return (
+      <div className="grid min-h-96 place-items-center">
+        <Loader2 className="animate-spin text-berry" size={32} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-black text-berry">관리자</p>
           <h1 className="mt-2 text-3xl font-black">공식샵 링크와 제보를 관리해요</h1>
-          <p className="mt-2 text-slate-600">Supabase profiles.role이 admin인 사용자만 접근하도록 확장하는 구조입니다.</p>
+          <p className="mt-2 text-slate-600">gold3534@gmail.com 계정만 관리자 화면에 접근할 수 있습니다.</p>
         </div>
         <Badge tone="mint">
           <ShieldCheck size={14} /> admin

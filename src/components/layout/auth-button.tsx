@@ -1,9 +1,10 @@
 "use client";
 
 import { LogIn, LogOut } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function AuthButton() {
   const [email, setEmail] = useState<string | null>(null);
@@ -21,15 +22,6 @@ export function AuthButton() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
-
-  async function signInWithGoogle() {
-    const supabase = createBrowserSupabaseClient();
-    const origin = window.location.origin;
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${origin}/auth/callback` }
-    });
-  }
 
   async function signOut() {
     const supabase = createBrowserSupabaseClient();
@@ -51,9 +43,11 @@ export function AuthButton() {
   }
 
   return (
-    <Button onClick={signInWithGoogle}>
-      <LogIn size={16} />
-      Google 로그인
-    </Button>
+    <Link href="/login">
+      <Button>
+        <LogIn size={16} />
+        로그인
+      </Button>
+    </Link>
   );
 }

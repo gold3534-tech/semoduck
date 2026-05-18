@@ -1,17 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { Search, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/layout/auth-button";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { isAdminEmail } from "@/lib/auth";
 
-const nav = [
+const defaultNav = [
   ["홈", "/"],
   ["갤러리", "/galleries"],
   ["굿즈", "/goods"],
   ["마켓", "/market"],
-  ["마이", "/mypage"],
-  ["관리자", "/admin"]
+  ["마이", "/mypage"]
 ];
 
 export function SiteHeader() {
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setEmail(session?.user.email ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const nav = isAdminEmail(email) ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
+
   return (
     <header className="sticky top-0 z-30 border-b border-white/70 bg-white/86 backdrop-blur">
       <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
