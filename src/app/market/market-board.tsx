@@ -14,6 +14,7 @@ import type { Gallery } from "@/types/domain";
 type TradeType = "sell" | "exchange" | "giveaway";
 type MarketItem = {
   id: string;
+  seller_id: string;
   title: string;
   description: string;
   trade_type: TradeType;
@@ -22,7 +23,7 @@ type MarketItem = {
   region: string | null;
   image_url: string | null;
   created_at: string;
-  profiles?: { nickname?: string | null } | null;
+  profiles?: { nickname?: string | null; email?: string | null } | null;
   galleries?: { name?: string | null; slug?: string | null } | null;
 };
 
@@ -51,7 +52,17 @@ const emptyForm = (gallerySlug = ""): FormState => ({
 
 const filters = ["전체", "판매", "교환", "나눔", "거래 가능", "예약중", "거래완료"];
 
-export function MarketBoard({ initialItems, galleries }: { initialItems: MarketItem[]; galleries: Gallery[] }) {
+export function MarketBoard({
+  initialItems,
+  galleries,
+  currentUserId,
+  isAdmin
+}: {
+  initialItems: MarketItem[];
+  galleries: Gallery[];
+  currentUserId: string | null;
+  isAdmin: boolean;
+}) {
   const [items, setItems] = useState(initialItems);
   const [filter, setFilter] = useState("전체");
   const [formOpen, setFormOpen] = useState(false);
@@ -164,11 +175,7 @@ export function MarketBoard({ initialItems, galleries }: { initialItems: MarketI
         <Card className="grid gap-3">
           <div className="grid gap-3 md:grid-cols-3">
             <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-11 rounded-lg border px-3">
-              {galleries.map((gallery) => (
-                <option key={gallery.slug} value={gallery.slug}>
-                  {gallery.name}
-                </option>
-              ))}
+              {galleries.map((gallery) => <option key={gallery.slug} value={gallery.slug}>{gallery.name}</option>)}
             </select>
             <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-11 rounded-lg border px-3">
               <option value="sell">판매</option>
@@ -196,39 +203,40 @@ export function MarketBoard({ initialItems, galleries }: { initialItems: MarketI
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((item) => (
-          <Card key={item.id} className="overflow-hidden p-0">
-            <Link href={`/market/${item.id}`} className="block">
-              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
-              </div>
-            </Link>
-            <div className="space-y-3 p-4">
-              <div className="flex flex-wrap gap-2">
-                {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
-                <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
-                <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
-              </div>
-              <Link href={`/market/${item.id}`} className="block text-lg font-black hover:text-berry">
-                {item.title}
+        {filtered.map((item) => {
+          const isOwner = currentUserId === item.seller_id;
+          const canDelete = isOwner || isAdmin;
+          return (
+            <Card key={item.id} className="overflow-hidden p-0">
+              <Link href={`/market/${item.id}`} className="block">
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
+                </div>
               </Link>
-              <p className="text-2xl font-black">{formatPrice(item.price)}</p>
-              <div className="flex flex-wrap gap-2 text-sm font-bold text-slate-500">
-                <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
-                <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
+              <div className="space-y-3 p-4">
+                <div className="flex flex-wrap gap-2">
+                  {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
+                  <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
+                  <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
+                </div>
+                <Link href={`/market/${item.id}`} className="block text-lg font-black hover:text-berry">{item.title}</Link>
+                <p className="text-2xl font-black">{formatPrice(item.price)}</p>
+                <div className="flex flex-wrap gap-2 text-sm font-bold text-slate-500">
+                  <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
+                  <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
+                </div>
+                <p className="text-sm font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
+                <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                {(isOwner || canDelete) ? (
+                  <div className="flex justify-end gap-2">
+                    {isOwner ? <Button variant="secondary" onClick={() => edit(item)}><Pencil size={16} /></Button> : null}
+                    {canDelete ? <Button variant="danger" onClick={() => remove(item.id)}><Trash2 size={16} /></Button> : null}
+                  </div>
+                ) : null}
               </div>
-              <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
-              <div className="flex justify-end gap-2">
-                <Button variant="secondary" onClick={() => edit(item)}>
-                  <Pencil size={16} />
-                </Button>
-                <Button variant="danger" onClick={() => remove(item.id)}>
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

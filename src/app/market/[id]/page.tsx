@@ -7,6 +7,7 @@ import { MarketOwnerActions } from "@/app/market/[id]/owner-actions";
 import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { isAdminEmail } from "@/lib/auth";
 import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -19,6 +20,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
   const authClient = await createServerSupabaseClient();
   const { data: auth } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
   const currentUserId = auth.user?.id;
+  const isAdmin = isAdminEmail(auth.user?.email);
 
   const [{ data: item }, { data: inquiries }] = await Promise.all([
     supabase
@@ -38,6 +40,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
 
   if (!item) notFound();
 
+  const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
   const gallery = Array.isArray(item.galleries) ? item.galleries[0] : item.galleries;
   const isOwner = currentUserId === item.seller_id;
 
@@ -56,7 +59,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
               <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
               <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
             </div>
-            {isOwner ? <MarketOwnerActions marketItemId={id} currentStatus={item.status} /> : null}
+            {isOwner || isAdmin ? <MarketOwnerActions marketItemId={id} currentStatus={item.status} canEdit={isOwner} /> : null}
           </div>
           <h1 className="mt-4 text-3xl font-black">{item.title}</h1>
           <p className="mt-3 text-2xl font-black">{formatPrice(item.price)}</p>
@@ -64,6 +67,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
             <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
             <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
           </div>
+          <p className="mt-3 text-sm font-bold text-slate-500">작성자 {profile?.nickname ?? profile?.email ?? "회원"}</p>
           <p className="mt-5 whitespace-pre-wrap leading-7 text-slate-700">{item.description}</p>
           {!isOwner ? (
             <div className="mt-5">

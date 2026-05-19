@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function CommentActions({ commentId, initialContent }: { commentId: string; initialContent: string }) {
+export function CommentActions({ commentId, initialContent, canEdit }: { commentId: string; initialContent: string; canEdit: boolean }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(initialContent);
@@ -60,9 +60,11 @@ export function CommentActions({ commentId, initialContent }: { commentId: strin
 
   return (
     <div className="absolute right-3 top-3 flex gap-1">
-      <button onClick={() => setEditing(true)} className="grid h-8 w-8 place-items-center rounded-lg bg-white text-slate-500 hover:text-ink" title="댓글 수정">
-        <Pencil size={15} />
-      </button>
+      {canEdit ? (
+        <button onClick={() => setEditing(true)} className="grid h-8 w-8 place-items-center rounded-lg bg-white text-slate-500 hover:text-ink" title="댓글 수정">
+          <Pencil size={15} />
+        </button>
+      ) : null}
       <button onClick={remove} className="grid h-8 w-8 place-items-center rounded-lg bg-white text-rose-500 hover:bg-rose-50" title="댓글 삭제">
         <Trash2 size={15} />
       </button>

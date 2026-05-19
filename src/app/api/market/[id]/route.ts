@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isAdminEmail } from "@/lib/auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -13,25 +14,22 @@ const updateSchema = z.object({
   status: z.enum(["active", "reserved", "completed", "hidden"]).optional()
 });
 
-async function requireOwner(id: string) {
+async function requireSession(id: string) {
   const authClient = await createServerSupabaseClient();
-  const { data: userData } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
-  const user = userData.user;
+  const { data } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
+  const user = data.user;
   if (!user) return { error: NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 }) };
 
   const admin = createAdminSupabaseClient();
   const { data: item } = await admin.from("market_items").select("seller_id").eq("id", id).single();
-  if (item?.seller_id !== user.id) {
-    return { error: NextResponse.json({ error: "권한이 없습니다." }, { status: 403 }) };
-  }
-
-  return { admin };
+  return { admin, user, isOwner: item?.seller_id === user.id, isAdmin: isAdminEmail(user.email) };
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const owner = await requireOwner(id);
-  if (owner.error) return owner.error;
+  const session = await requireSession(id);
+  if (session.error) return session.error;
+  if (!session.isOwner) return NextResponse.json({ error: "수정 권한이 없습니다." }, { status: 403 });
 
   const body = updateSchema.parse(await request.json());
   const payload = {
@@ -45,17 +43,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     updated_at: new Date().toISOString()
   };
 
-  const { error } = await owner.admin.from("market_items").update(payload).eq("id", id);
+  const { error } = await session.admin.from("market_items").update(payload).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const owner = await requireOwner(id);
-  if (owner.error) return owner.error;
+  const session = await requireSession(id);
+  if (session.error) return session.error;
+  if (!session.isOwner && !session.isAdmin) return NextResponse.json({ error: "삭제 권한이 없습니다." }, { status: 403 });
 
-  const { error } = await owner.admin.from("market_items").update({ status: "hidden", updated_at: new Date().toISOString() }).eq("id", id);
+  const { error } = await session.admin.from("market_items").update({ status: "hidden", updated_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

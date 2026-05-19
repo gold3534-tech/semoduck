@@ -9,6 +9,8 @@ import type { Product } from "@/types/domain";
 export function ProductCard({ product }: { product: Product }) {
   const prices = product.offers.map((offer) => offer.price).filter((price) => Number.isFinite(price));
   const lowest = prices.length ? Math.min(...prices) : 0;
+  const externalUrl = product.id.startsWith("naver-") ? product.offers[0]?.url : null;
+  const href = externalUrl ?? `/goods/${product.id}`;
 
   return (
     <Card className="flex h-full flex-col overflow-hidden p-0">
@@ -17,7 +19,7 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-3">
-          <Link href={`/goods/${product.id}`} className="line-clamp-2 font-black text-ink hover:text-berry">
+          <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="line-clamp-2 font-black text-ink hover:text-berry">
             {product.title}
           </Link>
           <button className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-pink-50 text-berry" title="찜하기">
@@ -30,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.offers.some((offer) => offer.specialBenefit) && <Badge tone="sun">특전</Badge>}
         </div>
         <p className="mt-auto text-lg font-black">{prices.length ? `${formatPrice(lowest)}~` : "가격 확인 필요"}</p>
-        <Link href={`/goods/${product.id}`} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white">
+        <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white">
           <ShoppingBag size={16} />
           판매처 보기
         </Link>
