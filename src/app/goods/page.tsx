@@ -1,9 +1,9 @@
 import { GoodsSearch } from "@/app/goods/search";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createDataSupabaseClient } from "@/lib/supabase/data";
 import type { Product } from "@/types/domain";
 
 async function getProducts(): Promise<Product[]> {
-  const admin = createAdminSupabaseClient();
+  const admin = createDataSupabaseClient();
   const { data } = await admin
     .from("products")
     .select("id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)")

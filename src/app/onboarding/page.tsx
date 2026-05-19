@@ -1,8 +1,8 @@
 import { OnboardingForm } from "@/app/onboarding/onboarding-form";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createDataSupabaseClient } from "@/lib/supabase/data";
 
 async function getInterests() {
-  const admin = createAdminSupabaseClient();
+  const admin = createDataSupabaseClient();
   const { data } = await admin.from("interests").select("name").order("name");
   return (data ?? []).map((interest) => interest.name);
 }

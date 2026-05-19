@@ -1,10 +1,10 @@
-import { GalleryBrowser } from "@/app/galleries/gallery-browser";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+﻿import { GalleryBrowser } from "@/app/galleries/gallery-browser";
+import { createDataSupabaseClient } from "@/lib/supabase/data";
 import type { Gallery } from "@/types/domain";
 
 async function getGalleries(): Promise<Gallery[]> {
-  const admin = createAdminSupabaseClient();
-  const { data } = await admin
+  const supabase = createDataSupabaseClient();
+  const { data } = await supabase
     .from("galleries")
     .select("id,name,slug,description,category,thumbnail_url,follower_count,post_count")
     .order("follower_count", { ascending: false });
