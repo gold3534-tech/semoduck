@@ -90,15 +90,6 @@ export default function MyPage() {
     await load();
   }
 
-  async function unfollowGallery(slug: string) {
-    const response = await fetch(`/api/galleries/${slug}/follow`, { method: "POST" });
-    if (!response.ok) {
-      alert("자주가는 갤러리를 해제하지 못했습니다.");
-      return;
-    }
-    await load();
-  }
-
   if (loading) {
     return (
       <div className="grid min-h-96 place-items-center">
@@ -173,7 +164,13 @@ export default function MyPage() {
               <p className="mt-1 text-2xl font-black">{value}</p>
             </Card>
           );
-          return href ? <Link key={label} href={href}>{inner}</Link> : <div key={label}>{inner}</div>;
+          return href ? (
+            <Link key={label} href={href}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={label}>{inner}</div>
+          );
         })}
       </div>
 
@@ -185,7 +182,9 @@ export default function MyPage() {
               <p className="mt-1 text-sm font-bold text-slate-500">게시글을 누르면 상세로 이동합니다.</p>
             </div>
             <Link href="/posts/new">
-              <Button variant="secondary"><PenLine size={16} /> 글쓰기</Button>
+              <Button variant="secondary">
+                <PenLine size={16} /> 글쓰기
+              </Button>
             </Link>
           </div>
           <div className="space-y-3">
@@ -199,11 +198,17 @@ export default function MyPage() {
                       <span className="text-xs font-bold text-slate-400">{post.created_at ? formatDateTime(post.created_at) : ""}</span>
                     </div>
                     <p className="mt-2 font-black text-ink">{post.title}</p>
-                    <p className="mt-2 text-sm font-bold text-slate-500">좋아요 {post.like_count} · 댓글 {post.comment_count} · 스크랩 {post.bookmark_count}</p>
+                    <p className="mt-2 text-sm font-bold text-slate-500">
+                      좋아요 {post.like_count} · 댓글 {post.comment_count} · 스크랩 {post.bookmark_count}
+                    </p>
                   </Link>
                   <div className="flex shrink-0 gap-1">
-                    <Link href={`/posts/${post.id}/edit`} className="inline-flex h-9 items-center justify-center rounded-lg bg-white px-3 text-sm font-black text-slate-600 hover:text-ink">수정</Link>
-                    <button onClick={() => deletePost(post.id)} className="inline-flex h-9 items-center justify-center rounded-lg bg-white px-3 text-sm font-black text-rose-600 hover:bg-rose-50"><Trash2 size={15} /></button>
+                    <Link href={`/posts/${post.id}/edit`} className="inline-flex h-9 items-center justify-center rounded-lg bg-white px-3 text-sm font-black text-slate-600 hover:text-ink">
+                      수정
+                    </Link>
+                    <button onClick={() => deletePost(post.id)} className="inline-flex h-9 items-center justify-center rounded-lg bg-white px-3 text-sm font-black text-rose-600 hover:bg-rose-50">
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -212,9 +217,13 @@ export default function MyPage() {
           </div>
           {activity.posts.length > pageSize && (
             <div className="mt-4 flex items-center justify-end gap-2">
-              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={16} /></Button>
+              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                <ChevronLeft size={16} />
+              </Button>
               <span className="text-sm font-black text-slate-500">{page} / {totalPages}</span>
-              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}><ChevronRight size={16} /></Button>
+              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                <ChevronRight size={16} />
+              </Button>
             </div>
           )}
         </Card>
@@ -232,27 +241,34 @@ export default function MyPage() {
               {!activity.comments.length && <p className="rounded-lg bg-cloud p-3 text-sm font-bold text-slate-500">아직 댓글이 없습니다.</p>}
             </div>
           </Card>
+
           <Card>
-            <h2 className="flex items-center gap-2 font-black"><Star size={18} /> 자주가는 갤러리</h2>
+            <h2 className="flex items-center gap-2 font-black">
+              <Star size={18} /> 자주가는 갤러리
+            </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {activity.followedGalleries.map((gallery) => (
-                <span key={gallery.id} className="inline-flex items-center overflow-hidden rounded-full bg-teal-100 text-sm font-black text-teal-700">
-                  <Link href={`/galleries/${gallery.slug}`} className="px-3 py-2">{gallery.name}</Link>
-                  <button onClick={() => unfollowGallery(gallery.slug)} className="px-2 py-2 text-teal-800 hover:bg-teal-200">해제</button>
-                </span>
+                <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-full bg-teal-100 px-3 py-2 text-sm font-black text-teal-700 hover:bg-teal-200">
+                  {gallery.name}
+                </Link>
               ))}
               {!activity.followedGalleries.length && <p className="rounded-lg bg-cloud p-3 text-sm font-bold text-slate-500">아직 추가한 갤러리가 없습니다.</p>}
             </div>
           </Card>
+
           <Link href="/mypage/market" className="block">
             <Card className="transition hover:bg-pink-50">
-              <h2 className="flex items-center gap-2 font-black"><HeartHandshake size={18} /> 내 마켓 글</h2>
+              <h2 className="flex items-center gap-2 font-black">
+                <HeartHandshake size={18} /> 내 유저거래 글
+              </h2>
               <p className="mt-2 text-sm font-bold text-slate-500">{activity.counts.marketItems}개 등록됨</p>
               <div className="mt-3 space-y-2">
                 {activity.marketItems.slice(0, 3).map((item) => (
-                  <p key={item.id} className="rounded-lg bg-white p-3 text-sm font-bold text-slate-700">{item.title} · {tradeTypeLabel(item.trade_type)} · {tradeStatusLabel(item.status)}</p>
+                  <p key={item.id} className="rounded-lg bg-white p-3 text-sm font-bold text-slate-700">
+                    {item.title} · {tradeTypeLabel(item.trade_type)} · {tradeStatusLabel(item.status)}
+                  </p>
                 ))}
-                {!activity.marketItems.length && <p className="rounded-lg bg-white p-3 text-sm font-bold text-slate-500">아직 마켓 글이 없습니다.</p>}
+                {!activity.marketItems.length && <p className="rounded-lg bg-white p-3 text-sm font-bold text-slate-500">아직 유저거래 글이 없습니다.</p>}
               </div>
             </Card>
           </Link>

@@ -10,8 +10,18 @@ import { isAdminEmail } from "@/lib/auth";
 import { formatDateTime, sourceLabel } from "@/lib/format";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+type TargetType = "post" | "market_item" | "product";
+type ReportTarget = {
+  id: string;
+  title?: string | null;
+  content?: string | null;
+  description?: string | null;
+  report_count?: number | null;
+  galleries?: { name?: string | null } | null;
+};
 type Report = {
   id: string;
+  target_type: TargetType;
   target_id: string;
   category?: string | null;
   detail?: string | null;
@@ -19,12 +29,13 @@ type Report = {
   status: string;
   created_at: string;
   reporter?: { email?: string | null; nickname?: string | null } | null;
-  post?: { id: string; title: string; content: string; report_count?: number; is_deleted?: boolean; galleries?: { name?: string | null } | null } | null;
+  target?: ReportTarget | null;
 };
 type LinkSubmission = { id: string; title: string; url: string; source: string; price?: number | null; is_official: boolean; status: string; created_at: string };
 type ProductOffer = { id: string; mall_name: string; url: string; price: number; source: string; is_official: boolean; products?: { title?: string | null } | null };
 type Gallery = { id: string; name: string; slug: string; thumbnail_url?: string | null; follower_count: number; post_count: number };
-type Dashboard = { reports: Report[]; linkSubmissions: LinkSubmission[]; productOffers: ProductOffer[]; galleries: Gallery[] };
+type ProductRow = { id: string; title: string; category?: string | null; brand?: string | null; image_url?: string | null; report_count?: number | null };
+type Dashboard = { reports: Report[]; linkSubmissions: LinkSubmission[]; productOffers: ProductOffer[]; galleries: Gallery[]; products: ProductRow[] };
 type ProductForm = {
   title: string;
   brand: string;
@@ -57,11 +68,17 @@ const emptyProductForm: ProductForm = {
   specialBenefit: ""
 };
 
+const targetLabels: Record<TargetType, string> = {
+  post: "게시글",
+  market_item: "유저거래글",
+  product: "상품"
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [data, setData] = useState<Dashboard | null>(null);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [thumbnailDrafts, setThumbnailDrafts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductForm>(emptyProductForm);
@@ -93,21 +110,22 @@ export default function AdminPage() {
     const groups = new Map<string, Report[]>();
     for (const report of data?.reports ?? []) {
       if (report.status !== "pending") continue;
-      groups.set(report.target_id, [...(groups.get(report.target_id) ?? []), report]);
+      const key = `${report.target_type}:${report.target_id}`;
+      groups.set(key, [...(groups.get(key) ?? []), report]);
     }
-    return [...groups.entries()].map(([postId, reports]) => ({ postId, reports, post: reports[0]?.post }));
+    return [...groups.entries()].map(([key, reports]) => ({ key, reports, targetType: reports[0].target_type, targetId: reports[0].target_id, target: reports[0].target }));
   }, [data]);
 
-  const selectedGroup = reportGroups.find((group) => group.postId === selectedPostId) ?? reportGroups[0];
+  const selectedGroup = reportGroups.find((group) => group.key === selectedKey) ?? reportGroups[0];
 
-  async function resolveReport(postId: string, action: "dismiss" | "delete") {
-    const response = await fetch(`/api/admin/reports/${postId}`, {
+  async function resolveReport(targetType: TargetType, targetId: string, action: "dismiss" | "delete") {
+    const response = await fetch("/api/admin/reports/resolve", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action })
+      body: JSON.stringify({ targetType, targetId, action })
     });
     if (!response.ok) {
-      alert("처리하지 못했습니다.");
+      alert("신고를 처리하지 못했습니다.");
       return;
     }
     await load();
@@ -183,11 +201,23 @@ export default function AdminPage() {
     });
     setSavingId(null);
     if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      alert(data.error ?? "상품을 등록하지 못했습니다.");
+      const error = (await response.json()) as { error?: string };
+      alert(error.error ?? "상품을 등록하지 못했습니다.");
       return;
     }
     setProductForm(emptyProductForm);
+    await load();
+  }
+
+  async function deleteProduct(productId: string) {
+    if (!confirm("이 상품을 삭제할까요?")) return;
+    setSavingId(productId);
+    const response = await fetch(`/api/admin/products/${productId}`, { method: "DELETE" });
+    setSavingId(null);
+    if (!response.ok) {
+      alert("상품을 삭제하지 못했습니다.");
+      return;
+    }
     await load();
   }
 
@@ -227,19 +257,21 @@ export default function AdminPage() {
         </Badge>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><Flag className="text-amber-500" /><p className="mt-3 text-sm font-bold text-slate-500">대기 신고 게시물</p><p className="mt-1 text-3xl font-black">{reportGroups.length}</p></Card>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card><Flag className="text-amber-500" /><p className="mt-3 text-sm font-bold text-slate-500">대기 신고</p><p className="mt-1 text-3xl font-black">{reportGroups.length}</p></Card>
         <Card><Link2 className="text-mint" /><p className="mt-3 text-sm font-bold text-slate-500">유저 제보 링크</p><p className="mt-1 text-3xl font-black">{data.linkSubmissions.length}</p></Card>
         <Card><ImageIcon className="text-berry" /><p className="mt-3 text-sm font-bold text-slate-500">갤러리</p><p className="mt-1 text-3xl font-black">{data.galleries.length}</p></Card>
+        <Card><Trash2 className="text-rose-500" /><p className="mt-3 text-sm font-bold text-slate-500">등록 상품</p><p className="mt-1 text-3xl font-black">{data.products.length}</p></Card>
       </div>
 
       <Card>
-        <h2 className="text-xl font-black">신고글 관리</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[20rem_1fr]">
+        <h2 className="text-xl font-black">신고 관리</h2>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[22rem_1fr]">
           <div className="space-y-2">
             {reportGroups.map((group) => (
-              <button key={group.postId} onClick={() => setSelectedPostId(group.postId)} className={`block w-full rounded-lg p-3 text-left font-bold ${selectedGroup?.postId === group.postId ? "bg-pink-50 text-berry" : "bg-cloud"}`}>
-                <p className="line-clamp-1">{group.post?.title ?? "삭제된 게시물"}</p>
+              <button key={group.key} onClick={() => setSelectedKey(group.key)} className={`block w-full rounded-lg p-3 text-left font-bold ${selectedGroup?.key === group.key ? "bg-pink-50 text-berry" : "bg-cloud"}`}>
+                <Badge tone={group.targetType === "product" ? "sun" : group.targetType === "market_item" ? "mint" : "pink"}>{targetLabels[group.targetType]}</Badge>
+                <p className="mt-2 line-clamp-1">{group.target?.title ?? "삭제되었거나 찾을 수 없는 대상"}</p>
                 <p className="mt-1 text-xs text-slate-500">신고 {group.reports.length}건</p>
               </button>
             ))}
@@ -248,9 +280,9 @@ export default function AdminPage() {
           {selectedGroup ? (
             <div className="space-y-4">
               <div className="rounded-lg bg-cloud p-4">
-                <p className="text-sm font-black text-berry">{selectedGroup.post?.galleries?.name}</p>
-                <h3 className="mt-1 text-lg font-black">{selectedGroup.post?.title}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{selectedGroup.post?.content}</p>
+                <Badge>{targetLabels[selectedGroup.targetType]}</Badge>
+                <h3 className="mt-2 text-lg font-black">{selectedGroup.target?.title ?? "대상 없음"}</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{selectedGroup.target?.content ?? selectedGroup.target?.description ?? ""}</p>
               </div>
               <div className="space-y-2">
                 {selectedGroup.reports.map((report) => (
@@ -262,8 +294,8 @@ export default function AdminPage() {
                 ))}
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="secondary" onClick={() => resolveReport(selectedGroup.postId, "dismiss")}><CheckCircle2 size={16} /> 신고 취소</Button>
-                <Button variant="danger" onClick={() => resolveReport(selectedGroup.postId, "delete")}><Trash2 size={16} /> 게시글 삭제</Button>
+                <Button variant="secondary" onClick={() => resolveReport(selectedGroup.targetType, selectedGroup.targetId, "dismiss")}><CheckCircle2 size={16} /> 신고 취소</Button>
+                <Button variant="danger" onClick={() => resolveReport(selectedGroup.targetType, selectedGroup.targetId, "delete")}><Trash2 size={16} /> 대상 삭제</Button>
               </div>
             </div>
           ) : null}
@@ -282,8 +314,7 @@ export default function AdminPage() {
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <input value={productForm.imageUrl} onChange={(event) => setProductForm({ ...productForm, imageUrl: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="상품 이미지 URL" />
             <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold ring-1 ring-slate-200">
-              <Upload size={16} />
-              이미지 업로드
+              <Upload size={16} /> 이미지 업로드
               <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && uploadProductImage(event.target.files[0])} />
             </label>
           </div>
@@ -316,6 +347,26 @@ export default function AdminPage() {
               상품 등록
             </Button>
           </div>
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-xl font-black">등록 상품 삭제</h2>
+        <p className="mt-1 text-sm font-bold text-slate-500">관리자는 상품을 수정하지 않고 삭제만 할 수 있습니다.</p>
+        <div className="mt-4 divide-y divide-slate-100">
+          {data.products.map((product) => (
+            <div key={product.id} className="grid gap-3 py-4 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <p className="font-black">{product.title}</p>
+                <p className="mt-1 text-sm font-bold text-slate-500">{product.brand || "브랜드 없음"} · {product.category || "카테고리 없음"} · 신고 {product.report_count ?? 0}건</p>
+              </div>
+              <Button variant="danger" onClick={() => deleteProduct(product.id)} disabled={savingId === product.id}>
+                {savingId === product.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                삭제
+              </Button>
+            </div>
+          ))}
+          {!data.products.length && <p className="py-4 text-sm font-bold text-slate-500">등록된 상품이 없습니다.</p>}
         </div>
       </Card>
 
@@ -358,8 +409,7 @@ export default function AdminPage() {
               <p className="font-black">{gallery.name}</p>
               <input value={thumbnailDrafts[gallery.id] ?? gallery.thumbnail_url ?? ""} onChange={(event) => setThumbnailDrafts((current) => ({ ...current, [gallery.id]: event.target.value }))} className="min-h-10 rounded-lg border border-slate-200 px-3" placeholder="대표사진 URL" />
               <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold ring-1 ring-slate-200">
-                <Upload size={16} />
-                업로드
+                <Upload size={16} /> 업로드
                 <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && uploadGalleryImage(gallery, event.target.files[0])} />
               </label>
               <Button variant="secondary" onClick={() => saveThumbnail(gallery)} disabled={savingId === gallery.id}>저장</Button>

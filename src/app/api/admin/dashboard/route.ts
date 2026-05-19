@@ -16,38 +16,46 @@ export async function GET() {
   const session = await requireAdmin();
   if (session.error) return session.error;
 
-  const [reportsResult, linksResult, offersResult, galleriesResult] = await Promise.all([
-    session.admin
-      .from("reports")
-      .select("id,reporter_id,category,detail,reason,status,created_at,target_id")
-      .eq("target_type", "post")
-      .order("created_at", { ascending: false }),
+  const [reportsResult, linksResult, offersResult, galleriesResult, productsResult] = await Promise.all([
+    session.admin.from("reports").select("id,reporter_id,target_type,target_id,category,detail,reason,status,created_at").order("created_at", { ascending: false }),
     session.admin.from("link_submissions").select("id,title,url,source,price,is_official,status,created_at").order("created_at", { ascending: false }),
     session.admin.from("product_offers").select("id,mall_name,url,price,source,is_official,products(title)").order("created_at", { ascending: false }).limit(30),
-    session.admin.from("galleries").select("id,name,slug,thumbnail_url,follower_count,post_count").order("name")
+    session.admin.from("galleries").select("id,name,slug,thumbnail_url,follower_count,post_count").order("name"),
+    session.admin.from("products").select("id,title,category,brand,image_url,report_count,is_deleted").eq("is_deleted", false).order("created_at", { ascending: false }).limit(50)
   ]);
 
   const reports = reportsResult.data ?? [];
-  const postIds = [...new Set(reports.map((report) => report.target_id).filter(Boolean))];
   const reporterIds = [...new Set(reports.map((report) => report.reporter_id).filter(Boolean))];
-  const [postsResult, reportersResult] = await Promise.all([
-    postIds.length
-      ? session.admin.from("posts").select("id,title,content,report_count,is_deleted,galleries(name,slug)").in("id", postIds)
-      : Promise.resolve({ data: [] }),
-    reporterIds.length ? session.admin.from("profiles").select("id,email,nickname").in("id", reporterIds) : Promise.resolve({ data: [] })
+  const postIds = reports.filter((report) => report.target_type === "post").map((report) => report.target_id);
+  const marketIds = reports.filter((report) => report.target_type === "market_item").map((report) => report.target_id);
+  const productIds = reports.filter((report) => report.target_type === "product").map((report) => report.target_id);
+
+  const [reportersResult, postsResult, marketsResult, reportProductsResult] = await Promise.all([
+    reporterIds.length ? session.admin.from("profiles").select("id,email,nickname").in("id", reporterIds) : Promise.resolve({ data: [] }),
+    postIds.length ? session.admin.from("posts").select("id,title,content,is_deleted").in("id", postIds) : Promise.resolve({ data: [] }),
+    marketIds.length ? session.admin.from("market_items").select("id,title,description,status").in("id", marketIds) : Promise.resolve({ data: [] }),
+    productIds.length ? session.admin.from("products").select("id,title,description,is_deleted").in("id", productIds) : Promise.resolve({ data: [] })
   ]);
 
-  const posts = new Map((postsResult.data ?? []).map((post) => [post.id, post]));
   const reporters = new Map((reportersResult.data ?? []).map((profile) => [profile.id, profile]));
+  const posts = new Map((postsResult.data ?? []).map((item) => [item.id, item]));
+  const markets = new Map((marketsResult.data ?? []).map((item) => [item.id, item]));
+  const products = new Map((reportProductsResult.data ?? []).map((item) => [item.id, item]));
 
   return NextResponse.json({
     reports: reports.map((report) => ({
       ...report,
-      post: posts.get(report.target_id) ?? null,
-      reporter: report.reporter_id ? reporters.get(report.reporter_id) ?? null : null
+      reporter: report.reporter_id ? reporters.get(report.reporter_id) ?? null : null,
+      target:
+        report.target_type === "post"
+          ? posts.get(report.target_id) ?? null
+          : report.target_type === "market_item"
+            ? markets.get(report.target_id) ?? null
+            : products.get(report.target_id) ?? null
     })),
     linkSubmissions: linksResult.data ?? [],
     productOffers: offersResult.data ?? [],
-    galleries: galleriesResult.data ?? []
+    galleries: galleriesResult.data ?? [],
+    products: productsResult.data ?? []
   });
 }

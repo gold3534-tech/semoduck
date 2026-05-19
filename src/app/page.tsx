@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, formatPrice, postTypeLabel, tradeTypeLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Gallery, Post, Product } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
@@ -43,9 +44,34 @@ function productFrom(row: any): Product {
 
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
+  const authClient = await createServerSupabaseClient();
+  const { data: auth } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
+  const { data: interestRows } = auth.user
+    ? await supabase.from("user_interests").select("interests(name)").eq("user_id", auth.user.id)
+    : { data: [] };
+  const interests = (interestRows ?? [])
+    .map((row: any) => {
+      const interest = Array.isArray(row.interests) ? row.interests[0] : row.interests;
+      return interest?.name as string | undefined;
+    })
+    .filter(Boolean) as string[];
+
+  const galleryQuery = supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count");
+  const recommendedGalleryQuery = interests.length
+    ? galleryQuery
+        .or(
+          interests
+            .slice(0, 6)
+            .flatMap((interest) => [`name.ilike.%${interest}%`, `category.ilike.%${interest}%`, `description.ilike.%${interest}%`])
+            .join(",")
+        )
+        .order("follower_count", { ascending: false })
+        .limit(3)
+    : galleryQuery.order("follower_count", { ascending: false }).limit(3);
+
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select("id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)").order("created_at", { ascending: false }).limit(3),
-    supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(3),
+    supabase.from("products").select("id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)").eq("is_deleted", false).order("created_at", { ascending: false }).limit(3),
+    recommendedGalleryQuery,
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(3),
     supabase.from("market_items").select("id,title,trade_type,price,image_url,galleries(name)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(4)
   ]);
@@ -81,12 +107,12 @@ async function getHomeData() {
     };
   });
   const marketItems: MarketPreview[] = (marketResult.data ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries }));
-  return { products, galleries, posts, marketItems };
+  return { products, galleries, posts, marketItems, interests };
 }
 
 export default async function HomePage() {
-  const { products, galleries, posts, marketItems } = await getHomeData();
-  const keywords = [...new Set([...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 6);
+  const { products, galleries, posts, marketItems, interests } = await getHomeData();
+  const keywords = [...new Set([...(interests.length ? interests : []), ...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 6);
 
   return (
     <div className="space-y-8">
@@ -103,13 +129,13 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="grid content-end gap-3">
-          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-sun"><Sparkles size={17} /> 추천 기준</div><p className="mt-3 leading-7 text-white/80">등록된 상품과 갤러리 데이터를 기준으로 추천합니다.</p></Card>
+          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-sun"><Sparkles size={17} /> 추천 기준</div><p className="mt-3 leading-7 text-white/80">{interests.length ? "마이페이지 관심사를 기준으로 갤러리를 추천합니다." : "관심사를 설정하면 더 맞는 갤러리를 추천합니다."}</p></Card>
           <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-mint"><Flame size={17} /> 추천 키워드</div><div className="mt-3 flex flex-wrap gap-2">{keywords.map((keyword) => <span key={keyword} className="rounded-full bg-white/12 px-3 py-1 text-sm font-bold">#{keyword}</span>)}</div></Card>
         </div>
       </section>
 
       <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 굿즈</p><h2 className="text-2xl font-black">최근 등록된 상품</h2></div><Link href="/goods" className="text-sm font-black text-slate-500 hover:text-ink">더 보기</Link></div><div className="grid gap-4 md:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} />)}{!products.length && <Card>등록된 굿즈가 없습니다.</Card>}</div></section>
-      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 갤러리</p><h2 className="text-2xl font-black">활동이 많은 갤러리</h2></div><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">전체보기</Link></div><div className="grid gap-4 md:grid-cols-3">{galleries.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}</div></section>
+      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 갤러리</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사에 맞는 갤러리" : "활동이 많은 갤러리"}</h2></div><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">전체보기</Link></div><div className="grid gap-4 md:grid-cols-3">{galleries.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}{!galleries.length && <Card>관심사와 맞는 갤러리가 아직 없습니다.</Card>}</div></section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { Search, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/layout/auth-button";
 import { isAdminEmail } from "@/lib/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -15,7 +16,9 @@ const defaultNav = [
 ];
 
 export function SiteHeader() {
+  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -25,6 +28,16 @@ export function SiteHeader() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const keyword = query.trim();
+    if (!keyword) {
+      router.push("/goods");
+      return;
+    }
+    router.push(`/goods?q=${encodeURIComponent(keyword)}`);
+  }
 
   const nav = isAdminEmail(email) ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
 
@@ -44,10 +57,10 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="order-last flex w-full items-center gap-2 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-500 md:order-none md:w-64">
+        <form onSubmit={submitSearch} className="order-last flex w-full items-center gap-2 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-500 focus-within:ring-2 focus-within:ring-berry/30 md:order-none md:w-72">
           <Search size={16} />
-          <span>굿즈, 갤러리, 게시글 검색</span>
-        </div>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full bg-transparent outline-none" placeholder="굿즈, 갤러리, 게시글 검색" />
+        </form>
         <AuthButton />
       </div>
     </header>

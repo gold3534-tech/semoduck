@@ -54,7 +54,7 @@ export function sourceLabel(source: string) {
     naver_shopping: "네이버",
     coupang: "쿠팡",
     user_submission: "유저 제보",
-    internal_market: "세모덕 마켓",
+    internal_market: "유저거래",
     external_search: "외부 검색"
   };
   return labels[source] ?? source;

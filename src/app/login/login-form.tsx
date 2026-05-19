@@ -87,10 +87,10 @@ export function LoginForm() {
         return;
       }
 
-      setMessage("회원가입 메일을 확인해 인증을 완료해주세요. Supabase에서 이메일 확인을 끄면 바로 로그인됩니다.");
+      setMessage("회원가입 메일을 확인해 주세요. Supabase에서 이메일 확인을 끄면 바로 로그인됩니다.");
     } catch (error) {
       setLoading(false);
-      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다. Vercel 환경변수를 확인해주세요.");
+      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다. 환경변수를 확인해 주세요.");
     }
   }
 
@@ -111,12 +111,7 @@ export function LoginForm() {
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={signInWithGoogle}
-        disabled={loading}
-        className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white"
-      >
+      <button type="button" onClick={signInWithGoogle} disabled={loading} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white">
         {loading ? <Loader2 size={16} className="animate-spin" /> : <Chrome size={16} />}
         Google로 계속하기
       </button>
@@ -131,7 +126,7 @@ export function LoginForm() {
         {mode === "signup" && (
           <label className="grid gap-2 text-sm font-black">
             닉네임
-            <input value={nickname} onChange={(event) => setNickname(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="덕심가득" />
+            <input value={nickname} onChange={(event) => setNickname(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="세모덕러" />
           </label>
         )}
         <label className="grid gap-2 text-sm font-black">

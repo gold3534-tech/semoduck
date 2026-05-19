@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
@@ -25,28 +25,46 @@ type ExternalGoodsResponse = {
   query: string;
   usedMock: boolean;
   error: string | null;
+  total: number;
   items: ExternalGoodsItem[];
 };
 
-export function GoodsSearch({ products }: { products: Product[] }) {
-  const [query, setQuery] = useState("쿠로미 키링");
-  const [items, setItems] = useState<ExternalGoodsItem[]>([]);
-  const [error, setError] = useState("");
-  const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
+export type RecommendedGoodsGroup = {
+  title: string;
+  products: Product[];
+};
 
-  async function searchGoods(event?: FormEvent<HTMLFormElement>) {
+const pageSize = 12;
+
+export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommendedGroups: RecommendedGoodsGroup[]; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery || "쿠로미 키링");
+  const [items, setItems] = useState<ExternalGoodsItem[]>([]);
+  const [normalizedQuery, setNormalizedQuery] = useState("");
+  const [error, setError] = useState("");
+  const [searched, setSearched] = useState(Boolean(initialQuery));
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return items.slice(start, start + pageSize);
+  }, [items, page]);
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+
+  async function searchGoods(event?: FormEvent<HTMLFormElement>, keyword = query) {
     event?.preventDefault();
-    if (!query.trim()) return;
+    if (!keyword.trim()) return;
 
     setLoading(true);
     setError("");
     setSearched(true);
+    setPage(1);
 
     try {
-      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(query)}&display=12`);
+      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(keyword)}&display=60`);
       const data = (await response.json()) as ExternalGoodsResponse;
       setItems(data.items);
+      setNormalizedQuery(data.query);
       setError(data.error ?? "");
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "상품 검색에 실패했습니다.");
@@ -55,18 +73,24 @@ export function GoodsSearch({ products }: { products: Product[] }) {
     }
   }
 
+  useEffect(() => {
+    if (initialQuery) {
+      searchGoods(undefined, initialQuery);
+    }
+  }, [initialQuery]);
+
   return (
     <div className="space-y-6">
       <div>
         <p className="text-sm font-black text-berry">굿즈 검색</p>
-        <h1 className="mt-2 text-3xl font-black">네이버 쇼핑 결과와 세모덕 굿즈를 함께 비교해요</h1>
+        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈만 골라서 가격과 판매처를 비교해요</h1>
       </div>
 
       <Card>
         <form onSubmit={searchGoods} className="grid gap-3 md:grid-cols-[1fr_auto]">
           <div className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 focus-within:border-berry">
             <Search size={18} className="text-slate-400" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full outline-none" placeholder="쿠로미 키링, 포토카드 바인더..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full outline-none" placeholder="원피스 피규어, 쿠로미 키링, 포켓몬 카드" />
           </div>
           <Button disabled={loading}>
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
@@ -74,7 +98,7 @@ export function GoodsSearch({ products }: { products: Product[] }) {
           </Button>
         </form>
         <div className="mt-4 flex flex-wrap gap-2">
-          {["인기순", "낮은 가격순", "최신순", "공식", "중고"].map((filter, index) => (
+          {["수집품", "완구/인형", "피규어", "문구/팬시", "포토카드", "음반/DVD"].map((filter, index) => (
             <Badge key={filter} tone={index === 0 ? "pink" : "gray"}>
               {filter}
             </Badge>
@@ -82,15 +106,18 @@ export function GoodsSearch({ products }: { products: Product[] }) {
         </div>
       </Card>
 
-      {searched && (
+      {searched ? (
         <section className="space-y-4">
-          <div>
-            <h2 className="text-2xl font-black">네이버 쇼핑 검색 결과</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">{query} 기준</p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-black">네이버 쇼핑 검색 결과</h2>
+              <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준 · 팬덤 굿즈 카테고리만 필터링</p>
+            </div>
+            {items.length ? <p className="text-sm font-black text-slate-500">{page} / {totalPages}</p> : null}
           </div>
           {error && <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{error}</p>}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {items.map((item) => (
+            {pagedItems.map((item) => (
               <Card key={item.id} className="flex h-full flex-col overflow-hidden p-0">
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-slate-100">
                   {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" /> : null}
@@ -111,26 +138,41 @@ export function GoodsSearch({ products }: { products: Product[] }) {
               </Card>
             ))}
           </div>
-          {!items.length && !loading && <Card>검색 결과가 없습니다.</Card>}
+          {!items.length && !loading && <Card>검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}
+          {items.length > pageSize && (
+            <div className="flex justify-center gap-2">
+              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                이전
+              </Button>
+              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                다음
+              </Button>
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-6">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-black">세모덕 추천 굿즈</h2>
+              <p className="mt-1 text-sm font-bold text-slate-500">마이페이지 관심사 기준으로 카테고리별 추천을 보여줍니다.</p>
+            </div>
+            <Link href="/posts/new" className="text-sm font-black text-slate-500 hover:text-ink">
+              글쓰기
+            </Link>
+          </div>
+          {recommendedGroups.map((group) => (
+            <div key={group.title}>
+              <h3 className="mb-3 text-lg font-black">{group.title}</h3>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {group.products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
       )}
-
-      <section>
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-black">세모덕 추천 굿즈</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">Supabase에 등록된 상품과 판매 링크입니다.</p>
-          </div>
-          <Link href="/posts/new" className="text-sm font-black text-slate-500 hover:text-ink">
-            글쓰기
-          </Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
