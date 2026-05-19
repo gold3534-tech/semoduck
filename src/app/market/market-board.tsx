@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Loader2, Plus, Upload } from "lucide-react";
 import { UploadedImagePreview } from "@/components/uploaded-image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,29 +127,6 @@ export function MarketBoard({
     await reload();
   }
 
-  async function remove(id: string) {
-    if (!confirm("거래 글을 삭제할까요?")) return;
-    const response = await fetch(`/api/market/${id}`, { method: "DELETE" });
-    if (response.status === 401) location.href = "/login?next=/market";
-    if (!response.ok) return;
-    await reload();
-  }
-
-  function edit(item: MarketItem) {
-    setForm({
-      id: item.id,
-      gallerySlug: item.galleries?.slug ?? galleries[0]?.slug ?? "",
-      tradeType: item.trade_type,
-      title: item.title,
-      description: item.description,
-      price: String(item.price),
-      region: item.region ?? "",
-      imageUrl: item.image_url ?? "",
-      status: item.status === "reported" ? "hidden" : item.status
-    });
-    setFormOpen(true);
-  }
-
   function closeForm() {
     setFormOpen(false);
     setForm(emptyForm(galleries[0]?.slug ?? ""));
@@ -203,10 +180,7 @@ export function MarketBoard({
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((item) => {
-          const isOwner = currentUserId === item.seller_id;
-          const canDelete = isOwner || isAdmin;
-          return (
+        {filtered.map((item) => (
             <Card key={item.id} className="overflow-hidden p-0">
               <Link href={`/market/${item.id}`} className="block">
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -227,16 +201,9 @@ export function MarketBoard({
                 </div>
                 <p className="text-sm font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
                 <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
-                {(isOwner || canDelete) ? (
-                  <div className="flex justify-end gap-2">
-                    {isOwner ? <Button variant="secondary" onClick={() => edit(item)}><Pencil size={16} /></Button> : null}
-                    {canDelete ? <Button variant="danger" onClick={() => remove(item.id)}><Trash2 size={16} /></Button> : null}
-                  </div>
-                ) : null}
               </div>
             </Card>
-          );
-        })}
+        ))}
       </div>
     </div>
   );
