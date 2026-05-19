@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Send, Sparkles, Tags, Upload } from "lucide-react";
+import { UploadedImagePreview } from "@/components/uploaded-image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,6 @@ const postTypes = [
   ["purchase_help", "구매고민글"],
   ["info", "정보글"],
   ["trade", "교환글"],
-  ["transfer", "양도글"],
   ["giveaway", "나눔글"]
 ] as const;
 
@@ -45,7 +45,7 @@ export function WriteForm({ galleries }: { galleries: GalleryOption[] }) {
   const [externalGoods, setExternalGoods] = useState<ExternalSearchResponse["items"]>([]);
   const [imageUrl, setImageUrl] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState<"tags" | "keywords" | "submit" | null>(null);
+  const [loading, setLoading] = useState<"tags" | "keywords" | "submit" | "image" | null>(null);
 
   async function recommendTags() {
     setLoading("tags");
@@ -101,12 +101,14 @@ export function WriteForm({ galleries }: { galleries: GalleryOption[] }) {
   }
 
   async function uploadImage(file: File) {
+    setLoading("image");
     setMessage("");
     const form = new FormData();
     form.set("file", file);
     form.set("bucket", "post-images");
     const response = await fetch("/api/uploads", { method: "POST", body: form });
     const data = (await response.json()) as { url?: string; error?: string };
+    setLoading(null);
     if (!response.ok || !data.url) {
       setMessage(data.error ?? "이미지 업로드에 실패했습니다.");
       return;
@@ -129,7 +131,7 @@ export function WriteForm({ galleries }: { galleries: GalleryOption[] }) {
             </select>
           </label>
           <label className="grid gap-2 text-sm font-black">
-            게시글 타입
+            게시글 유형
             <select value={postType} onChange={(event) => setPostType(event.target.value as typeof postType)} className="min-h-11 rounded-lg border border-slate-200 px-3">
               {postTypes.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -148,10 +150,11 @@ export function WriteForm({ galleries }: { galleries: GalleryOption[] }) {
           <textarea value={content} onChange={(event) => setContent(event.target.value)} className="min-h-48 rounded-lg border border-slate-200 p-4 leading-7 outline-none focus:border-berry" placeholder="내용을 입력하세요" />
         </label>
         <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cloud p-6 text-center text-sm font-bold text-slate-500 hover:border-berry">
-          <Upload size={18} />
+          {loading === "image" ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
           {imageUrl ? "이미지 업로드 완료" : "게시글 이미지 업로드"}
           <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && uploadImage(event.target.files[0])} />
         </label>
+        {imageUrl ? <UploadedImagePreview url={imageUrl} onRemove={() => setImageUrl("")} /> : null}
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="secondary" onClick={recommendTags} disabled={loading !== null || !title || !content}>
             {loading === "tags" ? <Loader2 size={16} className="animate-spin" /> : <Tags size={16} />}

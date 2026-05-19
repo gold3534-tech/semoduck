@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { tradeStatusLabel } from "@/lib/format";
 
 const statuses = ["active", "reserved", "completed"] as const;
@@ -42,22 +41,26 @@ export function MarketOwnerActions({ marketItemId, currentStatus }: { marketItem
   }
 
   return (
-    <div className="mt-4 rounded-lg bg-cloud p-4">
-      <p className="text-sm font-black text-slate-600">판매자 관리</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex flex-wrap justify-end gap-1.5">
         {statuses.map((status) => (
-          <Button key={status} variant={currentStatus === status ? "primary" : "secondary"} onClick={() => updateStatus(status)} disabled={busy !== null}>
-            {busy === status ? <Loader2 size={15} className="animate-spin" /> : null}
-            {tradeStatusLabel(status)}
-          </Button>
+          <button
+            key={status}
+            onClick={() => updateStatus(status)}
+            disabled={busy !== null}
+            className={`min-h-8 rounded-lg px-3 text-xs font-black transition ${currentStatus === status ? "bg-ink text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
+          >
+            {busy === status ? <Loader2 size={13} className="inline animate-spin" /> : tradeStatusLabel(status)}
+          </button>
         ))}
-        <Link href={`/market/${marketItemId}/edit`} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-bold text-ink ring-1 ring-slate-200 hover:bg-slate-50">
-          수정
+      </div>
+      <div className="flex justify-end gap-1.5">
+        <Link href={`/market/${marketItemId}/edit`} className="grid h-8 w-8 place-items-center rounded-lg bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50" title="수정">
+          <Pencil size={14} />
         </Link>
-        <Button variant="danger" onClick={deleteItem} disabled={busy !== null}>
-          {busy === "delete" ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-          삭제
-        </Button>
+        <button onClick={deleteItem} disabled={busy !== null} className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500 text-white hover:bg-rose-600" title="삭제">
+          {busy === "delete" ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+        </button>
       </div>
     </div>
   );

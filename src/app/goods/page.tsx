@@ -1,4 +1,5 @@
 import { GoodsSearch, type RecommendedGoodsGroup } from "@/app/goods/search";
+import { searchNaverShopping } from "@/lib/external/naver-shopping";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/domain";
@@ -44,6 +45,35 @@ function productFrom(row: any): Product {
   };
 }
 
+function productFromExternal(item: Awaited<ReturnType<typeof searchNaverShopping>>["items"][number], interest: string): Product {
+  return {
+    id: `naver-${item.id}`,
+    title: item.title,
+    normalizedTitle: item.title.toLowerCase(),
+    brand: item.brand ?? item.mallName,
+    category: item.category ?? interest,
+    description: item.category ?? `${interest} 관련 굿즈`,
+    image: item.image ?? "/placeholder-goods.svg",
+    isOfficialProduct: false,
+    tags: [interest, item.category].filter(Boolean) as string[],
+    gallerySlugs: [],
+    bookmarkCount: 0,
+    offers: [
+      {
+        id: item.id,
+        source: "naver_shopping",
+        mallName: item.mallName,
+        price: item.price,
+        shippingFee: item.shippingFee,
+        condition: item.condition,
+        isOfficial: item.isOfficial,
+        isUsed: item.isUsed,
+        url: item.url
+      }
+    ]
+  };
+}
+
 async function getUserInterests() {
   const authClient = await createServerSupabaseClient();
   const { data: auth } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
@@ -59,34 +89,35 @@ async function getUserInterests() {
     .filter(Boolean) as string[];
 }
 
-async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
+async function getLocalProducts(interest: string, limit: number) {
   const supabase = createDataSupabaseClient();
-  const interests = await getUserInterests();
   const productSelect = "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
+  const { data } = await supabase
+    .from("products")
+    .select(productSelect)
+    .eq("is_deleted", false)
+    .or(`title.ilike.%${interest}%,brand.ilike.%${interest}%,category.ilike.%${interest}%,description.ilike.%${interest}%`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map(productFrom);
+}
 
-  if (!interests.length) {
-    const { data } = await supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(6);
-    return [{ title: "최근 등록된 굿즈", products: (data ?? []).map(productFrom) }];
-  }
+async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
+  const interests = await getUserInterests();
+  const targets = interests.length ? interests.slice(0, 5) : ["쿠로미", "포켓몬", "원피스"];
 
   const groups = await Promise.all(
-    interests.slice(0, 5).map(async (interest) => {
-      const { data } = await supabase
-        .from("products")
-        .select(productSelect)
-        .eq("is_deleted", false)
-        .or(`title.ilike.%${interest}%,brand.ilike.%${interest}%,category.ilike.%${interest}%,description.ilike.%${interest}%`)
-        .order("created_at", { ascending: false })
-        .limit(4);
-      return { title: `${interest} 추천 굿즈`, products: (data ?? []).map(productFrom) };
+    targets.map(async (interest) => {
+      const localProducts = await getLocalProducts(interest, 4);
+      if (localProducts.length >= 4) return { title: `${interest} 추천 굿즈`, products: localProducts };
+
+      const external = await searchNaverShopping(`${interest} 굿즈`, 12);
+      const externalProducts = external.items.slice(0, 4 - localProducts.length).map((item) => productFromExternal(item, interest));
+      return { title: `${interest} 추천 굿즈`, products: [...localProducts, ...externalProducts] };
     })
   );
 
-  const nonEmpty = groups.filter((group) => group.products.length);
-  if (nonEmpty.length) return nonEmpty;
-
-  const { data } = await supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(6);
-  return [{ title: "최근 등록된 굿즈", products: (data ?? []).map(productFrom) }];
+  return groups.filter((group) => group.products.length);
 }
 
 export default async function GoodsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {

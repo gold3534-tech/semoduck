@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
@@ -113,7 +112,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
               <h2 className="text-2xl font-black">네이버 쇼핑 검색 결과</h2>
               <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준 · 팬덤 굿즈 카테고리만 필터링</p>
             </div>
-            {items.length ? <p className="text-sm font-black text-slate-500">{page} / {totalPages}</p> : null}
+            {items.length ? <p className="text-sm font-black text-slate-500">총 {items.length}개 · {page} / {totalPages}페이지</p> : null}
           </div>
           {error && <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{error}</p>}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -140,10 +139,13 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           </div>
           {!items.length && !loading && <Card>검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}
           {items.length > pageSize && (
-            <div className="flex justify-center gap-2">
+            <div className="flex items-center justify-center gap-3">
               <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
                 이전
               </Button>
+              <span className="min-w-24 text-center text-sm font-black text-slate-600">
+                {page} / {totalPages}
+              </span>
               <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
                 다음
               </Button>
@@ -152,14 +154,9 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
         </section>
       ) : (
         <section className="space-y-6">
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <h2 className="text-2xl font-black">세모덕 추천 굿즈</h2>
-              <p className="mt-1 text-sm font-bold text-slate-500">마이페이지 관심사 기준으로 카테고리별 추천을 보여줍니다.</p>
-            </div>
-            <Link href="/posts/new" className="text-sm font-black text-slate-500 hover:text-ink">
-              글쓰기
-            </Link>
+          <div>
+            <h2 className="text-2xl font-black">세모덕 추천 굿즈</h2>
+            <p className="mt-1 text-sm font-bold text-slate-500">마이페이지 관심사 기준으로 카테고리별 추천을 보여줍니다.</p>
           </div>
           {recommendedGroups.map((group) => (
             <div key={group.title}>
@@ -171,6 +168,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
               </div>
             </div>
           ))}
+          {!recommendedGroups.length && <Card>관심사를 설정하면 맞춤 추천 굿즈가 표시됩니다.</Card>}
         </section>
       )}
     </div>

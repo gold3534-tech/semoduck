@@ -32,11 +32,7 @@ export function SiteHeader() {
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const keyword = query.trim();
-    if (!keyword) {
-      router.push("/goods");
-      return;
-    }
-    router.push(`/goods?q=${encodeURIComponent(keyword)}`);
+    router.push(keyword ? `/search?q=${encodeURIComponent(keyword)}` : "/search");
   }
 
   const nav = isAdminEmail(email) ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
@@ -59,7 +55,7 @@ export function SiteHeader() {
         </nav>
         <form onSubmit={submitSearch} className="order-last flex w-full items-center gap-2 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-500 focus-within:ring-2 focus-within:ring-berry/30 md:order-none md:w-72">
           <Search size={16} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full bg-transparent outline-none" placeholder="굿즈, 갤러리, 게시글 검색" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full bg-transparent outline-none" placeholder="갤러리, 유저거래, 굿즈 통합검색" />
         </form>
         <AuthButton />
       </div>
