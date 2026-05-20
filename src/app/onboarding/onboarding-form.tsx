@@ -18,7 +18,7 @@ export function OnboardingForm({ interests }: { interests: string[] }) {
       <div>
         <p className="text-sm font-black text-berry">관심사 온보딩</p>
         <h1 className="mt-2 text-3xl font-black">좋아하는 장르와 키워드를 골라주세요</h1>
-        <p className="mt-3 text-slate-600">선택한 관심사는 추천, 갤러리 탐색, 굿즈 미리보기의 기본값으로 사용할 수 있습니다.</p>
+        <p className="mt-3 text-slate-600">선택한 관심사는 추천 굿즈와 갤러리 탐색의 기본값으로 사용할 수 있습니다.</p>
       </div>
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">

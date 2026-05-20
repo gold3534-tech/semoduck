@@ -1,11 +1,12 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Flame, MessageCircle, ShoppingBag, Sparkles, Star } from "lucide-react";
 import { GalleryCard } from "@/components/gallery-card";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, formatPrice, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
+import { formatDateTime, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import { fallbackRecommendedProducts, productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -83,7 +84,13 @@ async function getHomeData() {
   return { products: products.length ? products : fallbackRecommendedProducts(interests, 3), galleries, posts, marketItems, interests };
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams?: Promise<{ code?: string; next?: string }> }) {
+  const params = await searchParams;
+  if (params?.code) {
+    const callbackParams = new URLSearchParams({ code: params.code, next: params.next ?? "/" });
+    redirect(`/auth/callback?${callbackParams.toString()}`);
+  }
+
   const { products, galleries, posts, marketItems, interests } = await getHomeData();
   const keywords = [...new Set([...(interests.length ? interests : []), ...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 6);
 
@@ -102,12 +109,12 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="grid content-end gap-3">
-          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-sun"><Sparkles size={17} /> 추천 기준</div><p className="mt-3 leading-7 text-white/80">{interests.length ? "마이페이지 관심사를 기준으로 갤러리를 추천합니다." : "관심사를 설정하면 더 맞는 갤러리를 추천합니다."}</p></Card>
+          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-sun"><Sparkles size={17} /> 추천 기준</div><p className="mt-3 leading-7 text-white/80">{interests.length ? "마이페이지 관심사를 기준으로 갤러리를 추천합니다." : "관심사가 없는 계정에는 활동이 많은 갤러리와 기본 추천 굿즈를 보여줍니다."}</p></Card>
           <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-mint"><Flame size={17} /> 추천 키워드</div><div className="mt-3 flex flex-wrap gap-2">{keywords.map((keyword) => <span key={keyword} className="rounded-full bg-white/12 px-3 py-1 text-sm font-bold">#{keyword}</span>)}</div></Card>
         </div>
       </section>
 
-      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 굿즈</p><h2 className="text-2xl font-black">최근 등록된 상품</h2></div><Link href="/goods" className="text-sm font-black text-slate-500 hover:text-ink">더 보기</Link></div><div className="grid gap-4 md:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} />)}{!products.length && <Card>등록된 굿즈가 없습니다.</Card>}</div></section>
+      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 굿즈</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사 기반 상품" : "기본 추천 상품"}</h2></div><Link href="/goods" className="text-sm font-black text-slate-500 hover:text-ink">더 보기</Link></div><div className="grid gap-4 md:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} />)}{!products.length && <Card>등록된 굿즈가 없습니다.</Card>}</div></section>
       <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 갤러리</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사에 맞는 갤러리" : "활동이 많은 갤러리"}</h2></div><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">전체보기</Link></div><div className="grid gap-4 md:grid-cols-3">{galleries.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}{!galleries.length && <Card>관심사와 맞는 갤러리가 아직 없습니다.</Card>}</div></section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

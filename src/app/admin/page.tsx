@@ -35,7 +35,19 @@ type LinkSubmission = { id: string; title: string; url: string; source: string; 
 type ProductOffer = { id: string; mall_name: string; url: string; price: number; source: string; is_official: boolean; products?: { title?: string | null } | null };
 type Gallery = { id: string; name: string; slug: string; thumbnail_url?: string | null; follower_count: number; post_count: number };
 type ProductRow = { id: string; title: string; category?: string | null; brand?: string | null; image_url?: string | null; report_count?: number | null };
-type Dashboard = { reports: Report[]; linkSubmissions: LinkSubmission[]; productOffers: ProductOffer[]; galleries: Gallery[]; products: ProductRow[] };
+type Suggestion = {
+  id: string;
+  type: string;
+  title: string;
+  detail: string;
+  requested_gallery_name?: string | null;
+  requested_gallery_slug?: string | null;
+  requested_gallery_category?: string | null;
+  status: string;
+  created_at: string;
+  user?: { email?: string | null; nickname?: string | null } | null;
+};
+type Dashboard = { reports: Report[]; linkSubmissions: LinkSubmission[]; productOffers: ProductOffer[]; galleries: Gallery[]; products: ProductRow[]; suggestions: Suggestion[] };
 type ProductForm = {
   title: string;
   brand: string;
@@ -68,6 +80,14 @@ const emptyProductForm: ProductForm = {
   specialBenefit: ""
 };
 
+const emptyGalleryForm = {
+  name: "",
+  slug: "",
+  category: "",
+  description: "",
+  thumbnailUrl: ""
+};
+
 const targetLabels: Record<TargetType, string> = {
   post: "게시글",
   market_item: "유저거래글",
@@ -82,6 +102,7 @@ export default function AdminPage() {
   const [thumbnailDrafts, setThumbnailDrafts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductForm>(emptyProductForm);
+  const [galleryForm, setGalleryForm] = useState(emptyGalleryForm);
 
   async function load() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
@@ -209,6 +230,51 @@ export default function AdminPage() {
     await load();
   }
 
+  async function createGallery(fromSuggestion?: Suggestion) {
+    const form = fromSuggestion
+      ? {
+          name: fromSuggestion.requested_gallery_name || galleryForm.name,
+          slug: fromSuggestion.requested_gallery_slug || galleryForm.slug,
+          category: fromSuggestion.requested_gallery_category || galleryForm.category || "기타",
+          description: fromSuggestion.detail || galleryForm.description,
+          thumbnailUrl: galleryForm.thumbnailUrl
+        }
+      : galleryForm;
+
+    setSavingId(fromSuggestion ? `gallery-${fromSuggestion.id}` : "gallery");
+    const response = await fetch("/api/admin/galleries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form)
+    });
+    if (response.ok && fromSuggestion) {
+      await resolveSuggestion(fromSuggestion.id, "resolve", "갤러리 추가 완료");
+    }
+    setSavingId(null);
+    if (!response.ok) {
+      const error = (await response.json()) as { error?: string };
+      alert(error.error ?? "갤러리를 추가하지 못했습니다.");
+      return;
+    }
+    setGalleryForm(emptyGalleryForm);
+    await load();
+  }
+
+  async function resolveSuggestion(id: string, action: "resolve" | "reject", adminNote = "") {
+    setSavingId(`suggestion-${id}`);
+    const response = await fetch(`/api/admin/suggestions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, adminNote })
+    });
+    setSavingId(null);
+    if (!response.ok) {
+      alert("건의를 처리하지 못했습니다.");
+      return;
+    }
+    await load();
+  }
+
   async function deleteProduct(productId: string) {
     if (!confirm("이 상품을 삭제할까요?")) return;
     setSavingId(productId);
@@ -263,6 +329,62 @@ export default function AdminPage() {
         <Card><ImageIcon className="text-berry" /><p className="mt-3 text-sm font-bold text-slate-500">갤러리</p><p className="mt-1 text-3xl font-black">{data.galleries.length}</p></Card>
         <Card><Trash2 className="text-rose-500" /><p className="mt-3 text-sm font-bold text-slate-500">등록 상품</p><p className="mt-1 text-3xl font-black">{data.products.length}</p></Card>
       </div>
+
+      <Card>
+        <h2 className="text-xl font-black">유저 건의 처리</h2>
+        <div className="mt-4 divide-y divide-slate-100">
+          {(data.suggestions ?? []).map((suggestion) => (
+            <div key={suggestion.id} className="grid gap-3 py-4 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={suggestion.status === "pending" ? "sun" : "gray"}>{suggestion.status}</Badge>
+                  <Badge tone="mint">{suggestion.type === "gallery_request" ? "갤러리 추가" : suggestion.type}</Badge>
+                </div>
+                <p className="mt-2 font-black">{suggestion.title}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">{suggestion.detail}</p>
+                {suggestion.requested_gallery_name ? (
+                  <p className="mt-2 text-sm font-bold text-slate-500">
+                    요청 갤러리: {suggestion.requested_gallery_name} / {suggestion.requested_gallery_slug || "slug 미입력"} / {suggestion.requested_gallery_category || "카테고리 미입력"}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-xs font-bold text-slate-400">{suggestion.user?.email ?? "알 수 없음"} · {formatDateTime(suggestion.created_at)}</p>
+              </div>
+              {suggestion.status === "pending" ? (
+                <div className="flex flex-wrap gap-2">
+                  {suggestion.type === "gallery_request" ? (
+                    <Button variant="secondary" onClick={() => createGallery(suggestion)} disabled={savingId === `gallery-${suggestion.id}`}>
+                      {savingId === `gallery-${suggestion.id}` ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                      갤러리 추가
+                    </Button>
+                  ) : null}
+                  <Button variant="secondary" onClick={() => resolveSuggestion(suggestion.id, "resolve", "확인 완료")} disabled={savingId === `suggestion-${suggestion.id}`}>처리 완료</Button>
+                  <Button variant="danger" onClick={() => resolveSuggestion(suggestion.id, "reject", "반려")} disabled={savingId === `suggestion-${suggestion.id}`}>반려</Button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+          {!(data.suggestions ?? []).length && <p className="py-4 text-sm font-bold text-slate-500">아직 들어온 건의가 없습니다.</p>}
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-xl font-black">갤러리 직접 추가</h2>
+        <div className="mt-4 grid gap-3">
+          <div className="grid gap-3 md:grid-cols-3">
+            <input value={galleryForm.name} onChange={(event) => setGalleryForm({ ...galleryForm, name: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="갤러리명" />
+            <input value={galleryForm.slug} onChange={(event) => setGalleryForm({ ...galleryForm, slug: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="영문 주소" />
+            <input value={galleryForm.category} onChange={(event) => setGalleryForm({ ...galleryForm, category: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="카테고리" />
+          </div>
+          <textarea value={galleryForm.description} onChange={(event) => setGalleryForm({ ...galleryForm, description: event.target.value })} className="min-h-20 rounded-lg border p-3" placeholder="갤러리 설명" />
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <input value={galleryForm.thumbnailUrl} onChange={(event) => setGalleryForm({ ...galleryForm, thumbnailUrl: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="대표 이미지 URL" />
+            <Button onClick={() => createGallery()} disabled={savingId === "gallery" || !galleryForm.name || !galleryForm.slug || !galleryForm.category || !galleryForm.description}>
+              {savingId === "gallery" ? <Loader2 size={16} className="animate-spin" /> : null}
+              갤러리 추가
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       <Card>
         <h2 className="text-xl font-black">신고 관리</h2>

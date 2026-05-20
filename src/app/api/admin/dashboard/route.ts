@@ -16,16 +16,18 @@ export async function GET() {
   const session = await requireAdmin();
   if (session.error) return session.error;
 
-  const [reportsResult, linksResult, offersResult, galleriesResult, productsResult] = await Promise.all([
+  const [reportsResult, linksResult, offersResult, galleriesResult, productsResult, suggestionsResult] = await Promise.all([
     session.admin.from("reports").select("id,reporter_id,target_type,target_id,category,detail,reason,status,created_at").order("created_at", { ascending: false }),
     session.admin.from("link_submissions").select("id,title,url,source,price,is_official,status,created_at").order("created_at", { ascending: false }),
     session.admin.from("product_offers").select("id,mall_name,url,price,source,is_official,products(title)").order("created_at", { ascending: false }).limit(30),
     session.admin.from("galleries").select("id,name,slug,thumbnail_url,follower_count,post_count").order("name"),
-    session.admin.from("products").select("id,title,category,brand,image_url,report_count,is_deleted").eq("is_deleted", false).order("created_at", { ascending: false }).limit(50)
+    session.admin.from("products").select("id,title,category,brand,image_url,report_count,is_deleted").eq("is_deleted", false).order("created_at", { ascending: false }).limit(50),
+    session.admin.from("admin_suggestions").select("id,user_id,type,title,detail,requested_gallery_name,requested_gallery_slug,requested_gallery_category,status,admin_note,created_at,reviewed_at").order("created_at", { ascending: false })
   ]);
 
   const reports = reportsResult.data ?? [];
-  const reporterIds = [...new Set(reports.map((report) => report.reporter_id).filter(Boolean))];
+  const suggestions = suggestionsResult.data ?? [];
+  const reporterIds = [...new Set([...reports.map((report) => report.reporter_id), ...suggestions.map((suggestion) => suggestion.user_id)].filter(Boolean))];
   const postIds = reports.filter((report) => report.target_type === "post").map((report) => report.target_id);
   const marketIds = reports.filter((report) => report.target_type === "market_item").map((report) => report.target_id);
   const productIds = reports.filter((report) => report.target_type === "product").map((report) => report.target_id);
@@ -56,6 +58,10 @@ export async function GET() {
     linkSubmissions: linksResult.data ?? [],
     productOffers: offersResult.data ?? [],
     galleries: galleriesResult.data ?? [],
-    products: productsResult.data ?? []
+    products: productsResult.data ?? [],
+    suggestions: suggestions.map((suggestion) => ({
+      ...suggestion,
+      user: suggestion.user_id ? reporters.get(suggestion.user_id) ?? null : null
+    }))
   });
 }

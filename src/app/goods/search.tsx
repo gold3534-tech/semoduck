@@ -82,14 +82,14 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
     <div className="space-y-6">
       <div>
         <p className="text-sm font-black text-berry">굿즈 검색</p>
-        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈만 골라서 가격과 판매처를 비교해요</h1>
+        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈 가격과 판매 링크를 찾아봐요</h1>
       </div>
 
       <Card>
         <form onSubmit={searchGoods} className="grid gap-3 md:grid-cols-[1fr_auto]">
           <div className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 focus-within:border-berry">
             <Search size={18} className="text-slate-400" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full outline-none" placeholder="원피스 피규어, 쿠로미 키링, 포켓몬 카드" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full outline-none" placeholder="쿠로미 키링, 포켓몬 카드, BTS 포토카드" />
           </div>
           <Button disabled={loading}>
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
@@ -97,7 +97,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           </Button>
         </form>
         <div className="mt-4 flex flex-wrap gap-2">
-          {["수집품", "완구/인형", "피규어", "문구/팬시", "포토카드", "음반/DVD"].map((filter, index) => (
+          {["수집품", "인형/피규어", "키링", "문구/스티커", "포토카드", "앨범/DVD"].map((filter, index) => (
             <Badge key={filter} tone={index === 0 ? "pink" : "gray"}>
               {filter}
             </Badge>
@@ -109,8 +109,8 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black">네이버 쇼핑 검색 결과</h2>
-              <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준 · 팬덤 굿즈 카테고리만 필터링</p>
+              <h2 className="text-2xl font-black">검색 결과</h2>
+              <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준으로 찾은 외부 판매 링크입니다.</p>
             </div>
             {items.length ? <p className="text-sm font-black text-slate-500">총 {items.length}개 · {page} / {totalPages}페이지</p> : null}
           </div>
@@ -130,7 +130,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
                   {item.category && <p className="line-clamp-2 text-xs font-bold text-slate-400">{item.category}</p>}
                   <p className="mt-auto text-lg font-black">{formatPrice(item.price)}</p>
                   <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-bold text-white">
-                    쇼핑몰 열기
+                    판매 링크 열기
                     <ExternalLink size={15} />
                   </a>
                 </div>
@@ -155,8 +155,8 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
       ) : (
         <section className="space-y-6">
           <div>
-            <h2 className="text-2xl font-black">세모덕 추천 굿즈</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">마이페이지 관심사 기준으로 카테고리별 추천을 보여줍니다.</p>
+            <h2 className="text-2xl font-black">추천 굿즈</h2>
+            <p className="mt-1 text-sm font-bold text-slate-500">관심사를 설정하지 않은 계정에는 인기 주제와 최근 등록 상품을 기준으로 보여줍니다.</p>
           </div>
           {recommendedGroups.map((group) => (
             <div key={group.title}>
@@ -168,7 +168,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
               </div>
             </div>
           ))}
-          {!recommendedGroups.length && <Card>관심사를 설정하면 맞춤 추천 굿즈가 표시됩니다.</Card>}
+          {!recommendedGroups.length && <Card>관심사를 설정하면 추천 굿즈가 표시됩니다.</Card>}
         </section>
       )}
     </div>

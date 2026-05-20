@@ -1,49 +1,11 @@
 import { GoodsSearch, type RecommendedGoodsGroup } from "@/app/goods/search";
 import { searchNaverShopping } from "@/lib/external/naver-shopping";
+import { productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
-
-function productFrom(row: any): Product {
-  return {
-    id: row.id,
-    title: row.title,
-    normalizedTitle: row.normalized_title,
-    brand: row.brand ?? "",
-    category: row.category,
-    description: row.description ?? "",
-    image: row.image_url ?? "/placeholder-goods.svg",
-    isOfficialProduct: row.is_official_product ?? false,
-    tags: [row.category, row.brand].filter(Boolean) as string[],
-    gallerySlugs: [],
-    bookmarkCount: row.bookmark_count ?? 0,
-    offers: ((row.product_offers ?? []) as Array<{
-      id: string;
-      source: Product["offers"][number]["source"];
-      mall_name: string;
-      price: number;
-      shipping_fee: number;
-      condition: Product["offers"][number]["condition"];
-      is_official: boolean;
-      is_used: boolean;
-      special_benefit?: string | null;
-      url: string;
-    }>).map((offer) => ({
-      id: offer.id,
-      source: offer.source,
-      mallName: offer.mall_name,
-      price: offer.price,
-      shippingFee: offer.shipping_fee,
-      condition: offer.condition,
-      isOfficial: offer.is_official,
-      isUsed: offer.is_used,
-      specialBenefit: offer.special_benefit ?? undefined,
-      url: offer.url
-    }))
-  };
-}
 
 function productFromExternal(item: Awaited<ReturnType<typeof searchNaverShopping>>["items"][number], interest: string): Product {
   return {
@@ -91,7 +53,6 @@ async function getUserInterests() {
 
 async function getLocalProducts(interest: string, limit: number) {
   const supabase = createDataSupabaseClient();
-  const productSelect = "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
   const { data } = await supabase
     .from("products")
     .select(productSelect)
@@ -99,7 +60,7 @@ async function getLocalProducts(interest: string, limit: number) {
     .or(`title.ilike.%${interest}%,brand.ilike.%${interest}%,category.ilike.%${interest}%,description.ilike.%${interest}%`)
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? []).map(productFrom);
+  return (data ?? []).map(productFromDbRow);
 }
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {

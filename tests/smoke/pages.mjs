@@ -11,6 +11,7 @@ const staticPages = [
   { path: "/posts/new", name: "New post" },
   { path: "/goods", name: "Goods list" },
   { path: "/market", name: "Market" },
+  { path: "/suggestions", name: "Suggestions" },
   { path: "/mypage", name: "My page" },
   { path: "/admin", name: "Admin" }
 ];
