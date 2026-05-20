@@ -6,11 +6,20 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const createGallerySchema = z.object({
   name: z.string().min(2),
-  slug: z.string().min(2),
+  slug: z.string().optional().default(""),
   description: z.string().min(5),
   category: z.string().min(1),
   thumbnailUrl: z.string().optional().default("")
 });
+
+function slugify(value: string) {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || `gallery-${Date.now()}`;
+}
 
 async function requireAdmin() {
   const authClient = await createServerSupabaseClient();
@@ -30,7 +39,7 @@ export async function POST(request: Request) {
     .from("galleries")
     .insert({
       name: body.name,
-      slug: body.slug,
+      slug: body.slug || slugify(body.name),
       description: body.description,
       category: body.category,
       thumbnail_url: body.thumbnailUrl || null,

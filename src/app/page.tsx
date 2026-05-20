@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Flame, MessageCircle, ShoppingBag, Sparkles, Star } from "lucide-react";
-import { GalleryCard } from "@/components/gallery-card";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -15,6 +14,32 @@ import type { Gallery, Post, Product } from "@/types/domain";
 export const dynamic = "force-dynamic";
 
 type MarketPreview = { id: string; title: string; trade_type: string; price: number; image_url: string | null; galleries?: { name?: string | null } | null };
+
+const directInterestSlugs: Record<string, string[]> = {
+  bts: ["bts"],
+  포켓몬: ["pokemon"],
+  스텔라이브: ["stellive"],
+  롤: ["lol"],
+  산리오: ["sanrio"],
+  원피스: ["onepiece"]
+};
+
+const broadInterestCategories = new Set(["게임", "애니", "웹툰", "캐릭터", "아이돌", "버튜버"]);
+const ignoredRecommendationInterests = new Set(["굿즈", "덕", "돌"]);
+
+function scoreByInterests(textParts: Array<string | null | undefined>, interests: string[]) {
+  const text = textParts.filter(Boolean).join(" ").toLowerCase();
+  let score = 0;
+
+  for (const interest of interests) {
+    const normalized = interest.toLowerCase();
+    if (!normalized) continue;
+    if (ignoredRecommendationInterests.has(interest)) continue;
+    if (text.includes(normalized)) score += broadInterestCategories.has(interest) ? 1 : 10;
+  }
+
+  return score;
+}
 
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
@@ -30,28 +55,15 @@ async function getHomeData() {
     })
     .filter(Boolean) as string[];
 
-  const galleryQuery = supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count");
-  const recommendedGalleryQuery = interests.length
-    ? galleryQuery
-        .or(
-          interests
-            .slice(0, 6)
-            .flatMap((interest) => [`name.ilike.%${interest}%`, `category.ilike.%${interest}%`, `description.ilike.%${interest}%`])
-            .join(",")
-        )
-        .order("follower_count", { ascending: false })
-        .limit(3)
-    : galleryQuery.order("follower_count", { ascending: false }).limit(3);
-
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(3),
-    recommendedGalleryQuery,
+    supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(24),
+    supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(3),
     supabase.from("market_items").select("id,title,trade_type,price,image_url,galleries(name)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(4)
   ]);
 
-  const products = (productsResult.data ?? []).map(productFromDbRow);
-  const galleries: Gallery[] = (galleriesResult.data ?? []).map((gallery) => ({
+  const rawProducts = (productsResult.data ?? []).map(productFromDbRow);
+  const rawGalleries: Gallery[] = (galleriesResult.data ?? []).map((gallery) => ({
     id: gallery.id,
     name: gallery.name,
     slug: gallery.slug,
@@ -62,6 +74,32 @@ async function getHomeData() {
     postCount: gallery.post_count ?? 0,
     tags: [gallery.category].filter(Boolean)
   }));
+
+  const directSlugs = new Set(interests.flatMap((interest) => directInterestSlugs[interest.toLowerCase()] ?? directInterestSlugs[interest] ?? []));
+  const products = interests.length
+    ? rawProducts
+        .map((product) => ({
+          product,
+          score:
+            scoreByInterests([product.title, product.brand, product.category, product.description, ...product.tags], interests) +
+            product.gallerySlugs.reduce((sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0), 0)
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score || b.product.bookmarkCount - a.product.bookmarkCount)
+        .slice(0, 3)
+        .map((item) => item.product)
+    : rawProducts.slice(0, 3);
+  const galleries = interests.length
+    ? rawGalleries
+        .map((gallery) => ({
+          gallery,
+          score: scoreByInterests([gallery.name, gallery.category, gallery.description, gallery.slug, ...gallery.tags], interests) + (directSlugs.has(gallery.slug) ? 20 : 0)
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score || b.gallery.followerCount - a.gallery.followerCount)
+        .slice(0, 3)
+        .map((item) => item.gallery)
+    : rawGalleries.slice(0, 3);
   const posts: Post[] = (postsResult.data ?? []).map((post) => {
     const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
     const gallery = Array.isArray(post.galleries) ? post.galleries[0] : post.galleries;
@@ -115,7 +153,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
       </section>
 
       <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 굿즈</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사 기반 상품" : "기본 추천 상품"}</h2></div><Link href="/goods" className="text-sm font-black text-slate-500 hover:text-ink">더 보기</Link></div><div className="grid gap-4 md:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} />)}{!products.length && <Card>등록된 굿즈가 없습니다.</Card>}</div></section>
-      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 갤러리</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사에 맞는 갤러리" : "활동이 많은 갤러리"}</h2></div><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">전체보기</Link></div><div className="grid gap-4 md:grid-cols-3">{galleries.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}{!galleries.length && <Card>관심사와 맞는 갤러리가 아직 없습니다.</Card>}</div></section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>

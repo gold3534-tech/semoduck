@@ -372,13 +372,13 @@ export default function AdminPage() {
         <div className="mt-4 grid gap-3">
           <div className="grid gap-3 md:grid-cols-3">
             <input value={galleryForm.name} onChange={(event) => setGalleryForm({ ...galleryForm, name: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="갤러리명" />
-            <input value={galleryForm.slug} onChange={(event) => setGalleryForm({ ...galleryForm, slug: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="영문 주소" />
+            <input value={galleryForm.slug} onChange={(event) => setGalleryForm({ ...galleryForm, slug: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="주소 이름(선택)" />
             <input value={galleryForm.category} onChange={(event) => setGalleryForm({ ...galleryForm, category: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="카테고리" />
           </div>
           <textarea value={galleryForm.description} onChange={(event) => setGalleryForm({ ...galleryForm, description: event.target.value })} className="min-h-20 rounded-lg border p-3" placeholder="갤러리 설명" />
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <input value={galleryForm.thumbnailUrl} onChange={(event) => setGalleryForm({ ...galleryForm, thumbnailUrl: event.target.value })} className="min-h-10 rounded-lg border px-3" placeholder="대표 이미지 URL" />
-            <Button onClick={() => createGallery()} disabled={savingId === "gallery" || !galleryForm.name || !galleryForm.slug || !galleryForm.category || !galleryForm.description}>
+            <Button onClick={() => createGallery()} disabled={savingId === "gallery" || !galleryForm.name || !galleryForm.category || !galleryForm.description}>
               {savingId === "gallery" ? <Loader2 size={16} className="animate-spin" /> : null}
               갤러리 추가
             </Button>

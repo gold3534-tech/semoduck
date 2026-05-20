@@ -5,19 +5,18 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const suggestionSchema = z.object({
   type: z.enum(["gallery_request", "feature_request", "bug_report", "other"]).default("gallery_request"),
-  title: z.string().min(2),
-  detail: z.string().min(5),
+  title: z.string().min(2, "제목을 2글자 이상 입력해주세요."),
+  detail: z.string().min(5, "내용을 5글자 이상 입력해주세요."),
   galleryName: z.string().optional().default(""),
-  gallerySlug: z.string().optional().default(""),
   galleryCategory: z.string().optional().default("")
 });
 
 function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
+  const trimmed = value.trim().toLowerCase();
+  const slug = trimmed
     .replace(/[^a-z0-9가-힣]+/g, "-")
     .replace(/^-+|-+$/g, "");
+  return slug || `gallery-${Date.now()}`;
 }
 
 export async function POST(request: Request) {
@@ -27,7 +26,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const body = suggestionSchema.parse(await request.json());
+  const parsed = suggestionSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "입력값을 확인해주세요." }, { status: 400 });
+  }
+
+  const body = parsed.data;
   const admin = createAdminSupabaseClient();
   const { error } = await admin.from("admin_suggestions").insert({
     user_id: data.user.id,
@@ -35,7 +39,7 @@ export async function POST(request: Request) {
     title: body.title,
     detail: body.detail,
     requested_gallery_name: body.galleryName || null,
-    requested_gallery_slug: body.gallerySlug || (body.galleryName ? slugify(body.galleryName) : null),
+    requested_gallery_slug: body.galleryName ? slugify(body.galleryName) : null,
     requested_gallery_category: body.galleryCategory || null
   });
 

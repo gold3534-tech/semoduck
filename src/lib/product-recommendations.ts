@@ -27,9 +27,93 @@ export type ProductRow = {
 export const productSelect =
   "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
 
+function fallbackOffer(id: string, query: string, price: number) {
+  return {
+    id,
+    source: "naver_shopping" as const,
+    mallName: "네이버 쇼핑",
+    price,
+    shippingFee: 3000,
+    condition: "new" as const,
+    isOfficial: false,
+    isUsed: false,
+    url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(query)}`
+  };
+}
+
 const fallbackProducts: Product[] = [
   {
-    id: "naver-fallback-kuromi-keyring",
+    id: "fallback-bts-photocard",
+    title: "BTS 포토카드 바인더",
+    normalizedTitle: "bts 포토카드 바인더",
+    brand: "BTS",
+    category: "아이돌굿즈",
+    description: "포토카드 보관과 특전 정리에 어울리는 바인더입니다.",
+    image: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg",
+    isOfficialProduct: false,
+    tags: ["BTS", "아이돌", "포토카드", "바인더", "굿즈"],
+    gallerySlugs: ["bts"],
+    bookmarkCount: 418,
+    offers: [fallbackOffer("fallback-offer-bts", "BTS 포토카드 바인더", 17500)]
+  },
+  {
+    id: "fallback-pokemon-binder",
+    title: "포켓몬 카드 9포켓 바인더",
+    normalizedTitle: "포켓몬 카드 9포켓 바인더",
+    brand: "포켓몬",
+    category: "게임굿즈",
+    description: "포켓몬 카드 수집용 바인더와 슬리브를 찾는 팬에게 맞는 상품입니다.",
+    image: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg",
+    isOfficialProduct: false,
+    tags: ["포켓몬", "게임", "카드", "바인더", "굿즈"],
+    gallerySlugs: ["pokemon"],
+    bookmarkCount: 220,
+    offers: [fallbackOffer("fallback-offer-pokemon", "포켓몬 카드 바인더", 8000)]
+  },
+  {
+    id: "fallback-stellive-album",
+    title: "스텔라이브 앨범 굿즈",
+    normalizedTitle: "스텔라이브 앨범 굿즈",
+    brand: "스텔라이브",
+    category: "버튜버굿즈",
+    description: "스텔라이브 앨범과 특전 구성을 확인하기 좋은 굿즈입니다.",
+    image: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg",
+    isOfficialProduct: false,
+    tags: ["스텔라이브", "버튜버", "앨범", "특전", "굿즈"],
+    gallerySlugs: ["stellive"],
+    bookmarkCount: 121,
+    offers: [fallbackOffer("fallback-offer-stellive", "스텔라이브 앨범 굿즈", 19800)]
+  },
+  {
+    id: "fallback-t1-uniform",
+    title: "T1 롤드컵 유니폼",
+    normalizedTitle: "t1 롤드컵 유니폼",
+    brand: "T1",
+    category: "게임굿즈",
+    description: "e스포츠 유니폼을 찾는 팬에게 맞는 상품입니다.",
+    image: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg",
+    isOfficialProduct: false,
+    tags: ["롤", "T1", "게임", "유니폼", "LCK"],
+    gallerySlugs: ["lol"],
+    bookmarkCount: 201,
+    offers: [fallbackOffer("fallback-offer-t1", "T1 롤드컵 유니폼", 45500)]
+  },
+  {
+    id: "fallback-onepiece-figure",
+    title: "원피스 루피 기어5 피규어",
+    normalizedTitle: "원피스 루피 기어5 피규어",
+    brand: "원피스",
+    category: "애니굿즈",
+    description: "정품 여부와 판매 링크 확인이 중요한 원피스 피규어입니다.",
+    image: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg",
+    isOfficialProduct: true,
+    tags: ["원피스", "애니", "루피", "피규어", "굿즈"],
+    gallerySlugs: ["onepiece"],
+    bookmarkCount: 186,
+    offers: [fallbackOffer("fallback-offer-onepiece", "원피스 루피 기어5 피규어", 23000)]
+  },
+  {
+    id: "fallback-kuromi-keyring",
     title: "산리오 쿠로미 아크릴 키링",
     normalizedTitle: "산리오 쿠로미 아크릴 키링",
     brand: "산리오",
@@ -37,164 +121,21 @@ const fallbackProducts: Product[] = [
     description: "쿠로미 팬들이 많이 찾는 키링 굿즈입니다.",
     image: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg",
     isOfficialProduct: false,
-    tags: ["쿠로미", "산리오", "키링", "아크릴", "정품"],
+    tags: ["쿠로미", "산리오", "캐릭터", "키링", "굿즈"],
     gallerySlugs: ["sanrio"],
     bookmarkCount: 342,
-    offers: [
-      {
-        id: "fallback-offer-kuromi-keyring",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 4900,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: false,
-        isUsed: false,
-        specialBenefit: "예약 특전 확인",
-        url: "https://search.shopping.naver.com/search/all?query=%EC%BF%A0%EB%A1%9C%EB%AF%B8%20%ED%82%A4%EB%A7%81"
-      }
-    ]
-  },
-  {
-    id: "naver-fallback-pokemon-binder",
-    title: "포켓몬 카드 9포켓 바인더",
-    normalizedTitle: "포켓몬 카드 9포켓 바인더",
-    brand: "포켓몬",
-    category: "게임굿즈",
-    description: "카드 수집용 바인더와 슬리브를 찾는 팬에게 맞는 상품입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg",
-    isOfficialProduct: false,
-    tags: ["포켓몬", "카드", "바인더", "수집"],
-    gallerySlugs: ["pokemon"],
-    bookmarkCount: 220,
-    offers: [
-      {
-        id: "fallback-offer-pokemon-binder",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 8000,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: false,
-        isUsed: false,
-        url: "https://search.shopping.naver.com/search/all?query=%ED%8F%AC%EC%BC%93%EB%AA%AC%20%EC%B9%B4%EB%93%9C%20%EB%B0%94%EC%9D%B8%EB%8D%94"
-      }
-    ]
-  },
-  {
-    id: "naver-fallback-bts-photocard",
-    title: "BTS 포토카드 바인더",
-    normalizedTitle: "BTS 포토카드 바인더",
-    brand: "BTS",
-    category: "아이돌굿즈",
-    description: "포토카드 보관과 특전 정리에 어울리는 바인더입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg",
-    isOfficialProduct: false,
-    tags: ["BTS", "포토카드", "바인더", "특전"],
-    gallerySlugs: ["bts"],
-    bookmarkCount: 418,
-    offers: [
-      {
-        id: "fallback-offer-bts-photocard",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 17500,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: false,
-        isUsed: false,
-        url: "https://search.shopping.naver.com/search/all?query=BTS%20%ED%8F%AC%ED%86%A0%EC%B9%B4%EB%93%9C%20%EB%B0%94%EC%9D%B8%EB%8D%94"
-      }
-    ]
-  },
-  {
-    id: "naver-fallback-onepiece-figure",
-    title: "원피스 루피 기어5 피규어",
-    normalizedTitle: "원피스 루피 기어5 피규어",
-    brand: "원피스",
-    category: "애니굿즈",
-    description: "정품 여부와 판매처 확인이 중요한 원피스 피규어입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg",
-    isOfficialProduct: true,
-    tags: ["원피스", "루피", "피규어", "정품"],
-    gallerySlugs: ["onepiece"],
-    bookmarkCount: 186,
-    offers: [
-      {
-        id: "fallback-offer-onepiece-figure",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 23000,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: true,
-        isUsed: false,
-        url: "https://search.shopping.naver.com/search/all?query=%EC%9B%90%ED%94%BC%EC%8A%A4%20%EB%A3%A8%ED%94%BC%20%EA%B8%B0%EC%96%B45%20%ED%94%BC%EA%B7%9C%EC%96%B4"
-      }
-    ]
-  },
-  {
-    id: "naver-fallback-stellive-album",
-    title: "스텔라이브 앨범 굿즈",
-    normalizedTitle: "스텔라이브 앨범 굿즈",
-    brand: "스텔라이브",
-    category: "버튜버굿즈",
-    description: "앨범과 특전 구성을 함께 확인하기 좋은 굿즈입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg",
-    isOfficialProduct: false,
-    tags: ["스텔라이브", "앨범", "특전", "버튜버"],
-    gallerySlugs: ["stellive"],
-    bookmarkCount: 121,
-    offers: [
-      {
-        id: "fallback-offer-stellive-album",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 19800,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: false,
-        isUsed: false,
-        url: "https://search.shopping.naver.com/search/all?query=%EC%8A%A4%ED%85%94%EB%9D%BC%EC%9D%B4%EB%B8%8C%20%EC%95%A8%EB%B2%94%20%EA%B5%BF%EC%A6%88"
-      }
-    ]
-  },
-  {
-    id: "naver-fallback-lol-uniform",
-    title: "T1 롤드컵 유니폼",
-    normalizedTitle: "T1 롤드컵 유니폼",
-    brand: "T1",
-    category: "게임굿즈",
-    description: "사이즈와 판매처 확인이 필요한 e스포츠 유니폼입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg",
-    isOfficialProduct: false,
-    tags: ["롤", "T1", "유니폼", "LCK"],
-    gallerySlugs: ["lol"],
-    bookmarkCount: 201,
-    offers: [
-      {
-        id: "fallback-offer-lol-uniform",
-        source: "naver_shopping",
-        mallName: "네이버 쇼핑",
-        price: 45500,
-        shippingFee: 3000,
-        condition: "new",
-        isOfficial: false,
-        isUsed: false,
-        url: "https://search.shopping.naver.com/search/all?query=T1%20%EB%A1%A4%EB%93%9C%EC%BB%B5%20%EC%9C%A0%EB%8B%88%ED%8F%BC"
-      }
-    ]
+    offers: [fallbackOffer("fallback-offer-kuromi", "쿠로미 키링", 4900)]
   }
 ];
 
 const galleryKeywordMap: Record<string, string[]> = {
-  sanrio: ["산리오", "쿠로미", "키링", "아크릴"],
-  pokemon: ["포켓몬", "카드", "바인더"],
-  onepiece: ["원피스", "루피", "피규어"],
-  "webtoon-goods": ["웹툰", "아크릴", "챰", "팝업"],
-  bts: ["BTS", "포토카드", "바인더"],
-  stellive: ["스텔라이브", "앨범", "특전"],
-  lol: ["롤", "T1", "유니폼", "LCK"]
+  sanrio: ["산리오", "쿠로미", "캐릭터", "키링"],
+  pokemon: ["포켓몬", "게임", "카드", "바인더"],
+  onepiece: ["원피스", "애니", "루피", "피규어"],
+  "webtoon-goods": ["웹툰", "아크릴", "팝업"],
+  bts: ["BTS", "아이돌", "포토카드", "바인더"],
+  stellive: ["스텔라이브", "버튜버", "앨범", "특전"],
+  lol: ["롤", "T1", "게임", "유니폼", "LCK"]
 };
 
 export function productFromDbRow(row: ProductRow): Product {
@@ -228,8 +169,8 @@ export function productFromDbRow(row: ProductRow): Product {
 export function keywordsForPost(input: { title: string; content: string; gallerySlug?: string | null; galleryName?: string | null; tags?: string[] }) {
   const text = `${input.title} ${input.content} ${input.galleryName ?? ""} ${(input.tags ?? []).join(" ")}`.toLowerCase();
   const keywords = new Set<string>([...(input.gallerySlug ? galleryKeywordMap[input.gallerySlug] ?? [] : []), ...(input.tags ?? [])]);
+  const candidates = ["쿠로미", "산리오", "키링", "정품", "포켓몬", "카드", "바인더", "원피스", "루피", "피규어", "BTS", "포토카드", "스텔라이브", "롤", "T1", "유니폼", "아크릴", "특전"];
 
-  const candidates = ["쿠로미", "산리오", "키링", "정품", "예약특전", "포켓몬", "카드", "바인더", "원피스", "루피", "피규어", "BTS", "포토카드", "스텔라이브", "롤", "T1", "유니폼", "아크릴", "챰"];
   for (const keyword of candidates) {
     if (text.includes(keyword.toLowerCase())) keywords.add(keyword);
   }
@@ -238,13 +179,11 @@ export function keywordsForPost(input: { title: string; content: string; gallery
 }
 
 export function fallbackTags(input: { title: string; content: string; gallerySlug?: string | null; galleryName?: string | null }, limit = 5) {
-  const keywords = keywordsForPost(input);
-  return keywords.slice(0, limit);
+  return keywordsForPost(input).slice(0, limit);
 }
 
 export function relatedProducts(products: Product[], keywords: string[], limit = 4) {
   const normalizedKeywords = keywords.map((keyword) => keyword.toLowerCase()).filter(Boolean);
-
   const scored = products.map((product) => {
     const text = `${product.title} ${product.brand} ${product.category} ${product.description} ${product.tags.join(" ")} ${product.gallerySlugs.join(" ")}`.toLowerCase();
     const score = normalizedKeywords.reduce((sum, keyword) => sum + (text.includes(keyword) ? 1 : 0), 0);
@@ -259,5 +198,9 @@ export function relatedProducts(products: Product[], keywords: string[], limit =
 }
 
 export function fallbackRecommendedProducts(keywords: string[] = [], limit = 4) {
-  return relatedProducts(fallbackProducts, keywords, limit).concat(fallbackProducts).filter((product, index, all) => all.findIndex((item) => item.id === product.id) === index).slice(0, limit);
+  const related = relatedProducts(fallbackProducts, keywords, limit);
+  return related
+    .concat(fallbackProducts)
+    .filter((product, index, all) => all.findIndex((item) => item.id === product.id) === index)
+    .slice(0, limit);
 }
