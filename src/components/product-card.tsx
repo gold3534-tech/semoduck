@@ -11,6 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   const lowest = prices.length ? Math.min(...prices) : 0;
   const externalUrl = product.id.startsWith("naver-") ? product.offers[0]?.url : null;
   const href = externalUrl ?? `/goods/${product.id}`;
+  const hasFreeShipping = product.offers.some((offer) => offer.shippingFee === 0);
 
   return (
     <Card className="flex h-full flex-col overflow-hidden p-0">
@@ -29,9 +30,10 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="flex flex-wrap gap-2">
           {product.isOfficialProduct && <Badge tone="mint">공식</Badge>}
           <Badge tone="violet">{product.offers.length}개 판매처</Badge>
+          {hasFreeShipping && <Badge tone="gray">배송비 확인</Badge>}
           {product.offers.some((offer) => offer.specialBenefit) && <Badge tone="sun">특전</Badge>}
         </div>
-        <p className="mt-auto text-lg font-black">{prices.length ? `${formatPrice(lowest)}~` : "가격 확인 필요"}</p>
+        <p className="mt-auto text-lg font-black">{prices.length ? `최저 ${formatPrice(lowest)}` : "가격 확인 필요"}</p>
         <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white">
           <ShoppingBag size={16} />
           판매처 보기

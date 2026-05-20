@@ -8,7 +8,7 @@ import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail } from "@/lib/auth";
-import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel } from "@/lib/format";
+import { formatDateTime, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -62,7 +62,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
             {isOwner || isAdmin ? <MarketOwnerActions marketItemId={id} currentStatus={item.status} canEdit={isOwner} /> : null}
           </div>
           <h1 className="mt-4 text-3xl font-black">{item.title}</h1>
-          <p className="mt-3 text-2xl font-black">{formatPrice(item.price)}</p>
+          <p className="mt-3 text-2xl font-black">{tradeValueLabel(item.trade_type, item.price)}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold text-slate-500">
             <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
             <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>

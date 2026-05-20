@@ -31,6 +31,7 @@ export function postTypeLabel(type: string) {
 export function tradeTypeLabel(type: string) {
   const labels: Record<string, string> = {
     sell: "판매",
+    transfer: "양도",
     exchange: "교환",
     giveaway: "나눔"
   };
@@ -46,6 +47,12 @@ export function tradeStatusLabel(status: string) {
     reported: "신고됨"
   };
   return labels[status] ?? status;
+}
+
+export function tradeValueLabel(type: string, price: number) {
+  if (type === "exchange") return "교환 희망";
+  if (type === "giveaway") return "나눔";
+  return formatPrice(price);
 }
 
 export function sourceLabel(source: string) {

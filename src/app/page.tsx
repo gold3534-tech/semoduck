@@ -5,7 +5,8 @@ import { GalleryCard } from "@/components/gallery-card";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, formatPrice, postTypeLabel, tradeTypeLabel } from "@/lib/format";
+import { formatDateTime, formatPrice, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
+import { fallbackRecommendedProducts, productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Gallery, Post, Product } from "@/types/domain";
@@ -13,34 +14,6 @@ import type { Gallery, Post, Product } from "@/types/domain";
 export const dynamic = "force-dynamic";
 
 type MarketPreview = { id: string; title: string; trade_type: string; price: number; image_url: string | null; galleries?: { name?: string | null } | null };
-
-function productFrom(row: any): Product {
-  return {
-    id: row.id,
-    title: row.title,
-    normalizedTitle: row.normalized_title,
-    brand: row.brand ?? "",
-    category: row.category,
-    description: row.description ?? "",
-    image: row.image_url ?? "/placeholder-goods.svg",
-    isOfficialProduct: row.is_official_product ?? false,
-    tags: [row.category, row.brand].filter(Boolean),
-    gallerySlugs: [],
-    bookmarkCount: row.bookmark_count ?? 0,
-    offers: (row.product_offers ?? []).map((offer: any) => ({
-      id: offer.id,
-      source: offer.source,
-      mallName: offer.mall_name,
-      price: offer.price,
-      shippingFee: offer.shipping_fee,
-      condition: offer.condition,
-      isOfficial: offer.is_official,
-      isUsed: offer.is_used,
-      specialBenefit: offer.special_benefit ?? undefined,
-      url: offer.url
-    }))
-  };
-}
 
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
@@ -70,13 +43,13 @@ async function getHomeData() {
     : galleryQuery.order("follower_count", { ascending: false }).limit(3);
 
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select("id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)").eq("is_deleted", false).order("created_at", { ascending: false }).limit(3),
+    supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(3),
     recommendedGalleryQuery,
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(3),
     supabase.from("market_items").select("id,title,trade_type,price,image_url,galleries(name)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(4)
   ]);
 
-  const products = (productsResult.data ?? []).map(productFrom);
+  const products = (productsResult.data ?? []).map(productFromDbRow);
   const galleries: Gallery[] = (galleriesResult.data ?? []).map((gallery) => ({
     id: gallery.id,
     name: gallery.name,
@@ -107,7 +80,7 @@ async function getHomeData() {
     };
   });
   const marketItems: MarketPreview[] = (marketResult.data ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries }));
-  return { products, galleries, posts, marketItems, interests };
+  return { products: products.length ? products : fallbackRecommendedProducts(interests, 3), galleries, posts, marketItems, interests };
 }
 
 export default async function HomePage() {
@@ -139,7 +112,7 @@ export default async function HomePage() {
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>
-        <div><div className="mb-4 flex items-center gap-2"><ShoppingBag size={20} className="text-berry" /><h2 className="text-2xl font-black">최근 유저거래</h2></div><div className="space-y-3">{marketItems.map((item) => <Link key={item.id} href={`/market/${item.id}`} className="block"><Card className="grid grid-cols-[4.5rem_1fr] gap-3 transition hover:bg-pink-50"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="72px" /> : null}</div><div className="min-w-0"><Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge><p className="mt-2 line-clamp-1 font-black">{item.title}</p><p className="mt-1 text-sm font-bold text-slate-500">{formatPrice(item.price)} · {item.galleries?.name ?? "갤러리"}</p></div></Card></Link>)}{!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}</div></div>
+        <div><div className="mb-4 flex items-center gap-2"><ShoppingBag size={20} className="text-berry" /><h2 className="text-2xl font-black">최근 유저거래</h2></div><div className="space-y-3">{marketItems.map((item) => <Link key={item.id} href={`/market/${item.id}`} className="block"><Card className="grid grid-cols-[4.5rem_1fr] gap-3 transition hover:bg-pink-50"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="72px" /> : null}</div><div className="min-w-0"><Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge><p className="mt-2 line-clamp-1 font-black">{item.title}</p><p className="mt-1 text-sm font-bold text-slate-500">{tradeValueLabel(item.trade_type, item.price)} · {item.galleries?.name ?? "갤러리"}</p></div></Card></Link>)}{!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}</div></div>
       </section>
     </div>
   );

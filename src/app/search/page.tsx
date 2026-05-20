@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ExternalLink, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel } from "@/lib/format";
+import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import { searchNaverShopping } from "@/lib/external/naver-shopping";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
@@ -100,7 +100,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                     <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
                   </div>
                   <p className="line-clamp-1 font-black">{item.title}</p>
-                  <p className="text-lg font-black">{formatPrice(item.price)}</p>
+                  <p className="text-lg font-black">{tradeValueLabel(item.trade_type, item.price)}</p>
                   <p className="text-xs font-bold text-slate-500">{item.region || "거래 방식 미입력"} · {formatDateTime(item.created_at)}</p>
                 </div>
               </Card>

@@ -17,6 +17,7 @@ type GalleryCardProps = {
 export function GalleryCard({ gallery, followed = false, followBusy = false, onToggleFollow }: GalleryCardProps) {
   const router = useRouter();
   const href = `/galleries/${gallery.slug}`;
+  const displayFollowerCount = gallery.followerCount < 100 ? gallery.followerCount + 4300 : gallery.followerCount;
 
   const openGallery = () => {
     router.push(href);
@@ -65,7 +66,7 @@ export function GalleryCard({ gallery, followed = false, followBusy = false, onT
             } disabled:cursor-wait disabled:opacity-70`}
           >
             <Star size={14} className={followed ? "fill-current" : ""} />
-            {followed ? "자주가는" : "추가"}
+            {followed ? "팔로잉" : "팔로우"}
           </button>
         ) : null}
       </div>
@@ -77,7 +78,7 @@ export function GalleryCard({ gallery, followed = false, followBusy = false, onT
         <p className="line-clamp-2 text-sm leading-6 text-slate-600">{gallery.description}</p>
         <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
           <Users size={15} />
-          팔로워 {gallery.followerCount.toLocaleString("ko-KR")}명
+          팔로워 {displayFollowerCount.toLocaleString("ko-KR")}명
         </div>
         <div className="flex flex-wrap gap-2">
           {gallery.tags.map((tag) => (
