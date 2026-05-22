@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "placehold.co" },
       { protocol: "https", hostname: "shopping-phinf.pstatic.net" },
       { protocol: "https", hostname: "estar-egg.com" },
+      { protocol: "http", hostname: "image.toast.com" },
+      { protocol: "https", hostname: "image.toast.com" },
       { protocol: "https", hostname: "*.cdn-nhncommerce.com" },
       { protocol: "https", hostname: "shopby-images.cdn-nhncommerce.com" },
       { protocol: "https", hostname: "*.supabase.co" }

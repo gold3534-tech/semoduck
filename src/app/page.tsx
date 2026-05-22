@@ -176,12 +176,13 @@ async function getHomeData() {
         .map((item) => item.market)
     : rawMarketItems.slice(0, 8);
   const randomMarketItems = shuffled(marketItems).slice(0, 8);
+  const homePreviewMarketItems = randomMarketItems.slice(0, 3);
   const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 3);
   const interestItems: HomeInterestItem[] = [
     ...displayProducts.map((product) => ({ kind: "official" as const, product })),
     ...randomMarketItems.map((market) => ({ kind: "market" as const, market }))
   ];
-  return { products: displayProducts, galleries, posts, marketItems: randomMarketItems, interestItems, interests };
+  return { products: displayProducts, galleries, posts, marketItems: homePreviewMarketItems, interestItems, interests };
 }
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ code?: string; next?: string }> }) {
@@ -221,7 +222,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>
-        <div><div className="mb-4 flex items-center gap-2"><ShoppingBag size={20} className="text-berry" /><h2 className="text-2xl font-black">최근 유저거래</h2></div><div className="space-y-3">{marketItems.map((item) => <Link key={item.id} href={`/market/${item.id}`} className="block"><Card className="grid grid-cols-[4.5rem_1fr] gap-3 transition hover:bg-pink-50"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="72px" /> : null}</div><div className="min-w-0"><Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge><p className="mt-2 line-clamp-1 font-black">{item.title}</p><p className="mt-1 text-sm font-bold text-slate-500">{tradeValueLabel(item.trade_type, item.price)} · {item.galleries?.name ?? "갤러리"}</p></div></Card></Link>)}{!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}</div></div>
+        <div><div className="mb-4 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><ShoppingBag size={20} className="text-berry" /><h2 className="text-2xl font-black">최근 유저거래</h2></div><Link href="/market" className="text-sm font-black text-slate-500 hover:text-ink">유저거래로 이동</Link></div><div className="space-y-3">{marketItems.map((item) => <Link key={item.id} href={`/market/${item.id}`} className="block"><Card className="grid grid-cols-[4.5rem_1fr] gap-3 transition hover:bg-pink-50"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="72px" /> : null}</div><div className="min-w-0"><Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge><p className="mt-2 line-clamp-1 font-black">{item.title}</p><p className="mt-1 text-sm font-bold text-slate-500">{tradeValueLabel(item.trade_type, item.price)} · {item.galleries?.name ?? "갤러리"}</p></div></Card></Link>)}{!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}</div></div>
       </section>
     </div>
   );
