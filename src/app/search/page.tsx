@@ -49,10 +49,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       </div>
 
       <Card>
-        <form action="/search" className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 focus-within:border-berry">
-          <Search size={18} className="text-slate-400" />
-          <input name="q" defaultValue={keyword} className="w-full outline-none" placeholder="갤러리, 유저거래, 굿즈 통합검색" />
-          <button className="rounded-lg bg-ink px-4 py-2 text-sm font-black text-white">검색</button>
+        <form action="/search" className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 focus-within:border-berry">
+          <Search size={18} className="shrink-0 text-slate-400" />
+          <input name="q" defaultValue={keyword} className="min-w-0 flex-1 outline-none" placeholder="갤러리, 유저거래, 굿즈 통합검색" />
+          <button className="shrink-0 whitespace-nowrap rounded-lg bg-ink px-5 py-2 text-sm font-black text-white">검색</button>
         </form>
       </Card>
 
