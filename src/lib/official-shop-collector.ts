@@ -316,6 +316,86 @@ type PokemonStoreProduct = {
   minSalePrice?: number;
 };
 
+const dotorisupHeaders = {
+  accept: "application/json",
+  version: "1.0",
+  clientid: "lq+utCM77nQkP611GTjHTw==",
+  platform: "PC",
+  accessToken: ""
+};
+
+async function collectDotorisupProducts() {
+  const pages: Array<{ pageCount?: number; items?: DotorisupProduct[] }> = [];
+
+  for (let pageNumber = 1; pageNumber <= 200; pageNumber += 1) {
+    const url = new URL("https://shop-api.e-ncp.com/products/search");
+    url.searchParams.set("categoryNos", "435457");
+    url.searchParams.set("pageSize", "100");
+    url.searchParams.set("pageNumber", String(pageNumber));
+    url.searchParams.set("order.soldoutPlaceEnd", "true");
+    url.searchParams.set("order.by", "RECENT_PRODUCT");
+    url.searchParams.set("order.direction", "DESC");
+    url.searchParams.set("filter.totalReviewCount", "true");
+    url.searchParams.set("filter.soldout", "true");
+
+    const response = await fetch(url, { headers: dotorisupHeaders, next: { revalidate: 3600 } });
+    if (!response.ok) throw new Error(`dotorisup products ${response.status}`);
+
+    const page = (await response.json()) as { pageCount?: number; items?: DotorisupProduct[] };
+    pages.push(page);
+    const pageCount = Math.min(Number(page.pageCount || 1), 200);
+    if (pageNumber >= pageCount) break;
+  }
+
+  return pages
+    .flatMap((page) => page.items ?? [])
+    .filter((item) => item.frontDisplayYn !== false)
+    .filter((item) => !["STOP", "FINISHED", "ENDED"].includes(String(item.saleStatusType ?? "").toUpperCase()))
+    .filter((item) => !isPastSaleEnd(item.saleEndYmdt))
+    .map((item): OfficialProductCandidate => {
+      const image = item.listImageUrls?.[0] || item.imageUrls?.[0] || item.listImageUrlInfo?.url || item.imageUrlInfo?.[0]?.url;
+      const soldOut = Boolean(item.isSoldOut) || item.saleStatusType === "SOLDOUT" || item.stockCnt === 0 || item.mainStockCnt === 0;
+      const comingSoon = item.saleStatusType === "READY" || (!soldOut && item.saleStartYmdt ? new Date(`${item.saleStartYmdt.replace(" ", "T")}+09:00`).getTime() > Date.now() : false);
+
+      return {
+        key: `ghibli-dotorisup-${item.productNo}`,
+        gallerySlug: "ghibli",
+        title: item.productName || `지브리 상품 ${item.productNo}`,
+        brand: item.brandNameKo || item.brandName || "스튜디오 지브리",
+        category: "애니굿즈",
+        description: "도토리숲 공식샵에서 수집한 스튜디오 지브리 공식 상품입니다.",
+        imageUrl: image ? (image.startsWith("//") ? `https:${image}` : image) : undefined,
+        mallName: "도토리숲",
+        price: Number(item.salePrice || item.minSalePrice || 0),
+        shippingFee: 2500,
+        url: `https://www.dotorisup.com/product/detail/${item.productNo}`,
+        source: "official_shop",
+        availabilityLabel: soldOut ? "품절" : comingSoon ? "판매예정" : item.reservationData ? "예약판매" : "판매중"
+      };
+    });
+}
+
+type DotorisupProduct = {
+  productNo?: string | number;
+  productName?: string;
+  brandName?: string;
+  brandNameKo?: string;
+  saleStatusType?: string;
+  saleStartYmdt?: string;
+  saleEndYmdt?: string;
+  frontDisplayYn?: boolean;
+  isSoldOut?: boolean;
+  stockCnt?: number;
+  mainStockCnt?: number;
+  reservationData?: unknown;
+  listImageUrls?: string[];
+  imageUrls?: string[];
+  listImageUrlInfo?: { url?: string };
+  imageUrlInfo?: Array<{ url?: string }>;
+  salePrice?: number;
+  minSalePrice?: number;
+};
+
 function isPastSaleEnd(value?: string | null) {
   if (!value) return false;
   const endTime = new Date(`${value.replace(" ", "T")}+09:00`).getTime();
@@ -517,6 +597,13 @@ export async function collectOfficialShopCandidates(): Promise<OfficialShopColle
   } catch (error) {
     addFallback(collected, "pokemon");
     skipped.push({ gallerySlug: "pokemon", mallName: "Pokemon Store Korea", reason: error instanceof Error ? error.message : "수집 실패" });
+  }
+
+  try {
+    collected.push(...(await collectDotorisupProducts()));
+  } catch (error) {
+    addFallback(collected, "ghibli");
+    skipped.push({ gallerySlug: "ghibli", mallName: "도토리숲", reason: error instanceof Error ? error.message : "수집 실패" });
   }
 
   try {

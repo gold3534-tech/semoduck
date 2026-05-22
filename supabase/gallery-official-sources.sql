@@ -56,4 +56,9 @@ select id, 'https://x.com/_EternalReturn_', 'https://estar-egg.com/product/list.
 from public.galleries where slug = 'eternal-return'
 on conflict (gallery_id) do update set official_site_url = excluded.official_site_url, official_shop_url = excluded.official_shop_url, shop_label = excluded.shop_label, notes = excluded.notes, updated_at = now();
 
+insert into public.gallery_official_sources (gallery_id, official_site_url, official_shop_url, shop_label, notes)
+select id, 'https://www.instagram.com/dotorisup/reels/', 'https://www.dotorisup.com/', '도토리숲', '도토리숲 공식 인스타그램과 공식샵 상품 우선'
+from public.galleries where slug = 'ghibli'
+on conflict (gallery_id) do update set official_site_url = excluded.official_site_url, official_shop_url = excluded.official_shop_url, shop_label = excluded.shop_label, notes = excluded.notes, updated_at = now();
+
 notify pgrst, 'reload schema';

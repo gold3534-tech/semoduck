@@ -9,7 +9,8 @@ const synonymGroups = [
   ["산리오", "쿠로미", "시나모롤", "헬로키티", "마이멜로디", "폼폼푸린", "포차코"],
   ["포켓몬", "Pokemon", "피카츄"],
   ["원피스", "One Piece", "루피", "조로", "상디"],
-  ["스텔라이브", "Stellive", "Fanding"]
+  ["스텔라이브", "Stellive", "Fanding"],
+  ["지브리", "스튜디오 지브리", "Studio Ghibli", "도토리숲", "토토로", "키키", "하울", "치히로"]
 ];
 
 function stripGoodsWords(value: string) {

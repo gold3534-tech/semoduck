@@ -62,6 +62,13 @@ export const galleryOfficialSources: GalleryOfficialSource[] = [
     officialShopUrl: "https://estar-egg.com/product/list.html?cate_no=43",
     shopLabel: "ESTAR EGG 이터널 리턴 공식굿즈",
     notes: "공식 X와 ESTAR EGG 공식굿즈 카테고리를 함께 확인합니다."
+  },
+  {
+    slug: "ghibli",
+    officialSiteUrl: "https://www.instagram.com/dotorisup/reels/",
+    officialShopUrl: "https://www.dotorisup.com/",
+    shopLabel: "도토리숲",
+    notes: "도토리숲 공식 인스타그램과 공식샵 상품을 우선 확인합니다."
   }
 ];
 

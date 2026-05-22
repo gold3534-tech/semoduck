@@ -11,7 +11,10 @@ export async function GET(request: Request) {
     const { error } = (await supabase?.auth.exchangeCodeForSession(code)) ?? { error: new Error("Supabase 환경변수가 설정되지 않았습니다.") };
     if (error) {
       const loginUrl = new URL("/login", requestUrl.origin);
-      loginUrl.searchParams.set("error", error.message);
+      const message = error.message.includes("code verifier")
+        ? "로그인 정보가 만료되었습니다. 같은 브라우저에서 Google 로그인을 다시 눌러주세요."
+        : error.message;
+      loginUrl.searchParams.set("error", message);
       loginUrl.searchParams.set("next", next);
       return NextResponse.redirect(loginUrl);
     }

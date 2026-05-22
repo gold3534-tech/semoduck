@@ -139,7 +139,8 @@ const galleryKeywordMap: Record<string, string[]> = {
   "webtoon-goods": ["웹툰", "아크릴", "팝업"],
   bts: ["BTS", "아이돌", "포토카드", "바인더"],
   stellive: ["스텔라이브", "버튜버", "앨범", "특전"],
-  lol: ["롤", "T1", "게임", "유니폼", "LCK"]
+  lol: ["롤", "T1", "게임", "유니폼", "LCK"],
+  ghibli: ["지브리", "스튜디오 지브리", "도토리숲", "토토로", "키키", "하울"]
 };
 
 export function productFromDbRow(row: ProductRow): Product {
@@ -178,7 +179,7 @@ export function productFromDbRow(row: ProductRow): Product {
 export function keywordsForPost(input: { title: string; content: string; gallerySlug?: string | null; galleryName?: string | null; tags?: string[] }) {
   const text = `${input.title} ${input.content} ${input.galleryName ?? ""} ${(input.tags ?? []).join(" ")}`.toLowerCase();
   const keywords = new Set<string>([...(input.gallerySlug ? galleryKeywordMap[input.gallerySlug] ?? [] : []), ...(input.tags ?? [])]);
-  const candidates = ["쿠로미", "산리오", "키링", "정품", "포켓몬", "카드", "바인더", "원피스", "루피", "피규어", "BTS", "포토카드", "스텔라이브", "롤", "T1", "유니폼", "아크릴", "특전"];
+  const candidates = ["쿠로미", "산리오", "키링", "정품", "포켓몬", "카드", "바인더", "원피스", "루피", "피규어", "지브리", "토토로", "키키", "하울", "BTS", "포토카드", "스텔라이브", "롤", "T1", "유니폼", "아크릴", "특전"];
 
   for (const keyword of candidates) {
     if (text.includes(keyword.toLowerCase())) keywords.add(keyword);

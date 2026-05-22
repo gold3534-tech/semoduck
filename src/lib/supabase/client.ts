@@ -8,5 +8,12 @@ export function createBrowserSupabaseClient() {
     return createBrowserClient("https://placeholder.supabase.co", "placeholder-anon-key");
   }
 
-  return createBrowserClient(url, anonKey);
+  return createBrowserClient(url, anonKey, {
+    auth: {
+      flowType: "pkce",
+      detectSessionInUrl: false,
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  });
 }

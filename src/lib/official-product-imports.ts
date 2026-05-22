@@ -121,6 +121,19 @@ export const officialProductCandidates: OfficialProductCandidate[] = [
     shippingFee: 0,
     url: "https://fanding.kr/@stellive/shop",
     source: "official_shop"
+  },
+  {
+    key: "ghibli-dotorisup-goods",
+    gallerySlug: "ghibli",
+    title: "도토리숲 지브리 공식 굿즈",
+    brand: "스튜디오 지브리",
+    category: "애니굿즈",
+    description: "도토리숲 공식샵에서 확인하는 스튜디오 지브리 공식 굿즈입니다.",
+    mallName: "도토리숲",
+    price: 0,
+    shippingFee: 0,
+    url: "https://www.dotorisup.com/category/435457",
+    source: "official_shop"
   }
 ];
 
