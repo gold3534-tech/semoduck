@@ -21,13 +21,29 @@ export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
+  async function loadSession() {
+    try {
+      const response = await fetch("/api/auth/session", { cache: "no-store" });
+      const data = (await response.json()) as { user: { email: string | null } | null };
+      setEmail(data.user?.email ?? null);
+    } catch {
+      setEmail(null);
+    }
+  }
+
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user.email ?? null);
+    loadSession();
+    const refreshTimer = window.setTimeout(loadSession, 500);
+    window.addEventListener("focus", loadSession);
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      loadSession();
     });
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener("focus", loadSession);
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {

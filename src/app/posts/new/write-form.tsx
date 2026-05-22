@@ -47,6 +47,11 @@ export function WriteForm({ galleries }: { galleries: GalleryOption[] }) {
         body: JSON.stringify({ gallerySlug, postType, title, content, tags, imageUrl })
       });
       const data = (await response.json()) as { id?: string; error?: string };
+      if (response.status === 401) {
+        router.push("/login?next=/posts/new");
+        router.refresh();
+        return;
+      }
       if (!response.ok || !data.id) {
         setMessage(data.error ?? "게시글 등록에 실패했습니다.");
         setLoading(null);

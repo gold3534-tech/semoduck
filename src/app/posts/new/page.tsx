@@ -1,6 +1,8 @@
 ﻿import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { WriteForm } from "@/app/posts/new/write-form";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,12 @@ async function getGalleries() {
 }
 
 export default async function NewPostPage() {
+  const authClient = await createServerSupabaseClient();
+  const { data } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
+  if (!data.user) {
+    redirect("/login?next=/posts/new");
+  }
+
   const galleries = await getGalleries();
   return (
     <div className="space-y-6">
