@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Flame, MessageCircle, ShoppingBag, Sparkles, Star } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
+import { HomeInterestCarousel, type HomeInterestItem } from "@/app/home-interest-carousel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
@@ -13,7 +13,15 @@ import type { Gallery, Post, Product } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
-type MarketPreview = { id: string; title: string; trade_type: string; price: number; image_url: string | null; galleries?: { name?: string | null } | null };
+type MarketPreview = {
+  id: string;
+  title: string;
+  description?: string | null;
+  trade_type: string;
+  price: number;
+  image_url: string | null;
+  galleries?: { name?: string | null; slug?: string | null } | null;
+};
 
 const directInterestSlugs: Record<string, string[]> = {
   bts: ["bts"],
@@ -26,12 +34,33 @@ const directInterestSlugs: Record<string, string[]> = {
 
 const broadInterestCategories = new Set(["게임", "애니", "웹툰", "캐릭터", "아이돌", "버튜버"]);
 const ignoredRecommendationInterests = new Set(["굿즈", "덕", "돌"]);
+const interestKeywordMap: Record<string, string[]> = {
+  BTS: ["BTS", "방탄소년단", "Weverse"],
+  포켓몬: ["포켓몬", "Pokemon", "피카츄"],
+  스텔라이브: ["스텔라이브", "Fanding"],
+  롤: ["라이엇 스토어", "리그 오브 레전드", "League of Legends", "TFT", "요네", "아리", "티모"],
+  산리오: ["산리오", "쿠로미", "시나모롤", "헬로키티", "마이멜로디", "폼폼푸린", "포차코"],
+  원피스: ["원피스", "루피", "조로", "상디"],
+  애니: ["원피스", "애니", "피규어"],
+  웹툰: ["웹툰프렌즈", "웹툰"],
+  아이돌: ["BTS", "아이돌"],
+  게임: ["라이엇 스토어", "리그 오브 레전드", "포켓몬", "이터널 리턴"],
+  캐릭터: ["산리오", "포켓몬", "캐릭터"],
+  피규어: ["피규어", "원피스", "라이엇 스토어"],
+  버튜버: ["스텔라이브"]
+};
+
+function keywordsForInterests(interests: string[]) {
+  const targets = interests.filter((interest) => !ignoredRecommendationInterests.has(interest));
+  const keywords = targets.flatMap((interest) => [interest, ...(interestKeywordMap[interest] ?? [])]);
+  return [...new Set(keywords.filter(Boolean))];
+}
 
 function scoreByInterests(textParts: Array<string | null | undefined>, interests: string[]) {
   const text = textParts.filter(Boolean).join(" ").toLowerCase();
   let score = 0;
 
-  for (const interest of interests) {
+  for (const interest of keywordsForInterests(interests)) {
     const normalized = interest.toLowerCase();
     if (!normalized) continue;
     if (ignoredRecommendationInterests.has(interest)) continue;
@@ -56,10 +85,10 @@ async function getHomeData() {
     .filter(Boolean) as string[];
 
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select(productSelect).eq("is_deleted", false).order("created_at", { ascending: false }).limit(24),
+    supabase.from("products").select(productSelect).eq("is_deleted", false).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(160),
     supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(3),
-    supabase.from("market_items").select("id,title,trade_type,price,image_url,galleries(name)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(4)
+    supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(80)
   ]);
 
   const rawProducts = (productsResult.data ?? []).map(productFromDbRow);
@@ -82,13 +111,14 @@ async function getHomeData() {
           product,
           score:
             scoreByInterests([product.title, product.brand, product.category, product.description, ...product.tags], interests) +
-            product.gallerySlugs.reduce((sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0), 0)
+            product.gallerySlugs.reduce((sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0), 0) +
+            Number(product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial)) * 6
         }))
-        .filter((item) => item.score > 0)
-        .sort((a, b) => b.score - a.score || b.product.bookmarkCount - a.product.bookmarkCount)
-        .slice(0, 3)
+        .filter((item) => item.score > 0 && (item.product.isOfficialProduct || item.product.offers.some((offer) => offer.isOfficial)))
+        .sort((a, b) => b.score - a.score || Number(b.product.isOfficialProduct) - Number(a.product.isOfficialProduct) || b.product.bookmarkCount - a.product.bookmarkCount)
+        .slice(0, 8)
         .map((item) => item.product)
-    : rawProducts.slice(0, 3);
+    : rawProducts.filter((product) => product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial)).slice(0, 8);
   const galleries = interests.length
     ? rawGalleries
         .map((gallery) => ({
@@ -118,8 +148,24 @@ async function getHomeData() {
       image: "/placeholder-goods.svg"
     };
   });
-  const marketItems: MarketPreview[] = (marketResult.data ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries }));
-  return { products: products.length ? products : fallbackRecommendedProducts(interests, 3), galleries, posts, marketItems, interests };
+  const rawMarketItems: MarketPreview[] = (marketResult.data ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries }));
+  const marketItems = interests.length
+    ? rawMarketItems
+        .map((market) => ({
+          market,
+          score: scoreByInterests([market.title, market.description, market.galleries?.name, market.galleries?.slug], interests) + (market.galleries?.slug && directSlugs.has(market.galleries.slug) ? 12 : 0)
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8)
+        .map((item) => item.market)
+    : rawMarketItems.slice(0, 8);
+  const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 3);
+  const interestItems: HomeInterestItem[] = [
+    ...displayProducts.map((product) => ({ kind: "official" as const, product })),
+    ...marketItems.map((market) => ({ kind: "market" as const, market }))
+  ];
+  return { products: displayProducts, galleries, posts, marketItems, interestItems, interests };
 }
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ code?: string; next?: string }> }) {
@@ -129,7 +175,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     redirect(`/auth/callback?${callbackParams.toString()}`);
   }
 
-  const { products, galleries, posts, marketItems, interests } = await getHomeData();
+  const { products, galleries, posts, marketItems, interestItems, interests } = await getHomeData();
   const keywords = [...new Set([...(interests.length ? interests : []), ...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 6);
 
   return (
@@ -152,7 +198,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </div>
       </section>
 
-      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-sm font-black text-berry">추천 굿즈</p><h2 className="text-2xl font-black">{interests.length ? "내 관심사 기반 상품" : "기본 추천 상품"}</h2></div><Link href="/goods" className="text-sm font-black text-slate-500 hover:text-ink">더 보기</Link></div><div className="grid gap-4 md:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} />)}{!products.length && <Card>등록된 굿즈가 없습니다.</Card>}</div></section>
+      <section>
+        <HomeInterestCarousel items={interestItems} interests={interests} />
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>
