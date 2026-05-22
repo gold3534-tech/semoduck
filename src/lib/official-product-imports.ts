@@ -98,7 +98,7 @@ export const officialProductCandidates: OfficialProductCandidate[] = [
   },
   {
     key: "eternal-return-estar-goods",
-    gallerySlug: "이터널리턴",
+    gallerySlug: "eternal-return",
     title: "이터널 리턴 공식 굿즈",
     brand: "이터널 리턴",
     category: "게임굿즈",

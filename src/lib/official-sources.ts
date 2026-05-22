@@ -57,7 +57,7 @@ export const galleryOfficialSources: GalleryOfficialSource[] = [
     notes: "한국 소식은 리그 오브 레전드 한국 공식 인스타그램, 상품은 Riot Store 네이버 공식 브랜드스토어를 우선 확인합니다."
   },
   {
-    slug: "이터널리턴",
+    slug: "eternal-return",
     officialSiteUrl: "https://x.com/_EternalReturn_",
     officialShopUrl: "https://estar-egg.com/product/list.html?cate_no=43",
     shopLabel: "ESTAR EGG 이터널 리턴 공식굿즈",

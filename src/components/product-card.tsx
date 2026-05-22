@@ -11,6 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   const lowest = prices.length ? Math.min(...prices) : 0;
   const externalUrl = product.id.startsWith("naver-") ? product.offers[0]?.url : null;
   const href = externalUrl ?? `/goods/${product.id}`;
+  const primaryOffer = product.offers.find((offer) => offer.isOfficial) ?? product.offers[0];
 
   return (
     <Card className="flex h-full flex-col overflow-hidden p-0">
@@ -27,8 +28,8 @@ export function ProductCard({ product }: { product: Product }) {
           {product.offers.some((offer) => offer.specialBenefit) && <Badge tone="sun">특전</Badge>}
         </div>
         <p className="mt-auto text-lg font-black">{prices.length ? formatPrice(lowest) : "가격 확인 필요"}</p>
-        <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white">
-          판매 링크 열기
+        <Link href={primaryOffer?.url ?? href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white">
+          {primaryOffer?.isOfficial ? "공식 판매처 열기" : "판매 링크 열기"}
           <ExternalLink size={15} />
         </Link>
       </div>

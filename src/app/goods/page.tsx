@@ -51,13 +51,39 @@ async function getUserInterests() {
     .filter(Boolean) as string[];
 }
 
+const ignoredRecommendationInterests = new Set(["굿즈"]);
+const recommendationTerms: Record<string, string[]> = {
+  BTS: ["BTS", "방탄소년단", "Weverse"],
+  롤: ["라이엇 스토어", "리그 오브 레전드", "League of Legends", "TFT", "요네", "아리"],
+  스텔라이브: ["스텔라이브", "Fanding"],
+  포켓몬: ["포켓몬", "Pokemon Store"],
+  산리오: ["산리오", "쿠로미", "시나모롤", "헬로키티", "마이멜로디"],
+  애니: ["원피스", "피규어", "애니"],
+  웹툰: ["웹툰프렌즈", "웹툰"],
+  아이돌: ["BTS", "아이돌"],
+  게임: ["라이엇 스토어", "포켓몬", "이터널 리턴"],
+  캐릭터: ["산리오", "포켓몬", "캐릭터"],
+  피규어: ["피규어", "원피스", "라이엇 스토어"],
+  버튜버: ["스텔라이브"]
+};
+
+function termsForInterest(interest: string) {
+  return recommendationTerms[interest] ?? [interest];
+}
+
 async function getLocalProducts(interest: string, limit: number) {
   const supabase = createDataSupabaseClient();
+  const filters = termsForInterest(interest).flatMap((term) => [
+    `title.ilike.%${term}%`,
+    `brand.ilike.%${term}%`,
+    `category.ilike.%${term}%`,
+    `description.ilike.%${term}%`
+  ]);
   const { data } = await supabase
     .from("products")
     .select(productSelect)
     .eq("is_deleted", false)
-    .or(`title.ilike.%${interest}%,brand.ilike.%${interest}%,category.ilike.%${interest}%,description.ilike.%${interest}%`)
+    .or(filters.join(","))
     .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -68,14 +94,14 @@ async function getLocalProducts(interest: string, limit: number) {
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
   const interests = await getUserInterests();
-  const targets = interests.length ? interests.slice(0, 5) : ["쿠로미", "포켓몬", "원피스"];
+  const targets = interests.length ? interests.filter((interest) => !ignoredRecommendationInterests.has(interest)).slice(0, 5) : ["산리오", "포켓몬", "원피스"];
 
   const groups = await Promise.all(
     targets.map(async (interest) => {
       const localProducts = await getLocalProducts(interest, 4);
       if (localProducts.length >= 4) return { title: `${interest} 추천 굿즈`, products: localProducts };
 
-      const external = await searchNaverShopping(`${interest} 굿즈`, 12);
+      const external = await searchNaverShopping(`${termsForInterest(interest)[0]} 굿즈`, 12);
       const externalProducts = external.items.slice(0, 4 - localProducts.length).map((item) => productFromExternal(item, interest));
       return { title: `${interest} 추천 굿즈`, products: [...localProducts, ...externalProducts] };
     })

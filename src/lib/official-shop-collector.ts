@@ -57,7 +57,7 @@ const htmlSources: CollectSource[] = [
     titleKeywords: ["원피스", "루피", "조로", "상디", "쵸파", "피규어", "굿즈"]
   },
   {
-    gallerySlug: "이터널리턴",
+    gallerySlug: "eternal-return",
     brand: "이터널 리턴",
     category: "게임굿즈",
     mallName: "ESTAR EGG",

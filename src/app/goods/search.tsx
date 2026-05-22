@@ -60,7 +60,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
     setPage(1);
 
     try {
-      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(keyword)}&display=60`);
+      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(keyword)}&display=300`);
       const data = (await response.json()) as ExternalGoodsResponse;
       setItems(data.items);
       setNormalizedQuery(data.query);
@@ -82,7 +82,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
     <div className="space-y-6">
       <div>
         <p className="text-sm font-black text-berry">굿즈 검색</p>
-        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈 가격과 판매 링크를 찾아봐요</h1>
+        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈와 판매 링크를 찾아봐요</h1>
       </div>
 
       <Card>
@@ -96,13 +96,6 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
             네이버 검색
           </Button>
         </form>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {["수집품", "인형/피규어", "키링", "문구/스티커", "포토카드", "앨범/DVD"].map((filter, index) => (
-            <Badge key={filter} tone={index === 0 ? "pink" : "gray"}>
-              {filter}
-            </Badge>
-          ))}
-        </div>
       </Card>
 
       {searched ? (

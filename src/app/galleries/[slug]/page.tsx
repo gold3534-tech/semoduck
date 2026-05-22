@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ExternalLink, PenLine, Users } from "lucide-react";
 import { FollowGalleryButton } from "@/app/galleries/[slug]/follow-button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,10 @@ export const dynamic = "force-dynamic";
 
 export default async function GalleryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (slug === "이터널리턴") {
+    redirect("/galleries/eternal-return");
+  }
+
   const supabase = createDataSupabaseClient();
   const { data: gallery } = await supabase.from("galleries").select("id,name,slug,description,category,follower_count,post_count").eq("slug", slug).single();
   if (!gallery) notFound();

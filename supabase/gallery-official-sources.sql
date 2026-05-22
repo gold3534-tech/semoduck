@@ -53,7 +53,7 @@ on conflict (gallery_id) do update set official_site_url = excluded.official_sit
 
 insert into public.gallery_official_sources (gallery_id, official_site_url, official_shop_url, shop_label, notes)
 select id, 'https://x.com/_EternalReturn_', 'https://estar-egg.com/product/list.html?cate_no=43', 'ESTAR EGG 이터널 리턴 공식굿즈', '공식 X와 ESTAR EGG 공식굿즈 카테고리 우선'
-from public.galleries where slug = '이터널리턴'
+from public.galleries where slug = 'eternal-return'
 on conflict (gallery_id) do update set official_site_url = excluded.official_site_url, official_shop_url = excluded.official_shop_url, shop_label = excluded.shop_label, notes = excluded.notes, updated_at = now();
 
 notify pgrst, 'reload schema';
