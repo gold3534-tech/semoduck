@@ -25,7 +25,11 @@ export type ProductRow = {
 };
 
 export const productSelect =
-  "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
+  "id,title,normalized_title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
+
+function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
+  return offer.mall_name === "네이버" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
+}
 
 function fallbackOffer(id: string, query: string, price: number) {
   return {
@@ -140,6 +144,7 @@ const galleryKeywordMap: Record<string, string[]> = {
 
 export function productFromDbRow(row: ProductRow): Product {
   const offers = (row.product_offers ?? [])
+    .filter((offer) => !isPriceCompareOffer(offer))
     .map((offer) => ({
       id: offer.id,
       source: offer.source,

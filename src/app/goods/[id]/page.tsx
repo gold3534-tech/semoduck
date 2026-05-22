@@ -1,27 +1,44 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MessageCircle } from "lucide-react";
 import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatPrice, sourceLabel } from "@/lib/format";
+import { formatDateTime, formatPrice, postTypeLabel, sourceLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
 export const dynamic = "force-dynamic";
+
+function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
+  return offer.mall_name === "네이버" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
+}
 
 export default async function GoodsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createDataSupabaseClient();
   const { data: product } = await supabase
     .from("products")
-    .select("id,title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,is_official,is_used,special_benefit,url)")
+    .select("id,title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,is_official,is_used,special_benefit,url)")
     .eq("id", id)
-    .eq("is_deleted", false)
     .single();
 
   if (!product) notFound();
 
-  const offers = (product.product_offers ?? []).sort((a: any, b: any) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || 0) - Number(b.price || 0));
+  const offers = (product.product_offers ?? [])
+    .filter((offer: any) => !isPriceCompareOffer(offer))
+    .sort((a: any, b: any) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || 0) - Number(b.price || 0));
+  const relatedTerms = [...new Set([product.title, product.brand, product.category].filter(Boolean) as string[])].slice(0, 4);
+  const relatedFilters = relatedTerms.flatMap((term) => [`title.ilike.%${term}%`, `content.ilike.%${term}%`]);
+  const { data: relatedPosts } = relatedFilters.length
+    ? await supabase
+        .from("posts")
+        .select("id,title,content,post_type,like_count,comment_count,created_at,profiles(nickname,email)")
+        .or(relatedFilters.join(","))
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false })
+        .limit(6)
+    : { data: [] };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[25rem_1fr]">
@@ -69,6 +86,28 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
               </div>
             ))}
             {!offers.length && <p className="py-4 text-sm font-bold text-slate-500">아직 등록된 판매 링크가 없습니다.</p>}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="flex items-center gap-2 text-xl font-black"><MessageCircle size={20} /> 비슷한 게시물</h2>
+          <div className="mt-4 space-y-3">
+            {(relatedPosts ?? []).map((post: any) => {
+              const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+              return (
+                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-lg bg-cloud p-4 transition hover:bg-pink-50">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="pink">{postTypeLabel(post.post_type)}</Badge>
+                    <span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span>
+                    <span className="text-xs font-bold text-slate-400">{formatDateTime(post.created_at)}</span>
+                  </div>
+                  <p className="mt-2 font-black">{post.title}</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p>
+                  <p className="mt-2 text-xs font-bold text-slate-500">좋아요 {post.like_count} · 댓글 {post.comment_count}</p>
+                </Link>
+              );
+            })}
+            {!(relatedPosts ?? []).length && <p className="rounded-lg bg-cloud p-4 text-sm font-bold text-slate-500">아직 연결된 게시물이 없습니다.</p>}
           </div>
         </Card>
       </div>

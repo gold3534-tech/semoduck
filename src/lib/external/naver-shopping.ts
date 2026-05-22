@@ -71,6 +71,8 @@ function normalizeQuery(query: string) {
 function isLikelyFandomGoods(item: NaverShoppingItem) {
   const category = [item.category1, item.category2, item.category3, item.category4].filter(Boolean).join(" > ");
   const title = stripHtml(item.title);
+  if (item.mallName === "네이버") return false;
+  if (/search\.shopping\.naver\.com\/catalog/i.test(item.link)) return false;
   if (blockedCategoryHints.some((hint) => category.includes(hint))) return false;
   if (allowedCategoryHints.some((hint) => category.includes(hint) || title.includes(hint))) return true;
   return goodsWords.some((word) => title.includes(word));

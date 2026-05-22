@@ -82,7 +82,6 @@ async function getLocalProducts(interest: string, limit: number) {
   const { data } = await supabase
     .from("products")
     .select(productSelect)
-    .eq("is_deleted", false)
     .or(filters.join(","))
     .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
