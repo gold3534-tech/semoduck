@@ -5,15 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#272433",
-        berry: "#e85d9f",
-        violet: "#8b5cf6",
-        mint: "#4ecdc4",
-        sun: "#ffcf5c",
-        cloud: "#f6f7fb"
+        ink: "#4b3a6d",
+        berry: "#8f6abb",
+        violet: "#cba6e6",
+        mint: "#7ccbc4",
+        sun: "#ffdd57",
+        cream: "#fff8ec",
+        cloud: "#f7f2fb"
       },
       boxShadow: {
-        soft: "0 18px 60px rgba(39, 36, 51, 0.10)"
+        soft: "0 18px 60px rgba(75, 58, 109, 0.12)"
       }
     }
   },

@@ -90,7 +90,7 @@ const tabs = [
   ["suggestions", "건의/갤러리"],
   ["reports", "신고"],
   ["products", "상품/링크"],
-  ["galleries", "이미지"]
+  ["galleries", "갤러리"]
 ] as const;
 
 const emptyProductForm: ProductForm = {
@@ -382,6 +382,19 @@ export default function AdminPage() {
     await load();
   }
 
+  async function deleteGallery(gallery: Gallery) {
+    if (!confirm(`"${gallery.name}" 갤러리를 DB에서 삭제할까요?\n관련 팔로우와 공식 출처는 함께 정리되고, 연결된 게시글/거래글은 갤러리 연결이 해제될 수 있습니다.`)) return;
+    setSavingId(`delete-gallery-${gallery.id}`);
+    const response = await fetch(`/api/admin/galleries/${gallery.id}`, { method: "DELETE" });
+    setSavingId(null);
+    if (!response.ok) {
+      const error = (await response.json()) as { error?: string };
+      alert(error.error ?? "갤러리를 삭제하지 못했습니다.");
+      return;
+    }
+    await load();
+  }
+
   if (!ready || !data) {
     return (
       <div className="grid min-h-96 place-items-center">
@@ -633,14 +646,18 @@ export default function AdminPage() {
 
       {activeTab === "galleries" ? (
         <Card>
-          <h2 className="text-xl font-black">갤러리 대표사진 관리</h2>
+          <h2 className="text-xl font-black">갤러리 관리</h2>
           <div className="mt-4 grid gap-3">
             {data.galleries.map((gallery) => (
-              <div key={gallery.id} className="grid gap-2 rounded-lg bg-cloud p-3 md:grid-cols-[12rem_1fr_auto_auto] md:items-center">
-                <p className="font-black">{gallery.name}</p>
+              <div key={gallery.id} className="grid gap-2 rounded-lg bg-cloud p-3 md:grid-cols-[12rem_1fr_auto_auto_auto] md:items-center">
+                <div>
+                  <p className="font-black">{gallery.name}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">/{gallery.slug}</p>
+                </div>
                 <input value={thumbnailDrafts[gallery.id] ?? gallery.thumbnail_url ?? ""} onChange={(event) => setThumbnailDrafts((current) => ({ ...current, [gallery.id]: event.target.value }))} className="min-h-10 rounded-lg border border-slate-200 px-3" placeholder="대표사진 URL" />
                 <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold ring-1 ring-slate-200"><Upload size={16} /> 업로드<input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && uploadGalleryImage(gallery, event.target.files[0])} /></label>
                 <Button variant="secondary" onClick={() => saveThumbnail(gallery)} disabled={savingId === gallery.id}>저장</Button>
+                <Button variant="danger" onClick={() => deleteGallery(gallery)} disabled={savingId === `delete-gallery-${gallery.id}`}><Trash2 size={16} /> 삭제</Button>
               </div>
             ))}
           </div>

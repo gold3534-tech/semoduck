@@ -184,7 +184,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         <div className="flex min-h-[21rem] flex-col justify-between">
           <div>
             <Badge tone="sun">팬덤 굿즈 커뮤니티</Badge>
-            <h1 className="mt-5 max-w-2xl text-4xl font-black leading-tight sm:text-5xl">추천 굿즈와 갤러리를 먼저 보여드려요</h1>
+            <Image src="/semoduck-logo.svg" alt="세모덕" width={520} height={159} priority className="mt-5 h-auto w-full max-w-xs" />
+            <h1 className="mt-4 max-w-2xl text-4xl font-black leading-tight sm:text-5xl">추천 굿즈와 갤러리를 먼저 보여드려요</h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-white/75">세모덕에서 굿즈 검색, 갤러리 이야기, 유저거래를 한 번에 확인하세요.</p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">

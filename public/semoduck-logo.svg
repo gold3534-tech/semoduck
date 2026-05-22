@@ -1,0 +1,19 @@
+<svg width="1180" height="360" viewBox="0 0 1180 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M72 230C41 213 23 180 31 147c8-40 44-67 86-62 16-50 62-87 118-87 23 0 43 6 62 16 29-32 78-40 116-18 33 19 50 57 42 94 45 6 79 43 79 89 0 50-41 91-91 91H124c-19 0-37-5-52-40Z" transform="translate(0 50)" fill="#FFF8EC" stroke="#CBA6E6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M135 148h200c17 0 31 14 31 31v111c0 45-37 82-82 82h-75c-45 0-82-37-82-82V156c0-4 4-8 8-8Z" fill="#FFEFD1" stroke="#7F6BAF" stroke-width="10"/>
+  <path d="M175 150c9-60 39-96 85-96 48 0 79 37 86 96" stroke="#7866A8" stroke-width="18" stroke-linecap="round"/>
+  <path d="M206 174h113l-16 82h-77l-20-82Z" fill="#80D8CF" stroke="#7463A6" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M105 296c42 0 76-34 76-76s-34-76-76-76-76 34-76 76 34 76 76 76Z" fill="#F7F1FF" stroke="#7866A8" stroke-width="14"/>
+  <path d="M105 265c25 0 45-20 45-45s-20-45-45-45-45 20-45 45 20 45 45 45Z" fill="white"/>
+  <path d="M153 270l54 54" stroke="#7866A8" stroke-width="20" stroke-linecap="round"/>
+  <path d="M211 348l-27-27" stroke="#7866A8" stroke-width="30" stroke-linecap="round"/>
+  <path d="M104 200c11-19 39-12 39 11 0 22-39 44-39 44s-39-22-39-44c0-23 28-30 39-11Z" fill="#FF7D91"/>
+  <text x="415" y="237" font-family="'Arial Rounded MT Bold','Pretendard','Noto Sans KR',sans-serif" font-size="172" font-weight="900" letter-spacing="-4">
+    <tspan fill="#B987DD" stroke="#8F6ABB" stroke-width="8" paint-order="stroke">세</tspan>
+    <tspan x="585" fill="#FF7184" stroke="#D76078" stroke-width="8" paint-order="stroke">모</tspan>
+    <tspan x="755" fill="#65CFC6" stroke="#529F9B" stroke-width="8" paint-order="stroke">덕</tspan>
+  </text>
+  <path d="M680 63c15-25 53-17 53 15 0 31-53 61-53 61s-53-30-53-61c0-32 38-40 53-15Z" fill="#FF7489"/>
+  <path d="M1052 178l18 38 42 6-30 29 7 42-37-20-37 20 7-42-30-29 42-6 18-38Z" fill="#FFDD57" stroke="#EA8AAD" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M982 78l16 32 36 5-26 25 6 36-32-17-32 17 6-36-26-25 36-5 16-32Z" fill="#7F6BAF"/>
+</svg>

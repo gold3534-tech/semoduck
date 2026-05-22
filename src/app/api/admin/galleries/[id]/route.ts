@@ -8,17 +8,33 @@ const schema = z.object({
   thumbnailUrl: z.string().url()
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function requireAdmin() {
   const authClient = await createServerSupabaseClient();
   const { data } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
   if (!data.user?.email || !isAdminEmail(data.user.email)) {
-    return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    return { error: NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 }) };
   }
+  return { admin: createAdminSupabaseClient() };
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin();
+  if (session.error) return session.error;
 
   const { id } = await params;
   const body = schema.parse(await request.json());
-  const admin = createAdminSupabaseClient();
-  const { error } = await admin.from("galleries").update({ thumbnail_url: body.thumbnailUrl }).eq("id", id);
+  const { error } = await session.admin.from("galleries").update({ thumbnail_url: body.thumbnailUrl }).eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin();
+  if (session.error) return session.error;
+
+  const { id } = await params;
+  await session.admin.from("gallery_official_sources").delete().eq("gallery_id", id);
+  const { error } = await session.admin.from("galleries").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

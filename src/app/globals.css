@@ -16,11 +16,8 @@ html {
 
 body {
   margin: 0;
-  color: #272433;
-  background:
-    radial-gradient(circle at top left, rgba(232, 93, 159, 0.16), transparent 32rem),
-    radial-gradient(circle at top right, rgba(78, 205, 196, 0.18), transparent 30rem),
-    #f6f7fb;
+  color: #332846;
+  background: #f7f2fb;
 }
 
 a {

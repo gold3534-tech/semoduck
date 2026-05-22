@@ -4,8 +4,8 @@ import { ButtonHTMLAttributes, PropsWithChildren } from "react";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-ink text-white hover:bg-slate-800",
-  secondary: "bg-white text-ink ring-1 ring-slate-200 hover:bg-slate-50",
+  primary: "bg-ink text-white shadow-sm hover:bg-violet",
+  secondary: "bg-white text-ink ring-1 ring-violet/20 hover:bg-cloud",
   ghost: "bg-transparent text-slate-600 hover:bg-white",
   danger: "bg-rose-500 text-white hover:bg-rose-600"
 };

@@ -4,11 +4,11 @@ import { PropsWithChildren } from "react";
 type BadgeTone = "pink" | "mint" | "violet" | "sun" | "gray";
 
 const tones: Record<BadgeTone, string> = {
-  pink: "bg-pink-100 text-pink-700",
+  pink: "bg-rose-100 text-rose-600",
   mint: "bg-teal-100 text-teal-700",
-  violet: "bg-violet-100 text-violet-700",
+  violet: "bg-purple-100 text-purple-700",
   sun: "bg-amber-100 text-amber-700",
-  gray: "bg-slate-100 text-slate-600"
+  gray: "bg-violet/10 text-ink"
 };
 
 export function Badge({ children, tone = "gray" }: PropsWithChildren<{ tone?: BadgeTone }>) {
