@@ -70,6 +70,13 @@ function scoreByInterests(textParts: Array<string | null | undefined>, interests
   return score;
 }
 
+function shuffled<T>(items: T[]) {
+  return [...items]
+    .map((item) => ({ item, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
+}
+
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
   const authClient = await createServerSupabaseClient();
@@ -85,7 +92,7 @@ async function getHomeData() {
     .filter(Boolean) as string[];
 
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(160),
+    supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(600),
     supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(3),
     supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(80)
@@ -105,20 +112,28 @@ async function getHomeData() {
   }));
 
   const directSlugs = new Set(interests.flatMap((interest) => directInterestSlugs[interest.toLowerCase()] ?? directInterestSlugs[interest] ?? []));
-  const products = interests.length
-    ? rawProducts
+  const officialProductPool = rawProducts.filter(
+    (product) =>
+      (product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial)) &&
+      product.offers.length > 0 &&
+      Boolean(product.image) &&
+      product.image !== "/placeholder-goods.svg"
+  );
+  const scoredProductPool = interests.length
+    ? officialProductPool
         .map((product) => ({
           product,
           score:
             scoreByInterests([product.title, product.brand, product.category, product.description, ...product.tags], interests) +
-            product.gallerySlugs.reduce((sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0), 0) +
-            Number(product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial)) * 6
+            product.gallerySlugs.reduce((sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0), 0)
         }))
-        .filter((item) => item.score > 0 && (item.product.isOfficialProduct || item.product.offers.some((offer) => offer.isOfficial)))
-        .sort((a, b) => b.score - a.score || Number(b.product.isOfficialProduct) - Number(a.product.isOfficialProduct) || b.product.bookmarkCount - a.product.bookmarkCount)
-        .slice(0, 8)
-        .map((item) => item.product)
-    : rawProducts.filter((product) => product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial)).slice(0, 8);
+        .filter((item) => item.score > 0)
+    : officialProductPool.map((product) => ({ product, score: 1 }));
+  const highScore = Math.max(0, ...scoredProductPool.map((item) => item.score));
+  const primaryProductPool = scoredProductPool.filter((item) => item.score >= Math.max(1, highScore - 4));
+  const products = shuffled(primaryProductPool.length ? primaryProductPool : scoredProductPool)
+    .slice(0, 8)
+    .map((item) => item.product);
   const galleries = interests.length
     ? rawGalleries
         .map((gallery) => ({
@@ -157,15 +172,16 @@ async function getHomeData() {
         }))
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 8)
+        .slice(0, 16)
         .map((item) => item.market)
     : rawMarketItems.slice(0, 8);
+  const randomMarketItems = shuffled(marketItems).slice(0, 8);
   const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 3);
   const interestItems: HomeInterestItem[] = [
     ...displayProducts.map((product) => ({ kind: "official" as const, product })),
-    ...marketItems.map((market) => ({ kind: "market" as const, market }))
+    ...randomMarketItems.map((market) => ({ kind: "market" as const, market }))
   ];
-  return { products: displayProducts, galleries, posts, marketItems, interestItems, interests };
+  return { products: displayProducts, galleries, posts, marketItems: randomMarketItems, interestItems, interests };
 }
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ code?: string; next?: string }> }) {

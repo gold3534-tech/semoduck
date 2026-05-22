@@ -1,19 +1,21 @@
-<svg width="1180" height="360" viewBox="0 0 1180 360" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M72 230C41 213 23 180 31 147c8-40 44-67 86-62 16-50 62-87 118-87 23 0 43 6 62 16 29-32 78-40 116-18 33 19 50 57 42 94 45 6 79 43 79 89 0 50-41 91-91 91H124c-19 0-37-5-52-40Z" transform="translate(0 50)" fill="#FFF8EC" stroke="#CBA6E6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M135 148h200c17 0 31 14 31 31v111c0 45-37 82-82 82h-75c-45 0-82-37-82-82V156c0-4 4-8 8-8Z" fill="#FFEFD1" stroke="#7F6BAF" stroke-width="10"/>
-  <path d="M175 150c9-60 39-96 85-96 48 0 79 37 86 96" stroke="#7866A8" stroke-width="18" stroke-linecap="round"/>
-  <path d="M206 174h113l-16 82h-77l-20-82Z" fill="#80D8CF" stroke="#7463A6" stroke-width="8" stroke-linejoin="round"/>
-  <path d="M105 296c42 0 76-34 76-76s-34-76-76-76-76 34-76 76 34 76 76 76Z" fill="#F7F1FF" stroke="#7866A8" stroke-width="14"/>
-  <path d="M105 265c25 0 45-20 45-45s-20-45-45-45-45 20-45 45 20 45 45 45Z" fill="white"/>
-  <path d="M153 270l54 54" stroke="#7866A8" stroke-width="20" stroke-linecap="round"/>
-  <path d="M211 348l-27-27" stroke="#7866A8" stroke-width="30" stroke-linecap="round"/>
-  <path d="M104 200c11-19 39-12 39 11 0 22-39 44-39 44s-39-22-39-44c0-23 28-30 39-11Z" fill="#FF7D91"/>
-  <text x="415" y="237" font-family="'Arial Rounded MT Bold','Pretendard','Noto Sans KR',sans-serif" font-size="172" font-weight="900" letter-spacing="-4">
-    <tspan fill="#B987DD" stroke="#8F6ABB" stroke-width="8" paint-order="stroke">세</tspan>
-    <tspan x="585" fill="#FF7184" stroke="#D76078" stroke-width="8" paint-order="stroke">모</tspan>
-    <tspan x="755" fill="#65CFC6" stroke="#529F9B" stroke-width="8" paint-order="stroke">덕</tspan>
+<svg width="1800" height="520" viewBox="0 0 1800 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M92 352C48 331 26 288 39 245c14-50 63-80 116-70 25-72 94-122 175-122 36 0 69 10 98 28 39-37 101-46 150-17 42 24 63 73 52 121 58 6 103 55 103 114 0 64-52 116-116 116H163c-30 0-55-12-71-63Z" fill="#FFF9EE" stroke="#C9A0DF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M186 212h222c20 0 36 16 36 36v127c0 49-40 89-89 89h-83c-49 0-89-40-89-89V215c0-2 1-3 3-3Z" fill="#FFF1CF" stroke="#7362A2" stroke-width="10"/>
+  <path d="M231 214c10-69 44-109 97-109 55 0 90 42 99 109" stroke="#7362A2" stroke-width="19" stroke-linecap="round"/>
+  <path d="M269 244h127l-18 93h-87l-22-93Z" fill="#78D2CB" stroke="#7362A2" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M147 385c47 0 85-38 85-85s-38-85-85-85-85 38-85 85 38 85 85 85Z" fill="#F6F1FF" stroke="#7362A2" stroke-width="14"/>
+  <path d="M147 350c28 0 50-22 50-50s-22-50-50-50-50 22-50 50 22 50 50 50Z" fill="white"/>
+  <path d="M202 357l62 62" stroke="#7362A2" stroke-width="22" stroke-linecap="round"/>
+  <path d="M270 453l-33-33" stroke="#7362A2" stroke-width="31" stroke-linecap="round"/>
+  <path d="M146 278c13-21 45-14 45 13 0 25-45 51-45 51s-45-26-45-51c0-27 32-34 45-13Z" fill="#FF7184"/>
+  <path d="M83 112l17 35 39 6-28 27 7 39-35-18-35 18 7-39-28-27 39-6 17-35Z" fill="#78D2CB" stroke="#63B8B3" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M581 93l17 35 38 5-28 28 7 38-34-18-34 18 7-38-28-28 38-5 17-35Z" fill="#7362A2"/>
+  <path d="M969 93c19-33 68-22 68 19 0 39-68 78-68 78s-68-39-68-78c0-41 49-52 68-19Z" fill="#FF7184"/>
+  <path d="M1666 250l23 46 51 8-37 36 9 51-46-24-46 24 9-51-37-36 51-8 23-46Z" fill="#FFDD57" stroke="#E78BA9" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M1722 126l14 29 32 4-23 23 5 32-28-15-28 15 5-32-23-23 32-4 14-29Z" fill="#7362A2"/>
+  <text x="555" y="346" font-family="'Arial Rounded MT Bold','Pretendard','Noto Sans KR',sans-serif" font-size="250" font-weight="900" letter-spacing="-10">
+    <tspan fill="#B983DC" stroke="#8E6BB6" stroke-width="10" paint-order="stroke">세</tspan>
+    <tspan x="815" fill="#FF7184" stroke="#D76078" stroke-width="10" paint-order="stroke">모</tspan>
+    <tspan x="1085" fill="#65CFC6" stroke="#529F9B" stroke-width="10" paint-order="stroke">덕</tspan>
   </text>
-  <path d="M680 63c15-25 53-17 53 15 0 31-53 61-53 61s-53-30-53-61c0-32 38-40 53-15Z" fill="#FF7489"/>
-  <path d="M1052 178l18 38 42 6-30 29 7 42-37-20-37 20 7-42-30-29 42-6 18-38Z" fill="#FFDD57" stroke="#EA8AAD" stroke-width="9" stroke-linejoin="round"/>
-  <path d="M982 78l16 32 36 5-26 25 6 36-32-17-32 17 6-36-26-25 36-5 16-32Z" fill="#7F6BAF"/>
 </svg>

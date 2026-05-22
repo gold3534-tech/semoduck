@@ -71,6 +71,13 @@ function termsForInterest(interest: string) {
   return recommendationTerms[interest] ?? [interest];
 }
 
+function shuffled<T>(items: T[]) {
+  return [...items]
+    .map((item) => ({ item, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
+}
+
 async function getLocalProducts(interest: string, limit: number) {
   const supabase = createDataSupabaseClient();
   const filters = termsForInterest(interest).flatMap((term) => [
@@ -85,10 +92,13 @@ async function getLocalProducts(interest: string, limit: number) {
     .or(filters.join(","))
     .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(limit);
-  return (data ?? [])
+    .limit(120);
+  const products = (data ?? [])
     .map(productFromDbRow)
+    .filter((product) => product.offers.length > 0 && product.image && product.image !== "/placeholder-goods.svg")
     .sort((a, b) => Number(b.isOfficialProduct || b.offers.some((offer) => offer.isOfficial)) - Number(a.isOfficialProduct || a.offers.some((offer) => offer.isOfficial)));
+  const official = products.filter((product) => product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial));
+  return shuffled(official.length ? official : products).slice(0, limit);
 }
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {

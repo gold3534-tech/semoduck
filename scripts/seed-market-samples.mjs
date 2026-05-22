@@ -16,8 +16,9 @@ const samples = [
     status: "active",
     price: 18000,
     region: "서울 신촌",
-    title: "이터널리턴 아크릴 스탠드 일괄 판매",
-    description: "공식몰에서 구매한 아크릴 스탠드 2종입니다. 전시만 했고 큰 흠집은 없습니다. 직거래 우선으로 봅니다."
+    title: "이터널리턴 시즌05 장패드 판매",
+    description: "책상 사이즈랑 안 맞아서 정리합니다. 개봉만 해보고 사용은 거의 안 했고, 말림 없이 보관했습니다.",
+    image_url: "https://estar-egg.com/web/product/medium/202502/9986a1a0d412ddcea4c4ec714ea044b5.png"
   },
   {
     seller: "gold3534+lol@gmail.com",
@@ -27,8 +28,9 @@ const samples = [
     status: "active",
     price: 0,
     region: "경기 수원",
-    title: "이터널리턴 시즌 굿즈 교환 구해요",
-    description: "중복으로 나온 시즌 굿즈가 있어서 다른 캐릭터 굿즈와 교환 희망합니다. 상태 사진은 문의 주시면 보내드려요."
+    title: "다르코 온더락잔 다른 시즌 굿즈로 교환",
+    description: "컵류를 잘 안 써서 장패드나 카드지갑 쪽으로 교환 원합니다. 박스 상태까지 같이 확인해드릴게요.",
+    image_url: "https://estar-egg.com/web/product/medium/202502/a28d9c68cc0bc41d7b0e0ac8abd025b1.png"
   },
   {
     seller: "gold3534+stellive@gmail.com",
@@ -38,8 +40,9 @@ const samples = [
     status: "reserved",
     price: 0,
     region: "서울 건대입구",
-    title: "이터널리턴 특전 엽서 나눔",
-    description: "굿즈 구매하면서 받은 특전 엽서 여분 나눔합니다. 접힘 없이 보관했어요. 예약중입니다."
+    title: "셀린 후드티 포토카드만 나눔",
+    description: "후드티 구매하면서 받은 포토카드 여분입니다. 접힘 없고 슬리브에 넣어뒀어요. 예약중입니다.",
+    image_url: "https://estar-egg.com/web/product/medium/202502/21c884d4ede55a02919000a488e95b81.png"
   },
   {
     seller: "gold3534+pokemon@gmail.com",
@@ -49,8 +52,9 @@ const samples = [
     status: "active",
     price: 9000,
     region: "부산 서면",
-    title: "이리 미니 캔뱃지 세트 판매",
-    description: "이터널리턴 미니 캔뱃지 세트입니다. 중복이라 정리합니다. 택배 가능하고 포장 꼼꼼히 해드려요."
+    title: "시즌7 ACADEMY 카드지갑 판매",
+    description: "새 상품으로 보관하다가 다른 지갑을 쓰게 돼서 판매합니다. 택배 가능하고 완충해서 보내드립니다.",
+    image_url: "https://estar-egg.com/web/product/medium/202507/4b31d9c2c7f46b86fc376e6bda5e60c3.png"
   },
   {
     seller: "gold3534+lol@gmail.com",
@@ -60,8 +64,9 @@ const samples = [
     status: "active",
     price: 29000,
     region: "대전 둔산",
-    title: "라이엇스토어 티모 모자 판매",
-    description: "행사 때 구매한 티모 모자입니다. 실착 1회라 상태 괜찮고, 사진 확인 후 거래해요."
+    title: "LoL 아케인 아트북 스탠다드 에디션 판매",
+    description: "한 번 훑어본 뒤 책장 보관했습니다. 모서리 눌림 거의 없고, 직거래면 현장에서 상태 확인 가능합니다.",
+    image_url: "https://shopping-phinf.pstatic.net/main_8869409/88694098748.jpg"
   },
   {
     seller: "gold3534+sanrio@gmail.com",
@@ -137,6 +142,14 @@ const samples = [
   }
 ];
 
+const legacySampleTitles = [
+  "이터널리턴 아크릴 스탠드 일괄 판매",
+  "이터널리턴 시즌 굿즈 교환 구해요",
+  "이터널리턴 특전 엽서 나눔",
+  "이리 미니 캔뱃지 세트 판매",
+  "라이엇스토어 티모 모자 판매"
+];
+
 async function fetchLookup(table, select, key) {
   const { data, error } = await supabase.from(table).select(select);
   if (error) throw error;
@@ -150,7 +163,7 @@ async function main() {
     fetchLookup("products", "id,title", "title")
   ]);
 
-  const titles = samples.map((sample) => sample.title);
+  const titles = [...samples.map((sample) => sample.title), ...legacySampleTitles];
   const { error: cleanupExactError } = await supabase.from("market_items").delete().in("title", titles);
   if (cleanupExactError) throw cleanupExactError;
 
