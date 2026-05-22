@@ -14,11 +14,12 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
+  const callbackError = searchParams.get("error");
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(callbackError ?? "");
   const [loading, setLoading] = useState(false);
 
   async function signInWithGoogle() {
@@ -87,10 +88,10 @@ export function LoginForm() {
         return;
       }
 
-      setMessage("회원가입 메일을 확인해 주세요. Supabase에서 이메일 확인을 끄면 바로 로그인됩니다.");
+      setMessage("회원가입 메일을 확인해주세요. Supabase에서 이메일 확인이 꺼져 있으면 바로 로그인됩니다.");
     } catch (error) {
       setLoading(false);
-      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다. 환경변수를 확인해 주세요.");
+      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다.");
     }
   }
 

@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/format";
 import type { Product } from "@/types/domain";
 
 export function ProductCard({ product }: { product: Product }) {
-  const prices = product.offers.map((offer) => offer.price).filter((price) => Number.isFinite(price));
+  const prices = product.offers.map((offer) => offer.price).filter((price) => Number.isFinite(price) && price > 0);
   const lowest = prices.length ? Math.min(...prices) : 0;
   const externalUrl = product.id.startsWith("naver-") ? product.offers[0]?.url : null;
   const href = externalUrl ?? `/goods/${product.id}`;

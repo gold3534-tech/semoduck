@@ -12,10 +12,13 @@ const suggestionSchema = z.object({
 });
 
 function slugify(value: string) {
-  const trimmed = value.trim().toLowerCase();
-  const slug = trimmed
-    .replace(/[^a-z0-9가-힣]+/g, "-")
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
+
   return slug || `gallery-${Date.now()}`;
 }
 
@@ -39,10 +42,19 @@ export async function POST(request: Request) {
     title: body.title,
     detail: body.detail,
     requested_gallery_name: body.galleryName || null,
-    requested_gallery_slug: body.galleryName ? slugify(body.galleryName) : null,
+    requested_gallery_slug: null,
     requested_gallery_category: body.galleryCategory || null
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    const missingTable = error.message.includes("admin_suggestions") || error.message.includes("schema cache");
+    return NextResponse.json(
+      {
+        error: missingTable ? "건의함 테이블이 아직 없습니다. Supabase SQL Editor에서 supabase/admin-suggestions.sql을 먼저 실행해주세요." : error.message
+      },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json({ ok: true });
 }

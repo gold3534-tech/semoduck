@@ -22,11 +22,12 @@ export async function GET() {
     session.admin.from("product_offers").select("id,mall_name,url,price,source,is_official,products(title)").order("created_at", { ascending: false }).limit(30),
     session.admin.from("galleries").select("id,name,slug,thumbnail_url,follower_count,post_count").order("name"),
     session.admin.from("products").select("id,title,category,brand,image_url,report_count,is_deleted").eq("is_deleted", false).order("created_at", { ascending: false }).limit(50),
-    session.admin.from("admin_suggestions").select("id,user_id,type,title,detail,requested_gallery_name,requested_gallery_slug,requested_gallery_category,status,admin_note,created_at,reviewed_at").order("created_at", { ascending: false })
+    session.admin.from("admin_suggestions").select("id,user_id,type,title,detail,requested_gallery_name,requested_gallery_slug,requested_gallery_category,status,admin_note,created_at,reviewed_at").eq("status", "pending").order("created_at", { ascending: false })
   ]);
 
   const reports = reportsResult.data ?? [];
-  const suggestions = suggestionsResult.data ?? [];
+  const suggestionSetupMissing = Boolean(suggestionsResult.error?.message.includes("admin_suggestions") || suggestionsResult.error?.message.includes("schema cache"));
+  const suggestions = suggestionSetupMissing ? [] : suggestionsResult.data ?? [];
   const reporterIds = [...new Set([...reports.map((report) => report.reporter_id), ...suggestions.map((suggestion) => suggestion.user_id)].filter(Boolean))];
   const postIds = reports.filter((report) => report.target_type === "post").map((report) => report.target_id);
   const marketIds = reports.filter((report) => report.target_type === "market_item").map((report) => report.target_id);
@@ -59,6 +60,7 @@ export async function GET() {
     productOffers: offersResult.data ?? [],
     galleries: galleriesResult.data ?? [],
     products: productsResult.data ?? [],
+    suggestionSetupMissing,
     suggestions: suggestions.map((suggestion) => ({
       ...suggestion,
       user: suggestion.user_id ? reporters.get(suggestion.user_id) ?? null : null

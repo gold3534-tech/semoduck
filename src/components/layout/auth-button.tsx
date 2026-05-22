@@ -5,33 +5,46 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+type SessionResponse = {
+  user: {
+    id: string;
+    email: string | null;
+    nickname: string | null;
+  } | null;
+};
+
 export function AuthButton() {
   const [email, setEmail] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   async function loadProfile() {
-    const supabase = createBrowserSupabaseClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    setEmail(user?.email ?? null);
-    if (!user) {
-      setNickname(null);
+    try {
+      const response = await fetch("/api/auth/session", { cache: "no-store" });
+      const data = (await response.json()) as SessionResponse;
+      const user = data.user;
+
+      setEmail(user?.email ?? null);
+      setNickname(user?.nickname ?? user?.email?.split("@")[0] ?? null);
+    } finally {
       setReady(true);
-      return;
     }
-    const { data: profile } = await supabase.from("profiles").select("nickname").eq("id", user.id).maybeSingle();
-    setNickname(profile?.nickname ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? null);
-    setReady(true);
   }
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
     loadProfile();
+    const refreshTimer = window.setTimeout(loadProfile, 500);
+    window.addEventListener("focus", loadProfile);
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
       loadProfile();
     });
-    return () => listener.subscription.unsubscribe();
+
+    return () => {
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener("focus", loadProfile);
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   async function signOut() {

@@ -23,15 +23,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (session.error) return session.error;
 
   const { id } = await params;
-  const body = updateSchema.parse(await request.json());
-  const { error } = await session.admin
-    .from("admin_suggestions")
-    .update({
-      status: body.action === "resolve" ? "resolved" : "rejected",
-      admin_note: body.adminNote || null,
-      reviewed_at: new Date().toISOString()
-    })
-    .eq("id", id);
+  updateSchema.parse(await request.json());
+
+  const { error } = await session.admin.from("admin_suggestions").delete().eq("id", id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin();
+  if (session.error) return session.error;
+
+  const { id } = await params;
+  const { error } = await session.admin.from("admin_suggestions").delete().eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

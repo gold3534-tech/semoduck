@@ -139,6 +139,21 @@ const galleryKeywordMap: Record<string, string[]> = {
 };
 
 export function productFromDbRow(row: ProductRow): Product {
+  const offers = (row.product_offers ?? [])
+    .map((offer) => ({
+      id: offer.id,
+      source: offer.source,
+      mallName: offer.mall_name,
+      price: offer.price,
+      shippingFee: offer.shipping_fee,
+      condition: offer.condition,
+      isOfficial: offer.is_official,
+      isUsed: offer.is_used,
+      specialBenefit: offer.special_benefit ?? undefined,
+      url: offer.url
+    }))
+    .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || Number(a.isUsed) - Number(b.isUsed) || a.price - b.price);
+
   return {
     id: row.id,
     title: row.title,
@@ -151,18 +166,7 @@ export function productFromDbRow(row: ProductRow): Product {
     tags: [row.category, row.brand].filter(Boolean) as string[],
     gallerySlugs: [],
     bookmarkCount: row.bookmark_count ?? 0,
-    offers: (row.product_offers ?? []).map((offer) => ({
-      id: offer.id,
-      source: offer.source,
-      mallName: offer.mall_name,
-      price: offer.price,
-      shippingFee: offer.shipping_fee,
-      condition: offer.condition,
-      isOfficial: offer.is_official,
-      isUsed: offer.is_used,
-      specialBenefit: offer.special_benefit ?? undefined,
-      url: offer.url
-    }))
+    offers
   };
 }
 
@@ -192,7 +196,7 @@ export function relatedProducts(products: Product[], keywords: string[], limit =
 
   return scored
     .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score || b.product.bookmarkCount - a.product.bookmarkCount)
+    .sort((a, b) => b.score - a.score || Number(b.product.isOfficialProduct) - Number(a.product.isOfficialProduct) || b.product.bookmarkCount - a.product.bookmarkCount)
     .slice(0, limit)
     .map((item) => item.product);
 }

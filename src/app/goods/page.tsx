@@ -58,9 +58,12 @@ async function getLocalProducts(interest: string, limit: number) {
     .select(productSelect)
     .eq("is_deleted", false)
     .or(`title.ilike.%${interest}%,brand.ilike.%${interest}%,category.ilike.%${interest}%,description.ilike.%${interest}%`)
+    .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? []).map(productFromDbRow);
+  return (data ?? [])
+    .map(productFromDbRow)
+    .sort((a, b) => Number(b.isOfficialProduct || b.offers.some((offer) => offer.isOfficial)) - Number(a.isOfficialProduct || a.offers.some((offer) => offer.isOfficial)));
 }
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
