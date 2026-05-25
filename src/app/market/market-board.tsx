@@ -133,7 +133,7 @@ export function MarketBoard({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Card className="flex flex-wrap items-center justify-between gap-2 p-3">
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (
@@ -142,7 +142,7 @@ export function MarketBoard({
             </button>
           ))}
         </div>
-        <Button className="min-h-9 px-3 py-1.5 text-xs" onClick={() => setFormOpen((open) => !open)}>
+        <Button className="min-h-9 rounded-xl px-3 py-1.5 text-xs" onClick={() => setFormOpen((open) => !open)}>
           <Plus size={16} />
           거래 글쓰기
         </Button>
@@ -151,21 +151,25 @@ export function MarketBoard({
       {formOpen ? (
         <Card className="grid gap-3">
           <div className="grid gap-3 md:grid-cols-3">
-            <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3">
-              {galleries.map((gallery) => <option key={gallery.slug} value={gallery.slug}>{gallery.name}</option>)}
+            <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-10 rounded-xl border border-[#ead8f4] px-3 text-sm">
+              {galleries.map((gallery) => (
+                <option key={gallery.slug} value={gallery.slug}>
+                  {gallery.name}
+                </option>
+              ))}
             </select>
-            <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3">
+            <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-10 rounded-xl border border-[#ead8f4] px-3 text-sm">
               <option value="sell">판매</option>
               <option value="exchange">교환</option>
               <option value="giveaway">나눔</option>
             </select>
-            <input value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="가격" />
+            <input value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className="min-h-10 rounded-xl border border-[#ead8f4] px-3 text-sm" placeholder="가격" />
           </div>
-          <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="제목" />
-          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-28 rounded-2xl border border-[#ead8f4] p-3" placeholder="설명" />
+          <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="min-h-10 rounded-xl border border-[#ead8f4] px-3 text-sm" placeholder="제목" />
+          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-24 rounded-xl border border-[#ead8f4] p-3 text-sm" placeholder="상세 설명" />
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <input value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="지역 또는 거래 방식" />
-            <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-black ring-1 ring-[#ead8f4]">
+            <input value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="min-h-10 rounded-xl border border-[#ead8f4] px-3 text-sm" placeholder="지역 또는 거래 방식" />
+            <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-black ring-1 ring-[#ead8f4]">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               이미지 업로드
               <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])} />
@@ -173,37 +177,45 @@ export function MarketBoard({
           </div>
           {form.imageUrl ? <UploadedImagePreview url={form.imageUrl} onRemove={() => setForm((current) => ({ ...current, imageUrl: "" }))} /> : null}
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={closeForm}>취소</Button>
-            <Button onClick={submit} disabled={saving}>{saving ? <Loader2 size={16} className="animate-spin" /> : null} 저장</Button>
+            <Button variant="secondary" onClick={closeForm}>
+              취소
+            </Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving ? <Loader2 size={16} className="animate-spin" /> : null} 저장
+            </Button>
           </div>
         </Card>
       ) : null}
 
       <div className="space-y-3">
         {filtered.map((item) => (
-            <Card key={item.id} className="grid gap-4 overflow-hidden p-3 md:grid-cols-[12rem_1fr_auto] md:items-center">
-              <Link href={`/market/${item.id}`} className="block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="192px" /> : null}
-                </div>
-              </Link>
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
-                  <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
-                  <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
-                </div>
-                <Link href={`/market/${item.id}`} className="block text-lg font-black text-[#2f2352] hover:text-[#ff6f9b]">{item.title}</Link>
-                <p className="text-xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
-                <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
-                  <span className="rounded-full bg-cloud px-2.5 py-1">{item.region || "거래 방식 미입력"}</span>
-                  <span className="rounded-full bg-cloud px-2.5 py-1">{formatDateTime(item.created_at)}</span>
-                </div>
-                <p className="text-xs font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
-                <p className="line-clamp-2 text-xs leading-5 text-slate-600">{item.description}</p>
+          <Card key={item.id} className="grid gap-4 overflow-hidden p-3 md:grid-cols-[13rem_1fr_auto] md:items-center">
+            <Link href={`/market/${item.id}`} className="block">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#f7f2fb]">
+                {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="208px" /> : null}
               </div>
-              <Link href={`/market/${item.id}`} className="hidden text-[#8b61c8] md:block">›</Link>
-            </Card>
+            </Link>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
+                <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
+                <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
+              </div>
+              <Link href={`/market/${item.id}`} className="block text-lg font-black text-[#2f2352] hover:text-[#ff6f9b]">
+                {item.title}
+              </Link>
+              <p className="text-xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
+              <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                <span className="rounded-full bg-cloud px-2.5 py-1">{item.region || "거래 방식 미입력"}</span>
+                <span className="rounded-full bg-cloud px-2.5 py-1">{formatDateTime(item.created_at)}</span>
+              </div>
+              <p className="text-xs font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
+              <p className="line-clamp-2 text-xs leading-5 text-slate-600">{item.description}</p>
+            </div>
+            <Link href={`/market/${item.id}`} className="hidden text-[#8b61c8] md:block">
+              &gt;
+            </Link>
+          </Card>
         ))}
       </div>
     </div>

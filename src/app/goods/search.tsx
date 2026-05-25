@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
+import { externalGoodsDetailHref } from "@/lib/goods-detail-link";
 import type { Product } from "@/types/domain";
+import Link from "next/link";
 
 type ExternalGoodsItem = {
   id: string;
@@ -33,7 +35,7 @@ export type RecommendedGoodsGroup = {
   products: Product[];
 };
 
-const pageSize = 18;
+const pageSize = 12;
 const quickTerms = ["쿠로미", "산리오", "포켓몬", "BTS", "원피스", "스파이패밀리"];
 
 export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommendedGroups: RecommendedGoodsGroup[]; initialQuery?: string }) {
@@ -77,27 +79,28 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
 
   useEffect(() => {
     if (initialQuery) searchGoods(undefined, initialQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
   return (
     <div className="space-y-3">
-      <section className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#cfa9ed] bg-[#fbf4ff] p-5 shadow-[0_12px_34px_rgba(126,80,178,0.06)]">
-        <Image src="/semoduck-goods-hero.png" alt="" width={360} height={220} priority className="pointer-events-none absolute bottom-0 right-8 hidden h-44 w-auto object-contain lg:block" />
+      <section className="relative overflow-hidden rounded-2xl border-2 border-[#cfa9ed] bg-[#fbf4ff] p-4 shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
+        <Image src="/semoduck-goods-hero.png" alt="" width={320} height={190} priority className="pointer-events-none absolute bottom-0 right-8 hidden h-32 w-auto object-contain lg:block" />
         <div className="relative max-w-xl pr-0 lg:pr-40">
-          <h1 className="text-3xl font-black leading-tight text-[#6f4ab4] md:text-4xl">굿즈 검색</h1>
-          <p className="mt-2 text-sm font-bold leading-6 text-[#44385a]">원하는 굿즈를 검색하고 판매 링크와 추천 상품을 한눈에 확인하세요.</p>
-          <form onSubmit={searchGoods} className="mt-4 flex max-w-xl items-center gap-3 rounded-full border-2 border-[#9b63d6] bg-white px-4 py-2.5 shadow-[0_12px_30px_rgba(163,108,224,0.12)]">
-            <Search size={18} className="text-[#6f4ab4]" />
+          <h1 className="text-2xl font-black leading-tight text-[#6f4ab4] md:text-3xl">굿즈 검색</h1>
+          <p className="mt-1 text-xs font-bold leading-5 text-[#44385a]">원하는 굿즈와 판매 링크, 추천 상품을 한눈에 확인하세요.</p>
+          <form onSubmit={searchGoods} className="mt-3 flex max-w-lg items-center gap-2 rounded-full border-2 border-[#9b63d6] bg-white px-3 py-2 shadow-[0_10px_22px_rgba(163,108,224,0.1)]">
+            <Search size={17} className="text-[#6f4ab4]" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" placeholder="쿠로미 키링" />
-            <Button disabled={loading} className="hidden sm:inline-flex">
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+            <Button disabled={loading} className="min-h-8 rounded-xl px-3 py-1 text-xs">
+              {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
               검색
             </Button>
           </form>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-[#5e4b76]">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-bold text-[#5e4b76]">
             <span>인기 검색어</span>
             {quickTerms.map((word) => (
-              <button key={word} type="button" onClick={() => searchGoods(undefined, word)} className="rounded-full bg-white px-3 py-1.5 ring-1 ring-[#ead8f4]">
+              <button key={word} type="button" onClick={() => searchGoods(undefined, word)} className="rounded-full bg-white px-2.5 py-1 text-[11px] ring-1 ring-[#ead8f4]">
                 {word}
               </button>
             ))}
@@ -105,7 +108,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
         </div>
       </section>
 
-      <Card className="grid gap-2 p-3 md:grid-cols-6">
+      <Card className="grid gap-2 p-2.5 md:grid-cols-6">
         {[
           ["전체", Grid3X3],
           ["인기", Star],
@@ -114,8 +117,8 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           ["공식 우선", ShieldCheck],
           ["배송", Truck]
         ].map(([label, Icon]) => (
-          <button key={label as string} type="button" className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-2xl bg-white px-3 text-xs font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
-            <Icon size={16} />
+          <button key={label as string} type="button" className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-xs font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
+            <Icon size={15} />
             {label as string}
           </button>
         ))}
@@ -125,62 +128,74 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black">검색 결과</h2>
-              <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준으로 찾은 외부 판매 링크입니다.</p>
+              <h2 className="text-lg font-black">검색 결과</h2>
+              <p className="mt-0.5 text-xs font-bold text-slate-500">{normalizedQuery || query} 기준으로 찾은 외부 판매 링크입니다.</p>
             </div>
-            {items.length ? <p className="text-sm font-black text-slate-500">총 {items.length}개 · {page} / {totalPages}페이지</p> : null}
+            {items.length ? (
+              <p className="text-xs font-black text-slate-500">
+                총 {items.length}개 · {page} / {totalPages}페이지
+              </p>
+            ) : null}
           </div>
-          {error && <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{error}</p>}
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          {error && <p className="rounded-lg bg-amber-50 p-2.5 text-xs font-bold text-amber-700">{error}</p>}
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {pagedItems.map((item) => (
-              <Card key={item.id} className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1">
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
-                  {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 220px" /> : null}
-                  <span className="absolute left-3 top-3 rounded-full bg-[#ff6f9b] px-3 py-1 text-xs font-black text-white">상품</span>
-                  <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]"><Heart size={17} /></span>
-                </div>
-                <div className="flex flex-1 flex-col gap-2.5 p-3">
-                  <p className="line-clamp-2 text-sm font-black text-[#2f2352]">{item.title}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge tone="mint">네이버</Badge>
-                    <Badge>{item.mallName}</Badge>
+              <Link key={item.id} href={externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category })} className="block h-full">
+                <Card className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
+                    {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 280px" /> : null}
+                    <span className="absolute left-2 top-2 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
+                    <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">
+                      <Heart size={15} />
+                    </span>
                   </div>
-                  {item.category && <p className="line-clamp-2 text-xs font-bold text-slate-400">{item.category}</p>}
-                  <p className="mt-auto text-base font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-3 text-xs font-black text-white">
-                    판매 링크 열기
-                    <ExternalLink size={14} />
-                  </a>
-                </div>
-              </Card>
+                  <div className="flex flex-1 flex-col gap-2 p-2.5">
+                    <p className="line-clamp-2 text-sm font-black leading-5 text-[#2f2352]">{item.title}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge tone="mint">네이버</Badge>
+                      <Badge>{item.mallName}</Badge>
+                    </div>
+                    {item.category && <p className="line-clamp-1 text-[11px] font-bold text-slate-400">{item.category}</p>}
+                    <p className="mt-auto text-sm font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                    <span className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-xl bg-[#3a285f] px-3 text-xs font-black text-white">
+                      상세 보기
+                      <ExternalLink size={13} />
+                    </span>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
-          {!items.length && !loading && <Card>검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}
+          {!items.length && !loading && <Card className="p-3 text-sm font-bold text-slate-500">검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}
           {items.length > pageSize && (
             <div className="flex items-center justify-center gap-3">
-              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>이전</Button>
-              <span className="min-w-24 text-center text-sm font-black text-slate-600">{page} / {totalPages}</span>
-              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>다음</Button>
+              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                이전
+              </Button>
+              <span className="min-w-20 text-center text-xs font-black text-slate-600">{page} / {totalPages}</span>
+              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                다음
+              </Button>
             </div>
           )}
         </section>
       ) : (
         <section className="space-y-3">
           <div>
-            <h2 className="text-xl font-black">추천 굿즈</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">관심사와 인기 주제를 기준으로 보여줍니다.</p>
+            <h2 className="text-lg font-black">추천 굿즈</h2>
+            <p className="mt-0.5 text-xs font-bold text-slate-500">관심사와 인기 주제를 기준으로 보여줍니다.</p>
           </div>
           {recommendedGroups.map((group) => (
             <div key={group.title}>
-              <h3 className="mb-2 text-base font-black">{group.title}</h3>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              <h3 className="mb-2 text-sm font-black">{group.title}</h3>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {group.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             </div>
           ))}
-          {!recommendedGroups.length && <Card>관심사를 설정하면 추천 굿즈가 표시됩니다.</Card>}
+          {!recommendedGroups.length && <Card className="p-3 text-sm font-bold text-slate-500">관심사를 설정하면 추천 굿즈가 표시됩니다.</Card>}
         </section>
       )}
     </div>

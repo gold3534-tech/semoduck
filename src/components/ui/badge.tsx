@@ -12,5 +12,5 @@ const tones: Record<BadgeTone, string> = {
 };
 
 export function Badge({ children, tone = "gray" }: PropsWithChildren<{ tone?: BadgeTone }>) {
-  return <span className={clsx("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-black", tones[tone])}>{children}</span>;
+  return <span className={clsx("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black leading-4", tones[tone])}>{children}</span>;
 }

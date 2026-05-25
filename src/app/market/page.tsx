@@ -47,8 +47,8 @@ async function getData() {
 export default async function MarketPage() {
   const { items, galleries, currentUserId, isAdmin } = await getData();
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#ead0f4] bg-white/82 p-4 shadow-[0_12px_34px_rgba(126,80,178,0.06)] md:p-5">
+    <div className="space-y-4">
+      <section className="relative overflow-hidden rounded-2xl border border-[#ead0f4] bg-white/82 p-4 shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
         <Image src="/semoduck-market-hero.png" alt="" width={96} height={96} priority className="pointer-events-none absolute right-5 top-1/2 hidden h-20 w-20 -translate-y-1/2 rounded-2xl object-cover md:block" />
         <div className="relative max-w-xl pr-0 md:pr-28">
           <p className="text-sm font-black text-[#ff6f9b]">유저거래</p>
