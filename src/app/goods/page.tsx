@@ -51,7 +51,7 @@ async function getUserInterests() {
     .filter(Boolean) as string[];
 }
 
-const ignoredRecommendationInterests = new Set(["굿즈"]);
+const ignoredRecommendationInterests = new Set(["굿즈", "덕", "돌"]);
 const recommendationTerms: Record<string, string[]> = {
   BTS: ["BTS", "방탄소년단", "Weverse"],
   롤: ["라이엇 스토어", "리그 오브 레전드", "League of Legends", "TFT", "요네", "아리"],
@@ -72,11 +72,14 @@ function termsForInterest(interest: string) {
   return recommendationTerms[interest] ?? [interest];
 }
 
-function shuffled<T>(items: T[]) {
-  return [...items]
-    .map((item) => ({ item, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ item }) => item);
+function scoreProduct(product: Product, interest: string) {
+  const terms = termsForInterest(interest).map((term) => term.toLowerCase());
+  const text = `${product.title} ${product.brand} ${product.category} ${product.description} ${product.tags.join(" ")}`.toLowerCase();
+  return terms.reduce((sum, term) => sum + (text.includes(term) ? 1 : 0), 0);
+}
+
+function officialRank(product: Product) {
+  return Number(product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial));
 }
 
 async function getLocalProducts(interest: string, limit: number) {
@@ -97,9 +100,12 @@ async function getLocalProducts(interest: string, limit: number) {
   const products = (data ?? [])
     .map(productFromDbRow)
     .filter((product) => product.offers.length > 0 && product.image && product.image !== "/placeholder-goods.svg")
-    .sort((a, b) => Number(b.isOfficialProduct || b.offers.some((offer) => offer.isOfficial)) - Number(a.isOfficialProduct || a.offers.some((offer) => offer.isOfficial)));
+    .map((product) => ({ product, score: scoreProduct(product, interest) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || officialRank(b.product) - officialRank(a.product) || b.product.bookmarkCount - a.product.bookmarkCount)
+    .map((item) => item.product);
   const official = products.filter((product) => product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial));
-  return shuffled(official.length ? official : products).slice(0, limit);
+  return (official.length ? official : products).slice(0, limit);
 }
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {

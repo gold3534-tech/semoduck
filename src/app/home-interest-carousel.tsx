@@ -37,7 +37,7 @@ export function HomeInterestCarousel({ items, interests }: { items: HomeInterest
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-sm font-black text-berry">내 관심사 기반</p>
-          <h2 className="text-2xl font-black">공식 굿즈와 유저거래</h2>
+          <h2 className="text-xl font-black">공식 굿즈와 유저거래</h2>
           <p className="mt-1 text-sm font-bold text-slate-500">
             {interests.length ? interests.map((interest) => `#${interest}`).join(" ") : "인기 관심사"} 기준으로 보여줍니다.
           </p>
@@ -71,17 +71,17 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
   const price = prices.length ? Math.min(...prices) : 0;
 
   return (
-    <Card className="flex min-w-[17.5rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[20rem]">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg bg-slate-100">
-        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="320px" /> : null}
+    <Card className="flex min-w-[15.5rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[17rem]">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-t-lg bg-slate-100">
+        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="272px" /> : null}
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 flex-col gap-2.5 p-3">
         <div className="flex flex-wrap gap-2">
           <Badge tone="mint">공식 굿즈</Badge>
           <Badge tone="gray">{product.brand || product.category}</Badge>
         </div>
         <p className="line-clamp-2 font-black text-ink">{product.title}</p>
-        <p className="mt-auto text-lg font-black">{price ? formatPrice(price) : "가격 확인 필요"}</p>
+        <p className="mt-auto text-base font-black">{price ? formatPrice(price) : "가격 확인 필요"}</p>
         <Link href={primaryOffer?.url ?? `/goods/${product.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-bold text-white">
           공식 판매처 열기
           <ExternalLink size={15} />
@@ -93,18 +93,18 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
 
 function MarketSlide({ market }: { market: MarketPreview }) {
   return (
-    <Link href={`/market/${market.id}`} className="block min-w-[17.5rem] snap-start sm:min-w-[20rem]">
+    <Link href={`/market/${market.id}`} className="block min-w-[15.5rem] snap-start sm:min-w-[17rem]">
       <Card className="flex h-full flex-col overflow-hidden p-0 transition hover:bg-pink-50">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg bg-slate-100">
-          {market.image_url ? <Image src={market.image_url} alt={market.title} fill className="object-cover" sizes="320px" /> : <div className="grid h-full place-items-center text-slate-300"><ShoppingBag size={36} /></div>}
+        <div className="relative aspect-[16/10] overflow-hidden rounded-t-lg bg-slate-100">
+          {market.image_url ? <Image src={market.image_url} alt={market.title} fill className="object-cover" sizes="272px" /> : <div className="grid h-full place-items-center text-slate-300"><ShoppingBag size={32} /></div>}
         </div>
-        <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex flex-1 flex-col gap-2.5 p-3">
           <div className="flex flex-wrap gap-2">
             <Badge tone="pink">유저거래</Badge>
             <Badge tone="mint">{tradeTypeLabel(market.trade_type)}</Badge>
           </div>
           <p className="line-clamp-2 font-black text-ink">{market.title}</p>
-          <p className="mt-auto text-lg font-black">{tradeValueLabel(market.trade_type, market.price)}</p>
+          <p className="mt-auto text-base font-black">{tradeValueLabel(market.trade_type, market.price)}</p>
           <p className="text-sm font-bold text-slate-500">{market.galleries?.name ?? "갤러리"}</p>
         </div>
       </Card>

@@ -33,7 +33,8 @@ export type RecommendedGoodsGroup = {
   products: Product[];
 };
 
-const pageSize = 12;
+const pageSize = 18;
+const quickTerms = ["쿠로미", "산리오", "포켓몬", "BTS", "원피스", "스파이패밀리"];
 
 export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommendedGroups: RecommendedGoodsGroup[]; initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery || "쿠로미 키링");
@@ -52,15 +53,17 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
 
   async function searchGoods(event?: FormEvent<HTMLFormElement>, keyword = query) {
     event?.preventDefault();
-    if (!keyword.trim()) return;
+    const nextKeyword = keyword.trim();
+    if (!nextKeyword) return;
 
+    setQuery(nextKeyword);
     setLoading(true);
     setError("");
     setSearched(true);
     setPage(1);
 
     try {
-      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(keyword)}&display=300`);
+      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(nextKeyword)}&display=300`);
       const data = (await response.json()) as ExternalGoodsResponse;
       setItems(data.items);
       setNormalizedQuery(data.query);
@@ -73,31 +76,36 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
   }
 
   useEffect(() => {
-    if (initialQuery) {
-      searchGoods(undefined, initialQuery);
-    }
+    if (initialQuery) searchGoods(undefined, initialQuery);
   }, [initialQuery]);
 
   return (
-    <div className="space-y-6">
-      <section className="relative min-h-[16.5rem] overflow-hidden rounded-[2rem] border-2 border-[#cfa9ed] bg-white/78 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] md:p-12">
-        <Image src="/semoduck-goods-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-95" sizes="1536px" />
-        <div className="relative max-w-3xl">
-          <p className="text-sm font-black text-[#ff6f9b]">굿즈 검색</p>
-          <h1 className="mt-3 text-5xl font-black leading-tight text-[#6f4ab4] md:text-6xl">굿즈 검색</h1>
-          <p className="mt-3 text-lg font-bold leading-7 text-[#44385a]">원하는 굿즈를 검색하고 원하는 상품을 찾아보세요! 세상의 모든 덕질, 세모덕이 함께할게요!</p>
-          <form onSubmit={searchGoods} className="mt-7 flex max-w-3xl items-center gap-3 rounded-full border-2 border-[#9b63d6] bg-white px-6 py-3 shadow-[0_14px_40px_rgba(163,108,224,0.14)]">
-            <Search size={24} className="text-[#6f4ab4]" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-lg font-bold outline-none placeholder:text-slate-400" placeholder="쿠로미 키링" />
+    <div className="space-y-3">
+      <section className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#cfa9ed] bg-[#fbf4ff] p-5 shadow-[0_12px_34px_rgba(126,80,178,0.06)]">
+        <Image src="/semoduck-goods-hero.png" alt="" width={360} height={220} priority className="pointer-events-none absolute bottom-0 right-8 hidden h-44 w-auto object-contain lg:block" />
+        <div className="relative max-w-xl pr-0 lg:pr-40">
+          <h1 className="text-3xl font-black leading-tight text-[#6f4ab4] md:text-4xl">굿즈 검색</h1>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#44385a]">원하는 굿즈를 검색하고 판매 링크와 추천 상품을 한눈에 확인하세요.</p>
+          <form onSubmit={searchGoods} className="mt-4 flex max-w-xl items-center gap-3 rounded-full border-2 border-[#9b63d6] bg-white px-4 py-2.5 shadow-[0_12px_30px_rgba(163,108,224,0.12)]">
+            <Search size={18} className="text-[#6f4ab4]" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" placeholder="쿠로미 키링" />
             <Button disabled={loading} className="hidden sm:inline-flex">
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
               검색
             </Button>
           </form>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-[#5e4b76]">
+            <span>인기 검색어</span>
+            {quickTerms.map((word) => (
+              <button key={word} type="button" onClick={() => searchGoods(undefined, word)} className="rounded-full bg-white px-3 py-1.5 ring-1 ring-[#ead8f4]">
+                {word}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      <Card className="grid gap-3 md:grid-cols-6">
+      <Card className="grid gap-2 p-3 md:grid-cols-6">
         {[
           ["전체", Grid3X3],
           ["인기", Star],
@@ -106,55 +114,42 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           ["공식 우선", ShieldCheck],
           ["배송", Truck]
         ].map(([label, Icon]) => (
-          <button key={label as string} type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
+          <button key={label as string} type="button" className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-2xl bg-white px-3 text-xs font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
             <Icon size={16} />
             {label as string}
           </button>
         ))}
       </Card>
 
-      <Card>
-        <form onSubmit={searchGoods} className="grid gap-3 md:grid-cols-[1fr_auto]">
-          <div className="flex min-h-12 items-center gap-2 rounded-full border border-[#ead8f4] bg-white px-5 focus-within:border-[#b984e7]">
-            <Search size={18} className="text-[#8b61c8]" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full bg-transparent font-bold outline-none" placeholder="다시 검색" />
-          </div>
-          <Button disabled={loading}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            검색
-          </Button>
-        </form>
-      </Card>
-
       {searched ? (
-        <section className="space-y-4">
+        <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black">검색 결과</h2>
+              <h2 className="text-xl font-black">검색 결과</h2>
               <p className="mt-1 text-sm font-bold text-slate-500">{normalizedQuery || query} 기준으로 찾은 외부 판매 링크입니다.</p>
             </div>
             {items.length ? <p className="text-sm font-black text-slate-500">총 {items.length}개 · {page} / {totalPages}페이지</p> : null}
           </div>
           {error && <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{error}</p>}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {pagedItems.map((item) => (
               <Card key={item.id} className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1">
-                <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
-                  {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" /> : null}
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
+                  {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 220px" /> : null}
                   <span className="absolute left-3 top-3 rounded-full bg-[#ff6f9b] px-3 py-1 text-xs font-black text-white">상품</span>
-                  <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]"><Heart size={18} /></span>
+                  <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]"><Heart size={17} /></span>
                 </div>
-                <div className="flex flex-1 flex-col gap-3 p-4">
-                  <p className="line-clamp-2 font-black text-[#2f2352]">{item.title}</p>
+                <div className="flex flex-1 flex-col gap-2.5 p-3">
+                  <p className="line-clamp-2 text-sm font-black text-[#2f2352]">{item.title}</p>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="mint">네이버</Badge>
                     <Badge>{item.mallName}</Badge>
                   </div>
                   {item.category && <p className="line-clamp-2 text-xs font-bold text-slate-400">{item.category}</p>}
-                  <p className="mt-auto text-lg font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-4 text-sm font-black text-white">
+                  <p className="mt-auto text-base font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-3 text-xs font-black text-white">
                     판매 링크 열기
-                    <ExternalLink size={15} />
+                    <ExternalLink size={14} />
                   </a>
                 </div>
               </Card>
@@ -163,28 +158,22 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           {!items.length && !loading && <Card>검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}
           {items.length > pageSize && (
             <div className="flex items-center justify-center gap-3">
-              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
-                이전
-              </Button>
-              <span className="min-w-24 text-center text-sm font-black text-slate-600">
-                {page} / {totalPages}
-              </span>
-              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
-                다음
-              </Button>
+              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>이전</Button>
+              <span className="min-w-24 text-center text-sm font-black text-slate-600">{page} / {totalPages}</span>
+              <Button variant="secondary" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>다음</Button>
             </div>
           )}
         </section>
       ) : (
-        <section className="space-y-6">
+        <section className="space-y-3">
           <div>
-            <h2 className="text-2xl font-black">추천 굿즈</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">관심사를 설정하지 않은 계정에는 인기 주제와 최근 등록 상품을 기준으로 보여줍니다.</p>
+            <h2 className="text-xl font-black">추천 굿즈</h2>
+            <p className="mt-1 text-sm font-bold text-slate-500">관심사와 인기 주제를 기준으로 보여줍니다.</p>
           </div>
           {recommendedGroups.map((group) => (
             <div key={group.title}>
-              <h3 className="mb-3 text-lg font-black">{group.title}</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <h3 className="mb-2 text-base font-black">{group.title}</h3>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {group.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

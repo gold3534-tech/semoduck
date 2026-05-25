@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, ChevronLeft, ChevronRight, Heart, HeartHandshake, Loader2, MessageCircle, PenLine, Settings, Star, Trash2 } from "lucide-react";
+import { Bell, Bookmark, ChevronLeft, ChevronRight, Edit3, Heart, HeartHandshake, Loader2, MessageCircle, PenLine, Settings, Star, Trash2, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,79 +109,109 @@ export default function MyPage() {
 
   const totalPages = Math.max(1, Math.ceil(activity.posts.length / pageSize));
   const stats: Array<[string, number, LucideIcon, string]> = [
-    ["내가 쓴 글", activity.counts.posts, PenLine, ""],
-    ["내 댓글", activity.counts.comments, MessageCircle, ""],
-    ["좋아요한 글", activity.counts.likes, Heart, "/mypage/likes"],
-    ["스크랩한 글", activity.counts.bookmarks, Bookmark, "/mypage/bookmarks"]
+    ["작성글", activity.counts.posts, PenLine, ""],
+    ["댓글", activity.counts.comments, MessageCircle, ""],
+    ["스크랩", activity.counts.bookmarks, Star, "/mypage/bookmarks"],
+    ["거래", activity.counts.marketItems, HeartHandshake, "/mypage/market"]
+  ];
+  const sideNav: Array<[string, LucideIcon, string]> = [
+    ["프로필", UserRound, "/mypage"],
+    ["내가 쓴 글", Edit3, "/mypage"],
+    ["스크랩한 글", Bookmark, "/mypage/bookmarks"],
+    ["관심 갤러리", PenLine, "/galleries"],
+    ["찜한 굿즈", Heart, "/mypage/likes"],
+    ["거래 내역", HeartHandshake, "/mypage/market"],
+    ["알림 설정", Bell, "/mypage"],
+    ["계정 설정", Settings, "/mypage"]
   ];
 
   return (
-    <div className="space-y-6">
-      <Card className="relative overflow-hidden rounded-[2rem] border-2 border-[#ead0f4] bg-white/80 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] lg:grid lg:grid-cols-[1fr_28rem] lg:gap-5">
-        <div className="pointer-events-none absolute right-8 top-8 hidden text-7xl md:block">✨</div>
-        <div className="flex items-center gap-4">
-          <div className="relative h-32 w-32 overflow-hidden rounded-full bg-[#fff0f6] ring-8 ring-[#ffe4f0]">
-            <Image src="/semoduck-profile-duck.png" alt="" fill className="object-cover" sizes="128px" />
-          </div>
-          <div>
-            <p className="text-sm font-black text-[#ff6f9b]">마이페이지</p>
-            <h1 className="text-3xl font-black text-[#3a285f]">{activity.profile.nickname}</h1>
-            <p className="text-sm font-bold text-slate-500">{activity.profile.email}</p>
-          </div>
+    <div className="grid gap-4 lg:grid-cols-[12rem_1fr]">
+      <aside className="rounded-[1.5rem] border border-[#ead0f4] bg-white/84 p-3 shadow-soft">
+        <nav className="grid gap-1">
+          {sideNav.map(([label, Icon, href], index) => (
+            <Link
+              key={`${label}-${index}`}
+              href={href}
+              className={`flex min-h-10 items-center gap-2 rounded-2xl px-3 text-xs font-black text-[#2f2352] transition hover:bg-[#fff1f7] ${index === 0 ? "bg-[#f2e2ff]" : ""}`}
+            >
+              <Icon size={19} className="text-[#6f4ab4]" />
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-10 hidden lg:block">
+          <Image src="/semoduck-profile-duck.png" alt="" width={160} height={160} className="mx-auto opacity-80" />
         </div>
-        <div className="rounded-2xl bg-[#f8f2fb] p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-sm font-black">
-              <Settings size={16} />
-              관심사 수정
-            </h2>
-            <Button className="min-h-8 px-3 py-1 text-xs" onClick={saveProfile} disabled={saving}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : null}
-              저장
+      </aside>
+
+      <div className="space-y-5">
+        <Card className="relative overflow-hidden rounded-[1.5rem] border border-[#ead0f4] bg-white/84 p-4 shadow-[0_12px_34px_rgba(126,80,178,0.06)]">
+          <div className="pointer-events-none absolute right-8 top-12 hidden text-5xl opacity-60 md:block">☆</div>
+          <div className="grid gap-4 lg:grid-cols-[8.5rem_1fr_auto] lg:items-center">
+            <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full bg-[#fff0f6] ring-4 ring-[#ffe4f0] lg:mx-0">
+              <Image src="/semoduck-profile-duck.png" alt="" fill className="object-cover" sizes="112px" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-black text-[#3a285f]">{activity.profile.nickname}</h1>
+                <Badge tone="violet">Lv. {Math.max(1, Math.min(99, activity.counts.posts + activity.counts.comments + 1))}</Badge>
+              </div>
+              <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#5b506b]">
+                안녕하세요! 세모덕에서 굿즈와 갤러리를 즐기는 {activity.profile.nickname}님이에요.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge tone="gray">{activity.profile.email}</Badge>
+                {activity.interests.slice(0, 4).map((interest) => (
+                  <Badge key={interest} tone="mint">{interest}</Badge>
+                ))}
+              </div>
+            </div>
+            <Button variant="secondary" className="self-start">
+              <Edit3 size={16} /> 프로필 수정
             </Button>
           </div>
-          <div className="flex max-h-28 flex-wrap gap-2 overflow-auto pr-1">
-            {activity.allInterests.map((interest) => {
-              const active = selectedInterests.includes(interest);
-              return (
-                <button
-                  key={interest}
-                  onClick={() => setSelectedInterests((current) => (active ? current.filter((item) => item !== interest) : [...current, interest]))}
-                  className={`rounded-full px-3 py-1.5 text-xs font-black ${active ? "bg-[#ffe1ec] text-[#f05f8e]" : "bg-white text-slate-500"}`}
-                >
-                  {interest}
-                </button>
+
+          <div className="mt-4 grid overflow-hidden rounded-2xl border border-[#f1dbe8] bg-white/78 md:grid-cols-4">
+            {stats.map(([label, value, Icon, href]) => {
+              const inner = (
+                <div className="flex items-center justify-center gap-3 border-[#f1dbe8] px-3 py-3 md:border-r">
+                  <Icon size={24} className="text-[#a56be8]" />
+                  <div>
+                    <p className="text-sm font-black text-[#3a285f]">{label}</p>
+                    <p className="text-xl font-black text-[#ff6f9b]">{value}</p>
+                  </div>
+                </div>
               );
+              return href ? <Link key={label} href={href}>{inner}</Link> : <div key={label}>{inner}</div>;
             })}
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        {stats.map(([label, value, Icon, href]) => {
-          const inner = (
-            <Card className={href ? "transition hover:-translate-y-1 hover:bg-[#fff5fa]" : ""}>
-              <Icon size={20} className="text-[#9d6de1]" />
-              <p className="mt-3 text-sm font-bold text-slate-500">{label}</p>
-              <p className="mt-1 text-2xl font-black">{value}</p>
-            </Card>
-          );
-          return href ? (
-            <Link key={label} href={href}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={label}>{inner}</div>
-          );
-        })}
-      </div>
+        <Card className="rounded-[1.75rem] p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-black text-[#3a285f]">내 관심 갤러리</h2>
+            <Link href="/galleries" className="text-sm font-black text-[#6f4ab4]">더보기</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {(activity.followedGalleries.length ? activity.followedGalleries : activity.interests.map((interest, index) => ({ id: `${interest}-${index}`, name: interest, slug: "", category: "관심사" }))).slice(0, 6).map((gallery) => (
+              <Link key={gallery.id} href={gallery.slug ? `/galleries/${gallery.slug}` : "/galleries"} className="rounded-2xl border border-[#f1dbe8] bg-[#fff8fb] p-3 text-center transition hover:-translate-y-1 hover:shadow-soft">
+                <div className="mx-auto grid h-14 w-20 place-items-center rounded-2xl bg-[#f2e2ff] text-xl font-black text-[#6f4ab4]">
+                  {gallery.name.slice(0, 2)}
+                </div>
+                <p className="mt-2 line-clamp-1 text-sm font-black text-[#3a285f]">{gallery.name}</p>
+                <p className="text-xs font-bold text-slate-400">{gallery.category}</p>
+              </Link>
+            ))}
+            {!activity.followedGalleries.length && !activity.interests.length && <p className="col-span-full rounded-2xl bg-cloud p-4 text-sm font-bold text-slate-500">관심 갤러리나 관심사가 아직 없습니다.</p>}
+          </div>
+        </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card className="rounded-[1.75rem]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black">내가 쓴 글</h2>
-              <p className="mt-1 text-sm font-bold text-slate-500">게시글을 누르면 상세로 이동합니다.</p>
             </div>
             <Link href="/posts/new">
               <Button variant="secondary">
@@ -228,53 +258,57 @@ export default function MyPage() {
               </Button>
             </div>
           )}
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <h2 className="font-black">내 댓글</h2>
-            <div className="mt-3 space-y-2">
-              {activity.comments.slice(0, 5).map((comment) => (
-                <Link key={comment.id} href={`/posts/${comment.posts?.id ?? ""}`} className="block rounded-2xl bg-[#fbf4ff] p-3 text-sm font-bold text-slate-700 hover:text-[#ff6f9b]">
-                  <p className="line-clamp-2">{comment.content}</p>
-                  <p className="mt-1 text-xs text-slate-400">{comment.posts?.title} · {formatDateTime(comment.created_at)}</p>
-                </Link>
-              ))}
-              {!activity.comments.length && <p className="rounded-lg bg-cloud p-3 text-sm font-bold text-slate-500">아직 댓글이 없습니다.</p>}
-            </div>
           </Card>
 
-          <Card>
-            <h2 className="flex items-center gap-2 font-black">
-              <Star size={18} /> 자주가는 갤러리
-            </h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {activity.followedGalleries.map((gallery) => (
-                <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-full bg-[#d8fbf4] px-3 py-2 text-sm font-black text-teal-700 hover:bg-teal-200">
-                  {gallery.name}
+          <Card className="rounded-[1.75rem]">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-xl font-black">최근 거래 내역</h2>
+              <Link href="/mypage/market" className="text-sm font-black text-[#6f4ab4]">더보기</Link>
+            </div>
+            <div className="space-y-3">
+              {activity.marketItems.slice(0, 4).map((item) => (
+                <Link key={item.id} href={`/market/${item.id}`} className="grid grid-cols-[4rem_1fr_auto] items-center gap-3 rounded-2xl bg-[#fbf4ff] p-3 hover:bg-[#fff5fa]">
+                  <div className="grid h-16 w-16 place-items-center rounded-xl bg-white text-[#9d6de1]">
+                    <HeartHandshake size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="line-clamp-1 font-black text-[#3a285f]">{item.title}</p>
+                    <p className="mt-1 text-xs font-bold text-slate-500">{tradeTypeLabel(item.trade_type)} · {tradeStatusLabel(item.status)}</p>
+                  </div>
+                  <p className="text-sm font-black text-[#2f2352]">{item.price ? `${item.price.toLocaleString("ko-KR")}원` : "가격협의"}</p>
                 </Link>
               ))}
-              {!activity.followedGalleries.length && <p className="rounded-lg bg-cloud p-3 text-sm font-bold text-slate-500">아직 추가한 갤러리가 없습니다.</p>}
+              {!activity.marketItems.length && <p className="rounded-lg bg-cloud p-4 font-bold text-slate-500">아직 유저거래 글이 없습니다.</p>}
             </div>
           </Card>
-
-          <Link href="/mypage/market" className="block">
-            <Card className="transition hover:bg-pink-50">
-              <h2 className="flex items-center gap-2 font-black">
-                <HeartHandshake size={18} /> 내 유저거래 글
-              </h2>
-              <p className="mt-2 text-sm font-bold text-slate-500">{activity.counts.marketItems}개 등록됨</p>
-              <div className="mt-3 space-y-2">
-                {activity.marketItems.slice(0, 3).map((item) => (
-                  <p key={item.id} className="rounded-lg bg-white p-3 text-sm font-bold text-slate-700">
-                    {item.title} · {tradeTypeLabel(item.trade_type)} · {tradeStatusLabel(item.status)}
-                  </p>
-                ))}
-                {!activity.marketItems.length && <p className="rounded-lg bg-white p-3 text-sm font-bold text-slate-500">아직 유저거래 글이 없습니다.</p>}
-              </div>
-            </Card>
-          </Link>
         </div>
+
+        <Card className="rounded-[1.75rem]">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-black">
+              <Settings size={16} />
+              관심사 수정
+            </h2>
+            <Button className="min-h-8 px-3 py-1 text-xs" onClick={saveProfile} disabled={saving}>
+              {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+              저장
+            </Button>
+          </div>
+          <div className="flex max-h-28 flex-wrap gap-2 overflow-auto pr-1">
+            {activity.allInterests.map((interest) => {
+              const active = selectedInterests.includes(interest);
+              return (
+                <button
+                  key={interest}
+                  onClick={() => setSelectedInterests((current) => (active ? current.filter((item) => item !== interest) : [...current, interest]))}
+                  className={`rounded-full px-3 py-1.5 text-xs font-black ${active ? "bg-[#ffe1ec] text-[#f05f8e]" : "bg-white text-slate-500 ring-1 ring-[#ead8f4]"}`}
+                >
+                  {interest}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
       </div>
     </div>
   );

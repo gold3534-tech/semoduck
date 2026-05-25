@@ -1,19 +1,25 @@
 ﻿import Image from "next/image";
 import { notFound } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, MessageCircle, ShoppingCart } from "lucide-react";
 import { CommentActions } from "@/app/posts/[id]/comment-actions";
 import { CommentForm } from "@/app/posts/[id]/comment-form";
 import { PostActions } from "@/app/posts/[id]/post-actions";
-import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail } from "@/lib/auth";
-import { formatDateTime, postTypeLabel } from "@/lib/format";
+import { formatDateTime, formatPrice, postTypeLabel } from "@/lib/format";
 import { fallbackRecommendedProducts, fallbackTags, keywordsForPost, productFromDbRow, productSelect, relatedProducts } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { Product } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
+
+function productPrice(product: Product) {
+  const prices = product.offers.map((offer) => offer.price).filter((price) => Number.isFinite(price) && price > 0);
+  return prices.length ? Math.min(...prices) : 0;
+}
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,5 +44,75 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const goods = localRelatedProducts.length ? localRelatedProducts : fallbackRecommendedProducts(keywords, 4);
   const isOwner = currentUserId === post.user_id;
 
-  return <div className="grid gap-6 lg:grid-cols-[1fr_24rem]"><article className="space-y-5"><Card className="overflow-hidden rounded-[2rem] border-[#efd7e7] bg-gradient-to-br from-white via-[#fffafd] to-[#fff6fb] p-7"><div className="mb-4 flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.post_type)}</Badge><span className="text-sm font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span><span className="text-sm font-bold text-slate-400">{formatDateTime(post.created_at)}</span></div><h1 className="text-3xl font-black leading-tight text-[#3a285f] md:text-4xl">{post.title}</h1>{post.image_url ? <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-[1.5rem] bg-[#f7f2fb] ring-1 ring-[#efd7e7]"><Image src={post.image_url} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 760px" /></div> : null}<p className="mt-5 whitespace-pre-line leading-8 text-slate-700">{post.content}</p><div className="mt-5 flex flex-wrap gap-2">{(tags.length ? tags : ["세모덕"]).map((tag) => <Badge key={tag}>#{tag}</Badge>)}</div><PostActions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} initialLiked={false} initialBookmarked={false} isOwner={isOwner} isAdmin={isAdmin} /></Card><Card><h2 className="flex items-center gap-2 text-xl font-black text-[#3a285f]"><MessageCircle size={20} /> 댓글 {comments?.length ?? 0}</h2><div className="mt-4 space-y-3">{(comments ?? []).map((comment) => { const writer = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles; const isCommentOwner = currentUserId === comment.user_id; const canDeleteComment = isCommentOwner || isAdmin; return <div key={comment.id} className="relative rounded-2xl bg-[#fff7fb] p-4 pr-24 ring-1 ring-[#f2deeb]">{canDeleteComment && <CommentActions commentId={comment.id} initialContent={comment.content} canEdit={isCommentOwner} />}<p className="font-black">{writer?.nickname ?? writer?.email ?? "회원"}</p><p className="mt-2 text-slate-700">{comment.content}</p><p className="mt-2 text-xs font-bold text-slate-400">{formatDateTime(comment.created_at)}</p></div>; })}{!(comments ?? []).length && <p className="rounded-2xl bg-[#fff7fb] p-4 font-bold text-slate-500">아직 댓글이 없습니다.</p>}</div><CommentForm postId={post.id} /></Card></article><aside className="space-y-4"><div><p className="text-sm font-black text-[#ff6f9b]">이 글과 함께 볼 굿즈</p><h2 className="mt-1 text-xl font-black text-[#3a285f]">관련 굿즈</h2></div><div className="grid gap-4">{goods.map((product) => <ProductCard key={product.id} product={product} />)}</div></aside></div>;
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
+      <article className="space-y-4">
+        <Card className="overflow-hidden rounded-[1.5rem] border-[#efd7e7] bg-gradient-to-br from-white via-[#fffafd] to-[#fff6fb] p-5">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge tone="pink">{postTypeLabel(post.post_type)}</Badge>
+            <span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span>
+            <span className="text-xs font-bold text-slate-400">{formatDateTime(post.created_at)}</span>
+          </div>
+          <h1 className="text-2xl font-black leading-tight text-[#3a285f] md:text-3xl">{post.title}</h1>
+          <p className="mt-3 whitespace-pre-line text-sm font-bold leading-6 text-slate-700">{post.content}</p>
+          <div className="mt-3 flex flex-wrap gap-2">{(tags.length ? tags : ["세모덕"]).map((tag) => <Badge key={tag}>#{tag}</Badge>)}</div>
+          {post.image_url ? (
+            <div className="relative mt-4 aspect-[16/7] overflow-hidden rounded-[1.25rem] bg-[#f7f2fb] ring-1 ring-[#efd7e7]">
+              <Image src={post.image_url} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 720px" />
+            </div>
+          ) : null}
+          <PostActions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} initialLiked={false} initialBookmarked={false} isOwner={isOwner} isAdmin={isAdmin} />
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><MessageCircle size={18} /> 댓글 {comments?.length ?? 0}</h2>
+          <div className="mt-3 space-y-2">
+            {(comments ?? []).map((comment) => {
+              const writer = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
+              const isCommentOwner = currentUserId === comment.user_id;
+              const canDeleteComment = isCommentOwner || isAdmin;
+              return (
+                <div key={comment.id} className="relative rounded-2xl bg-[#fff7fb] p-3 pr-20 ring-1 ring-[#f2deeb]">
+                  {canDeleteComment && <CommentActions commentId={comment.id} initialContent={comment.content} canEdit={isCommentOwner} />}
+                  <p className="text-sm font-black">{writer?.nickname ?? writer?.email ?? "회원"}</p>
+                  <p className="mt-1 text-sm text-slate-700">{comment.content}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-400">{formatDateTime(comment.created_at)}</p>
+                </div>
+              );
+            })}
+            {!(comments ?? []).length && <p className="rounded-2xl bg-[#fff7fb] p-3 text-sm font-bold text-slate-500">아직 댓글이 없습니다.</p>}
+          </div>
+          <CommentForm postId={post.id} />
+        </Card>
+      </article>
+
+      <aside className="space-y-3">
+        <div>
+          <p className="text-sm font-black text-[#ff6f9b]">이 글과 함께 볼 굿즈</p>
+          <h2 className="text-xl font-black text-[#3a285f]">관련 굿즈</h2>
+        </div>
+        <div className="grid gap-3">
+          {goods.map((product) => {
+            const offer = product.offers.find((item) => item.isOfficial) ?? product.offers[0];
+            const price = productPrice(product);
+            return (
+              <Card key={product.id} className="grid grid-cols-[5.5rem_1fr] gap-3 p-3">
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
+                  {product.image ? <Image src={product.image} alt="" fill className="object-cover" sizes="88px" /> : null}
+                </div>
+                <div className="min-w-0">
+                  <Badge tone="pink">{product.isOfficialProduct ? "인기" : product.category}</Badge>
+                  <p className="mt-2 line-clamp-2 text-sm font-black text-[#2f2352]">{product.title}</p>
+                  <p className="mt-2 text-sm font-black text-[#ff5f8d]">{price ? formatPrice(price) : "가격 확인"}</p>
+                  <Link href={offer?.url ?? `/goods/${product.id}`} target={offer?.url ? "_blank" : undefined} className="mt-2 inline-flex h-8 items-center gap-1 rounded-full bg-[#3a285f] px-3 text-xs font-black text-white">
+                    <ShoppingCart size={13} /> 링크 <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </aside>
+    </div>
+  );
 }

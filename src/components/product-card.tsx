@@ -14,13 +14,13 @@ export function ProductCard({ product }: { product: Product }) {
   const primaryOffer = product.offers.find((offer) => offer.isOfficial) ?? product.offers[0];
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(255,111,155,0.16)]">
-      <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
-        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
-        <div className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">♡</div>
+    <Card className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(255,111,155,0.14)]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
+        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 240px" /> : null}
+        <div className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">♡</div>
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="line-clamp-2 font-black text-[#2f2352] hover:text-[#ff6f9b]">
+      <div className="flex flex-1 flex-col gap-2.5 p-3">
+        <Link href={href} target={externalUrl ? "_blank" : undefined} rel={externalUrl ? "noopener noreferrer" : undefined} className="line-clamp-2 text-sm font-black text-[#2f2352] hover:text-[#ff6f9b]">
           {product.title}
         </Link>
         <div className="flex flex-wrap gap-2">
@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
           <Badge tone="gray">{product.brand || product.category}</Badge>
           {product.offers.some((offer) => offer.specialBenefit) && <Badge tone="sun">특전</Badge>}
         </div>
-        <p className="mt-auto text-lg font-black text-[#ff5f8d]">{prices.length ? formatPrice(lowest) : "가격 확인 필요"}</p>
+        <p className="mt-auto text-base font-black text-[#ff5f8d]">{prices.length ? formatPrice(lowest) : "가격 확인 필요"}</p>
         <Link href={primaryOffer?.url ?? href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-4 py-2 text-sm font-black text-white">
           {primaryOffer?.isOfficial ? "공식 판매처 열기" : "판매 링크 열기"}
           <ExternalLink size={15} />

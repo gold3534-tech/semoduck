@@ -41,10 +41,10 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
     : { data: [] };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[25rem_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
       <Card className="h-fit overflow-hidden p-0">
-        <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
-          {product.image_url ? <Image src={product.image_url} alt={product.title} fill className="object-cover" sizes="400px" /> : null}
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
+          {product.image_url ? <Image src={product.image_url} alt={product.title} fill className="object-cover" sizes="288px" /> : null}
         </div>
         <div className="p-5 flex flex-wrap gap-2">
           <Badge>#{product.category}</Badge>
@@ -52,14 +52,14 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
         </div>
       </Card>
 
-      <div className="space-y-5">
-        <Card>
+      <div className="space-y-4">
+        <Card className="p-4">
           <div className="flex flex-wrap gap-2">
             <Badge tone="mint">{product.category}</Badge>
             {product.is_official_product && <Badge tone="pink">공식 상품</Badge>}
           </div>
-          <h1 className="mt-3 text-4xl font-black text-[#3a285f]">{product.title}</h1>
-          <p className="mt-3 font-bold leading-7 text-slate-600">{product.description}</p>
+          <h1 className="mt-2 text-2xl font-black text-[#3a285f] md:text-3xl">{product.title}</h1>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-600">{product.description}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <ReportButton targetType="product" targetId={id} />
           </div>
@@ -67,7 +67,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
         <Card>
           <h2 className="text-xl font-black">판매 링크</h2>
-          <div className="mt-4 divide-y divide-slate-100">
+          <div className="mt-3 divide-y divide-slate-100">
             {offers.map((offer: any) => (
               <div key={offer.id} className="grid gap-3 py-4 md:grid-cols-[1fr_auto] md:items-center">
                 <div>
@@ -91,11 +91,11 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
         <Card>
           <h2 className="flex items-center gap-2 text-xl font-black"><MessageCircle size={20} /> 비슷한 게시물</h2>
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2">
             {(relatedPosts ?? []).map((post: any) => {
               const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
               return (
-                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-2xl bg-[#fbf4ff] p-4 transition hover:bg-[#fff5fa]">
+                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-2xl bg-[#fbf4ff] p-3 transition hover:bg-[#fff5fa]">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone="pink">{postTypeLabel(post.post_type)}</Badge>
                     <span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span>

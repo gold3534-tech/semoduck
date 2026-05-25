@@ -18,7 +18,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang="ko">
       <body>
         <SiteHeader />
-        <main className="mx-auto min-h-screen w-full max-w-[1536px] px-8 pb-20 pt-6">{children}</main>
+        <main className="mx-auto min-h-screen w-full max-w-5xl px-4 pb-14 pt-4 sm:px-5">{children}</main>
       </body>
     </html>
   );

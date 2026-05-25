@@ -48,12 +48,12 @@ export default async function MarketPage() {
   const { items, galleries, currentUserId, isAdmin } = await getData();
   return (
     <div className="space-y-6">
-      <section className="relative min-h-[15rem] overflow-hidden rounded-[2rem] border-2 border-[#ead0f4] bg-white/78 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] md:p-12">
-        <Image src="/semoduck-market-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-95" sizes="1536px" />
-        <div className="relative max-w-xl">
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#ead0f4] bg-white/82 p-4 shadow-[0_12px_34px_rgba(126,80,178,0.06)] md:p-5">
+        <Image src="/semoduck-market-hero.png" alt="" width={96} height={96} priority className="pointer-events-none absolute right-5 top-1/2 hidden h-20 w-20 -translate-y-1/2 rounded-2xl object-cover md:block" />
+        <div className="relative max-w-xl pr-0 md:pr-28">
           <p className="text-sm font-black text-[#ff6f9b]">유저거래</p>
-          <h1 className="mt-3 text-5xl font-black leading-tight text-[#6f4ab4] md:text-6xl">유저거래</h1>
-          <p className="mt-4 text-xl font-bold leading-8 text-[#44385a]">판매, 교환, 나눔으로 덕질템을 나눠요. 믿을 수 있는 덕후들과 안전하게 거래해 보세요.</p>
+          <h1 className="mt-1 text-2xl font-black leading-tight text-[#6f4ab4] md:text-3xl">유저거래</h1>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#44385a]">판매, 교환, 나눔으로 덕질템을 나누는 내부 게시판입니다.</p>
         </div>
       </section>
       <MarketBoard initialItems={items as any} galleries={galleries} currentUserId={currentUserId} isAdmin={isAdmin} />

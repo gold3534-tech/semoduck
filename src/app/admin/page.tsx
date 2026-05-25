@@ -405,12 +405,12 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden bg-gradient-to-br from-[#fff8fb] via-white to-[#f5edff] p-7">
-        <div className="pointer-events-none absolute right-8 top-6 text-5xl opacity-60">🛡️</div>
+      <Card className="relative overflow-hidden bg-gradient-to-br from-[#fff8fb] via-white to-[#f5edff] p-5">
+        <div className="pointer-events-none absolute right-8 top-6 text-4xl opacity-50">🛡️</div>
         <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-black text-[#ff6f9b]">관리자</p>
-          <h1 className="mt-2 text-3xl font-black text-[#3a285f]">세모덕 운영 관리</h1>
+          <h1 className="mt-1 text-2xl font-black text-[#3a285f]">세모덕 운영 관리</h1>
           <p className="mt-2 text-sm font-bold text-slate-500">건의, 신고, 공식 굿즈, 갤러리를 탭으로 나눠 관리합니다.</p>
         </div>
         <Badge tone="mint">
@@ -420,10 +420,10 @@ export default function AdminPage() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><Flag className="text-amber-500" /><p className="mt-3 text-sm font-bold text-slate-500">대기 신고</p><p className="mt-1 text-3xl font-black">{reportGroups.length}</p></Card>
-        <Card><Link2 className="text-mint" /><p className="mt-3 text-sm font-bold text-slate-500">건의</p><p className="mt-1 text-3xl font-black">{data.suggestions.length}</p></Card>
-        <Card><ImageIcon className="text-berry" /><p className="mt-3 text-sm font-bold text-slate-500">갤러리</p><p className="mt-1 text-3xl font-black">{data.galleries.length}</p></Card>
-        <Card><Trash2 className="text-rose-500" /><p className="mt-3 text-sm font-bold text-slate-500">상품</p><p className="mt-1 text-3xl font-black">{data.products.length}</p></Card>
+        <Card className="p-4"><Flag className="text-amber-500" /><p className="mt-2 text-sm font-bold text-slate-500">대기 신고</p><p className="mt-1 text-2xl font-black">{reportGroups.length}</p></Card>
+        <Card className="p-4"><Link2 className="text-mint" /><p className="mt-2 text-sm font-bold text-slate-500">건의</p><p className="mt-1 text-2xl font-black">{data.suggestions.length}</p></Card>
+        <Card className="p-4"><ImageIcon className="text-berry" /><p className="mt-2 text-sm font-bold text-slate-500">갤러리</p><p className="mt-1 text-2xl font-black">{data.galleries.length}</p></Card>
+        <Card className="p-4"><Trash2 className="text-rose-500" /><p className="mt-2 text-sm font-bold text-slate-500">상품</p><p className="mt-1 text-2xl font-black">{data.products.length}</p></Card>
       </div>
 
       <div className="flex flex-wrap gap-2 rounded-[1.5rem] border border-[#efd7e7] bg-white/80 p-2 shadow-soft">

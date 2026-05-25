@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { Gamepad2, Grid3X3, MonitorPlay, Search, Sparkles, Star, Tv, Users } from "lucide-react";
 import { GalleryCard } from "@/components/gallery-card";
 import { Card } from "@/components/ui/card";
@@ -90,9 +92,9 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[14rem_1fr]">
-      <aside className="space-y-4">
-        <Card className="grid gap-2 p-4">
+    <div className="grid gap-4 lg:grid-cols-[12rem_1fr]">
+      <aside className="space-y-3">
+        <Card className="grid gap-1.5 p-3">
           {categories.map((item, index) => {
             const Icon = categoryIcons[index] ?? Grid3X3;
             return (
@@ -100,7 +102,7 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
                 key={item}
                 type="button"
                 onClick={() => setCategory(item)}
-                className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-black transition ${
+                className={`flex min-h-10 items-center gap-2 rounded-2xl px-3 text-xs font-black transition ${
                   category === item ? "bg-[#ffeaf1] text-[#f15f91]" : "text-[#4b3a6d] hover:bg-[#fff4fa]"
                 }`}
               >
@@ -110,36 +112,69 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
             );
           })}
         </Card>
-        <Card className="bg-gradient-to-br from-[#fff8fb] to-[#fff1f7]">
-          <p className="font-black text-[#6f4ab4]">갤러리 제안</p>
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">원하는 공간이 없다면 건의함에서 관리자에게 알려주세요.</p>
+        <Card className="bg-gradient-to-br from-[#fff8fb] to-[#fff1f7] p-3">
+          <p className="text-sm font-black text-[#6f4ab4]">갤러리를 만들고</p>
+          <p className="mt-1 text-xs font-bold leading-5 text-slate-500">나만의 덕질 공간을 꾸며보세요.</p>
+          <Link href="/suggestions" className="mt-3 inline-flex h-9 items-center rounded-2xl bg-white px-3 text-xs font-black text-[#6f4ab4] ring-1 ring-[#ead8f4]">
+            갤러리 만들기 +
+          </Link>
         </Card>
       </aside>
-      <div className="space-y-5">
-      <Card className="grid gap-3 md:grid-cols-[1fr_auto]">
-        <div className="flex min-h-12 items-center gap-2 rounded-full border border-[#ead8f4] bg-white px-5 focus-within:border-[#b984e7]">
+      <div className="space-y-4">
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-[#ead0f4] bg-white/82 p-4 shadow-[0_12px_34px_rgba(126,80,178,0.06)]">
+          <Image src="/semoduck-gallery-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-90" sizes="1024px" />
+          <div className="relative max-w-md">
+            <h1 className="text-3xl font-black text-[#6f4ab4]">갤러리</h1>
+            <p className="mt-2 text-sm font-bold leading-6 text-[#44385a]">덕질 사진, 굿즈 자랑, 전시까지 다양한 갤러리를 구경해 보세요.</p>
+          </div>
+        </section>
+
+      <Card className="grid gap-3 p-3 md:grid-cols-[1fr_auto]">
+        <div className="flex min-h-10 items-center gap-2 rounded-full border border-[#ead8f4] bg-white px-4 focus-within:border-[#b984e7]">
           <Search size={18} className="text-[#8b61c8]" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="w-full bg-transparent font-bold outline-none"
-            placeholder="굿즈, 갤러리, 게시글 검색"
+            className="w-full bg-transparent text-sm font-bold outline-none"
+            placeholder={`${category === "전체" ? "갤러리" : category} 검색`}
           />
         </div>
         <p className="self-center text-sm font-black text-slate-500">{filtered.length.toLocaleString("ko-KR")}개 갤러리</p>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((gallery) => (
-          <GalleryCard
-            key={gallery.id}
-            gallery={gallery}
-            followed={followedSlugs.has(gallery.slug)}
-            followBusy={busySlug === gallery.slug}
-            onToggleFollow={toggleFollow}
-          />
-        ))}
-      </div>
+        <Card className="p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-black text-[#3a285f]">{category === "전체" ? "인기 갤러리" : `${category} 갤러리`}</h2>
+            <span className="text-xs font-black text-[#6f4ab4]">더보기 ›</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {filtered.slice(0, category === "전체" && !query ? 8 : filtered.length).map((gallery, index) => (
+              <GalleryCard
+                key={gallery.id}
+                gallery={gallery}
+                rank={index + 1}
+                compact={category !== "전체" || Boolean(query)}
+                followed={followedSlugs.has(gallery.slug)}
+                followBusy={busySlug === gallery.slug}
+                onToggleFollow={toggleFollow}
+              />
+            ))}
+          </div>
+        </Card>
+
+        {category === "전체" && !query ? (
+          <Card className="p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-black text-[#3a285f]">새로 생긴 갤러리 <span className="rounded-full bg-[#ff6f9b] px-2 py-1 text-xs text-white">NEW</span></h2>
+              <span className="text-xs font-black text-[#6f4ab4]">더보기 ›</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {items.slice(-4).map((gallery) => (
+                <GalleryCard key={`new-${gallery.id}`} gallery={gallery} compact followed={followedSlugs.has(gallery.slug)} followBusy={busySlug === gallery.slug} onToggleFollow={toggleFollow} />
+              ))}
+            </div>
+          </Card>
+        ) : null}
       </div>
     </div>
   );

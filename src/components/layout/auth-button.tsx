@@ -2,6 +2,7 @@
 
 import { LogIn, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -14,6 +15,7 @@ type SessionResponse = {
 };
 
 export function AuthButton() {
+  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -52,24 +54,26 @@ export function AuthButton() {
     await supabase.auth.signOut();
     setEmail(null);
     setNickname(null);
+    router.push("/");
+    router.refresh();
   }
 
   if (!ready) {
-    return <div className="h-9 w-28 animate-pulse rounded-lg bg-slate-200" />;
+    return <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />;
   }
 
   if (email) {
     return (
       <div className="flex items-center gap-2">
-        <span className="hidden max-w-32 truncate text-xs font-black text-slate-600 sm:inline" title={email}>
+        <span className="hidden max-w-24 truncate text-xs font-black text-slate-600 xl:inline" title={email}>
           {nickname ?? email}
         </span>
-        <Link href="/mypage" className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-ink px-3 text-xs font-black text-white">
-          <UserRound size={14} />
+        <Link href="/mypage" className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-ink px-3 text-xs font-black text-white">
+          <UserRound size={13} />
           마이
         </Link>
-        <button onClick={signOut} title={email} className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white px-3 text-xs font-black text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50">
-          <LogOut size={14} />
+        <button onClick={signOut} title={email} className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-white px-3 text-xs font-black text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50">
+          <LogOut size={13} />
           로그아웃
         </button>
       </div>
@@ -77,8 +81,8 @@ export function AuthButton() {
   }
 
   return (
-    <Link href="/login" className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-ink px-3 text-xs font-black text-white">
-      <LogIn size={14} />
+    <Link href="/login" className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-ink px-3 text-xs font-black text-white">
+      <LogIn size={13} />
       로그인
     </Link>
   );

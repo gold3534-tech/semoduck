@@ -133,16 +133,16 @@ export function MarketBoard({
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4">
+      <Card className="flex flex-wrap items-center justify-between gap-2 p-3">
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (
-            <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-4 py-2 text-sm font-black ${filter === item ? "bg-[#ff6f9b] text-white" : "bg-white text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]"}`}>
+            <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-3 py-1.5 text-xs font-black ${filter === item ? "bg-[#ff6f9b] text-white" : "bg-white text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]"}`}>
               {item}
             </button>
           ))}
         </div>
-        <Button onClick={() => setFormOpen((open) => !open)}>
+        <Button className="min-h-9 px-3 py-1.5 text-xs" onClick={() => setFormOpen((open) => !open)}>
           <Plus size={16} />
           거래 글쓰기
         </Button>
@@ -179,28 +179,28 @@ export function MarketBoard({
         </Card>
       ) : null}
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filtered.map((item) => (
-            <Card key={item.id} className="grid gap-5 overflow-hidden p-4 md:grid-cols-[15rem_1fr_auto] md:items-center">
+            <Card key={item.id} className="grid gap-4 overflow-hidden p-3 md:grid-cols-[12rem_1fr_auto] md:items-center">
               <Link href={`/market/${item.id}`} className="block">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="240px" /> : null}
+                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#f7f2fb]">
+                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="192px" /> : null}
                 </div>
               </Link>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
                   <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
                   <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
                 </div>
-                <Link href={`/market/${item.id}`} className="block text-xl font-black text-[#2f2352] hover:text-[#ff6f9b]">{item.title}</Link>
-                <p className="text-2xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
-                <div className="flex flex-wrap gap-2 text-sm font-bold text-slate-500">
-                  <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
-                  <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
+                <Link href={`/market/${item.id}`} className="block text-lg font-black text-[#2f2352] hover:text-[#ff6f9b]">{item.title}</Link>
+                <p className="text-xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
+                <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                  <span className="rounded-full bg-cloud px-2.5 py-1">{item.region || "거래 방식 미입력"}</span>
+                  <span className="rounded-full bg-cloud px-2.5 py-1">{formatDateTime(item.created_at)}</span>
                 </div>
-                <p className="text-sm font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
-                <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                <p className="text-xs font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
+                <p className="line-clamp-2 text-xs leading-5 text-slate-600">{item.description}</p>
               </div>
               <Link href={`/market/${item.id}`} className="hidden text-[#8b61c8] md:block">›</Link>
             </Card>
