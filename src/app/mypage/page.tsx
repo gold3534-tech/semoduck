@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Bookmark, Edit3, Heart, HeartHandshake, Loader2, MessageCircle, PenLine, Star, Trash2, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -99,7 +99,6 @@ function postList(posts: LinkedPost[], emptyText: string, onDelete?: (postId: st
 
 export default function MyPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [activity, setActivity] = useState<ActivityResponse | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [nicknameDraft, setNicknameDraft] = useState("");
@@ -107,7 +106,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const activeTab = normalizeTab(searchParams.get("tab"));
+  const [activeTab, setActiveTab] = useState<TabKey>("profile");
 
   async function load() {
     const response = await fetch("/api/me/activity", { cache: "no-store" });
@@ -123,6 +122,7 @@ export default function MyPage() {
   }
 
   useEffect(() => {
+    setActiveTab(normalizeTab(new URLSearchParams(window.location.search).get("tab")));
     load()
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "마이페이지 정보를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
@@ -142,6 +142,7 @@ export default function MyPage() {
   );
 
   function switchTab(tab: TabKey) {
+    setActiveTab(tab);
     router.replace(tab === "profile" ? "/mypage" : `/mypage?tab=${tab}`, { scroll: false });
   }
 

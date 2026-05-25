@@ -2,7 +2,7 @@
 
 import { LogIn, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -17,10 +17,10 @@ type SessionResponse = {
 export function AuthButton() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [nextPath, setNextPath] = useState(pathname || "/");
 
   async function loadProfile() {
     try {
@@ -34,6 +34,10 @@ export function AuthButton() {
       setReady(true);
     }
   }
+
+  useEffect(() => {
+    setNextPath(`${window.location.pathname}${window.location.search}`);
+  }, [pathname]);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -81,8 +85,6 @@ export function AuthButton() {
       </div>
     );
   }
-
-  const nextPath = `${pathname || "/"}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
   return (
     <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-ink px-3 text-xs font-black text-white">
