@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { MarketBoard } from "@/app/market/market-board";
 import { isAdminEmail } from "@/lib/auth";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
@@ -47,11 +48,14 @@ export default async function MarketPage() {
   const { items, galleries, currentUserId, isAdmin } = await getData();
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">유저거래</p>
-        <h1 className="mt-2 text-3xl font-black">판매, 교환, 나눔을 올리는 거래 게시판</h1>
-        <p className="mt-3 text-slate-600">세모덕은 결제나 배송을 대행하지 않고, 유저가 직접 거래 글을 관리합니다.</p>
-      </div>
+      <section className="relative min-h-[15rem] overflow-hidden rounded-[2rem] border-2 border-[#ead0f4] bg-white/78 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] md:p-12">
+        <Image src="/semoduck-market-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-95" sizes="1536px" />
+        <div className="relative max-w-xl">
+          <p className="text-sm font-black text-[#ff6f9b]">유저거래</p>
+          <h1 className="mt-3 text-5xl font-black leading-tight text-[#6f4ab4] md:text-6xl">유저거래</h1>
+          <p className="mt-4 text-xl font-bold leading-8 text-[#44385a]">판매, 교환, 나눔으로 덕질템을 나눠요. 믿을 수 있는 덕후들과 안전하게 거래해 보세요.</p>
+        </div>
+      </section>
       <MarketBoard initialItems={items as any} galleries={galleries} currentUserId={currentUserId} isAdmin={isAdmin} />
     </div>
   );

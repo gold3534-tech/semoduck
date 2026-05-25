@@ -43,9 +43,9 @@ export function GalleryCard({ gallery, followed = false, followBusy = false, onT
       aria-label={`${gallery.name}로 이동`}
       onClick={openGallery}
       onKeyDown={handleKeyDown}
-      className="group h-full cursor-pointer overflow-hidden rounded-lg border border-slate-100 bg-white p-0 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-berry/30 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-berry/40"
+      className="group h-full cursor-pointer overflow-hidden rounded-2xl border border-[#f1dbe8] bg-white/86 p-0 shadow-soft transition duration-200 hover:-translate-y-1 hover:border-[#ff9fc0] hover:shadow-[0_24px_70px_rgba(255,111,155,0.14)] focus:outline-none focus:ring-2 focus:ring-[#b984e7]/40"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/9] overflow-hidden bg-[#f7f2fb]">
         <Image
           src={gallery.thumbnail}
           alt=""
@@ -61,8 +61,8 @@ export function GalleryCard({ gallery, followed = false, followBusy = false, onT
             aria-pressed={followed}
             className={`absolute right-3 top-3 inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-black shadow-sm ring-1 transition ${
               followed
-                ? "bg-sun text-ink ring-sun/70 hover:bg-sun/90"
-                : "bg-white/95 text-slate-700 ring-slate-200 hover:bg-berry hover:text-white hover:ring-berry"
+                ? "bg-[#fff2bd] text-[#3a285f] ring-[#ffe08a] hover:bg-[#ffeaa3]"
+                : "bg-white/95 text-slate-700 ring-[#ead8f4] hover:bg-[#ff6f9b] hover:text-white hover:ring-[#ff6f9b]"
             } disabled:cursor-wait disabled:opacity-70`}
           >
             <Star size={14} className={followed ? "fill-current" : ""} />
@@ -73,7 +73,7 @@ export function GalleryCard({ gallery, followed = false, followBusy = false, onT
       <div className="space-y-3 p-4">
         <div>
           <Badge tone="mint">{gallery.category}</Badge>
-          <h2 className="mt-2 text-lg font-black text-ink transition group-hover:text-berry">{gallery.name}</h2>
+          <h2 className="mt-2 text-lg font-black text-[#2f2352] transition group-hover:text-[#ff6f9b]">{gallery.name}</h2>
         </div>
         <p className="line-clamp-2 text-sm leading-6 text-slate-600">{gallery.description}</p>
         <div className="flex items-center gap-2 text-sm font-bold text-slate-500">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Search } from "lucide-react";
+import { ExternalLink, Grid3X3, Heart, Loader2, Package, Search, ShieldCheck, Sparkles, Star, Truck } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,20 +80,48 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">굿즈 검색</p>
-        <h1 className="mt-2 text-3xl font-black">팬덤 굿즈와 판매 링크를 찾아봐요</h1>
-      </div>
+      <section className="relative min-h-[16.5rem] overflow-hidden rounded-[2rem] border-2 border-[#cfa9ed] bg-white/78 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] md:p-12">
+        <Image src="/semoduck-goods-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-95" sizes="1536px" />
+        <div className="relative max-w-3xl">
+          <p className="text-sm font-black text-[#ff6f9b]">굿즈 검색</p>
+          <h1 className="mt-3 text-5xl font-black leading-tight text-[#6f4ab4] md:text-6xl">굿즈 검색</h1>
+          <p className="mt-3 text-lg font-bold leading-7 text-[#44385a]">원하는 굿즈를 검색하고 원하는 상품을 찾아보세요! 세상의 모든 덕질, 세모덕이 함께할게요!</p>
+          <form onSubmit={searchGoods} className="mt-7 flex max-w-3xl items-center gap-3 rounded-full border-2 border-[#9b63d6] bg-white px-6 py-3 shadow-[0_14px_40px_rgba(163,108,224,0.14)]">
+            <Search size={24} className="text-[#6f4ab4]" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-lg font-bold outline-none placeholder:text-slate-400" placeholder="쿠로미 키링" />
+            <Button disabled={loading} className="hidden sm:inline-flex">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+              검색
+            </Button>
+          </form>
+        </div>
+      </section>
+
+      <Card className="grid gap-3 md:grid-cols-6">
+        {[
+          ["전체", Grid3X3],
+          ["인기", Star],
+          ["신상품", Sparkles],
+          ["거래중", Package],
+          ["공식 우선", ShieldCheck],
+          ["배송", Truck]
+        ].map(([label, Icon]) => (
+          <button key={label as string} type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
+            <Icon size={16} />
+            {label as string}
+          </button>
+        ))}
+      </Card>
 
       <Card>
         <form onSubmit={searchGoods} className="grid gap-3 md:grid-cols-[1fr_auto]">
-          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 focus-within:border-berry">
-            <Search size={18} className="text-slate-400" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full outline-none" placeholder="쿠로미 키링, 포켓몬 카드, BTS 포토카드" />
+          <div className="flex min-h-12 items-center gap-2 rounded-full border border-[#ead8f4] bg-white px-5 focus-within:border-[#b984e7]">
+            <Search size={18} className="text-[#8b61c8]" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full bg-transparent font-bold outline-none" placeholder="다시 검색" />
           </div>
           <Button disabled={loading}>
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            네이버 검색
+            검색
           </Button>
         </form>
       </Card>
@@ -108,21 +136,23 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
             {items.length ? <p className="text-sm font-black text-slate-500">총 {items.length}개 · {page} / {totalPages}페이지</p> : null}
           </div>
           {error && <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{error}</p>}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             {pagedItems.map((item) => (
-              <Card key={item.id} className="flex h-full flex-col overflow-hidden p-0">
-                <div className="relative aspect-square overflow-hidden rounded-t-lg bg-slate-100">
+              <Card key={item.id} className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1">
+                <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
                   {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" /> : null}
+                  <span className="absolute left-3 top-3 rounded-full bg-[#ff6f9b] px-3 py-1 text-xs font-black text-white">상품</span>
+                  <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]"><Heart size={18} /></span>
                 </div>
                 <div className="flex flex-1 flex-col gap-3 p-4">
-                  <p className="line-clamp-2 font-black text-ink">{item.title}</p>
+                  <p className="line-clamp-2 font-black text-[#2f2352]">{item.title}</p>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="mint">네이버</Badge>
                     <Badge>{item.mallName}</Badge>
                   </div>
                   {item.category && <p className="line-clamp-2 text-xs font-bold text-slate-400">{item.category}</p>}
-                  <p className="mt-auto text-lg font-black">{formatPrice(item.price)}</p>
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-bold text-white">
+                  <p className="mt-auto text-lg font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-4 text-sm font-black text-white">
                     판매 링크 열기
                     <ExternalLink size={15} />
                   </a>

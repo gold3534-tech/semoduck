@@ -42,11 +42,11 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="grid gap-6 lg:grid-cols-[25rem_1fr]">
-      <Card className="h-fit">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">
+      <Card className="h-fit overflow-hidden p-0">
+        <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
           {product.image_url ? <Image src={product.image_url} alt={product.title} fill className="object-cover" sizes="400px" /> : null}
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="p-5 flex flex-wrap gap-2">
           <Badge>#{product.category}</Badge>
           {product.brand ? <Badge>#{product.brand}</Badge> : null}
         </div>
@@ -58,8 +58,8 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
             <Badge tone="mint">{product.category}</Badge>
             {product.is_official_product && <Badge tone="pink">공식 상품</Badge>}
           </div>
-          <h1 className="mt-3 text-3xl font-black">{product.title}</h1>
-          <p className="mt-3 leading-7 text-slate-600">{product.description}</p>
+          <h1 className="mt-3 text-4xl font-black text-[#3a285f]">{product.title}</h1>
+          <p className="mt-3 font-bold leading-7 text-slate-600">{product.description}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <ReportButton targetType="product" targetId={id} />
           </div>
@@ -79,7 +79,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
                   </div>
                   <p className="mt-1 text-sm font-bold text-slate-500">배송비 {offer.shipping_fee > 0 ? formatPrice(offer.shipping_fee) : "확인 필요"}</p>
                 </div>
-                <a href={offer.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white">
+                <a href={offer.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-4 text-sm font-black text-white">
                   {offer.price > 0 ? formatPrice(offer.price) : "가격 확인"}
                   <ExternalLink size={15} />
                 </a>
@@ -95,7 +95,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
             {(relatedPosts ?? []).map((post: any) => {
               const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
               return (
-                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-lg bg-cloud p-4 transition hover:bg-pink-50">
+                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-2xl bg-[#fbf4ff] p-4 transition hover:bg-[#fff5fa]">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone="pink">{postTypeLabel(post.post_type)}</Badge>
                     <span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span>

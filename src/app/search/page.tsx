@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink, Search, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
@@ -43,18 +43,19 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">통합검색</p>
-        <h1 className="mt-2 text-3xl font-black">{keyword ? `"${keyword}" 검색 결과` : "검색어를 입력해 주세요"}</h1>
-      </div>
-
-      <Card>
-        <form action="/search" className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 focus-within:border-berry">
-          <Search size={18} className="shrink-0 text-slate-400" />
-          <input name="q" defaultValue={keyword} className="min-w-0 flex-1 outline-none" placeholder="갤러리, 유저거래, 굿즈 통합검색" />
-          <button className="shrink-0 whitespace-nowrap rounded-lg bg-ink px-5 py-2 text-sm font-black text-white">검색</button>
+      <section className="relative overflow-hidden rounded-[2rem] border border-[#efd7e7] bg-gradient-to-br from-[#fff8fb] via-[#fbf1ff] to-[#fffaf0] p-7 shadow-soft md:p-10">
+        <div className="pointer-events-none absolute right-8 top-8 hidden text-[#d7b9f4] md:block">
+          <Sparkles size={72} />
+        </div>
+        <p className="text-sm font-black text-[#ff6f9b]">통합검색</p>
+        <h1 className="mt-2 text-3xl font-black text-[#3a285f] md:text-4xl">{keyword ? `"${keyword}" 검색 결과` : "검색어를 입력해 주세요"}</h1>
+        <p className="mt-3 text-sm font-bold text-[#70657f]">갤러리, 유저거래, 굿즈 링크를 한 번에 찾아볼 수 있어요.</p>
+        <form action="/search" className="mt-6 flex min-h-14 max-w-3xl items-center gap-3 rounded-full border-2 border-[#e5c9ef] bg-white px-5 py-2 shadow-[0_14px_40px_rgba(163,108,224,0.12)] focus-within:border-[#a36ce0]">
+          <Search size={20} className="shrink-0 text-[#8b61c8]" />
+          <input name="q" defaultValue={keyword} className="min-w-0 flex-1 bg-transparent font-bold outline-none placeholder:text-slate-400" placeholder="갤러리, 유저거래, 굿즈 통합검색" />
+          <button className="shrink-0 whitespace-nowrap rounded-2xl bg-[#3a285f] px-6 py-3 text-sm font-black text-white">검색</button>
         </form>
-      </Card>
+      </section>
 
       <section className="space-y-3">
         <div className="flex items-end justify-between">
@@ -64,8 +65,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <div className="grid gap-4 md:grid-cols-3">
           {galleries.map((gallery) => (
             <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="block">
-              <Card className="grid h-full grid-cols-[6rem_1fr] gap-3 transition hover:bg-pink-50">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">
+              <Card className="grid h-full grid-cols-[6rem_1fr] gap-3 transition hover:-translate-y-1 hover:bg-[#fff7fb]">
+                <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f2fb]">
                   {gallery.thumbnail_url ? <Image src={gallery.thumbnail_url} alt="" fill className="object-cover" sizes="96px" /> : null}
                 </div>
                 <div className="min-w-0">
@@ -89,8 +90,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <div className="grid gap-4 md:grid-cols-3">
           {marketItems.map((item) => (
             <Link key={item.id} href={`/market/${item.id}`} className="block">
-              <Card className="overflow-hidden p-0 transition hover:bg-pink-50">
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Card className="overflow-hidden p-0 transition hover:-translate-y-1 hover:bg-[#fff7fb]">
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
                   {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
                 </div>
                 <div className="space-y-2 p-4">
@@ -118,15 +119,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {goodsResult.error ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-700">{goodsResult.error}</p> : null}
         <div className="grid gap-4 md:grid-cols-4">
           {goods.map((item) => (
-            <Card key={item.id} className="flex h-full flex-col overflow-hidden p-0">
-              <div className="relative aspect-square overflow-hidden bg-slate-100">
+            <Card key={item.id} className="flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1">
+              <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
                 {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" /> : null}
               </div>
               <div className="flex flex-1 flex-col gap-2 p-4">
                 <p className="line-clamp-2 font-black">{item.title}</p>
                 <p className="text-xs font-bold text-slate-500">{item.mallName}</p>
-                <p className="mt-auto text-lg font-black">{formatPrice(item.price)}</p>
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-white">
+                <p className="mt-auto text-lg font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-[#3a285f] px-3 text-sm font-black text-white">
                   열기 <ExternalLink size={14} />
                 </a>
               </div>

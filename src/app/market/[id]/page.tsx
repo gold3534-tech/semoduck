@@ -46,8 +46,8 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div className="grid gap-6 lg:grid-cols-[28rem_1fr]">
-      <Card className="h-fit">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">
+      <Card className="h-fit overflow-hidden p-0">
+        <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
           {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="448px" /> : null}
         </div>
       </Card>
@@ -61,8 +61,8 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
             </div>
             {isOwner || isAdmin ? <MarketOwnerActions marketItemId={id} currentStatus={item.status} canEdit={isOwner} /> : null}
           </div>
-          <h1 className="mt-4 text-3xl font-black">{item.title}</h1>
-          <p className="mt-3 text-2xl font-black">{tradeValueLabel(item.trade_type, item.price)}</p>
+          <h1 className="mt-4 text-4xl font-black text-[#3a285f]">{item.title}</h1>
+          <p className="mt-3 text-2xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold text-slate-500">
             <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
             <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
@@ -85,7 +85,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
               const writer = Array.isArray(inquiry.profiles) ? inquiry.profiles[0] : inquiry.profiles;
               const canEdit = currentUserId === inquiry.user_id;
               return (
-                <div key={inquiry.id} className="relative rounded-lg bg-cloud p-4">
+                <div key={inquiry.id} className="relative rounded-2xl bg-[#fbf4ff] p-4">
                   {canEdit ? <InquiryActions inquiryId={inquiry.id} initialContent={inquiry.content} /> : null}
                   <p className="font-black">{writer?.nickname ?? writer?.email ?? "회원"}</p>
                   <p className="mt-2 whitespace-pre-wrap pr-20 text-slate-700">{inquiry.content}</p>

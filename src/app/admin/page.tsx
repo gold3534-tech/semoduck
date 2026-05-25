@@ -405,14 +405,18 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="flex flex-wrap items-center justify-between gap-4">
+      <Card className="relative overflow-hidden bg-gradient-to-br from-[#fff8fb] via-white to-[#f5edff] p-7">
+        <div className="pointer-events-none absolute right-8 top-6 text-5xl opacity-60">🛡️</div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-black text-berry">관리자</p>
-          <h1 className="mt-2 text-3xl font-black">세모덕 운영 관리</h1>
+          <p className="text-sm font-black text-[#ff6f9b]">관리자</p>
+          <h1 className="mt-2 text-3xl font-black text-[#3a285f]">세모덕 운영 관리</h1>
+          <p className="mt-2 text-sm font-bold text-slate-500">건의, 신고, 공식 굿즈, 갤러리를 탭으로 나눠 관리합니다.</p>
         </div>
         <Badge tone="mint">
           <ShieldCheck size={14} /> admin
         </Badge>
+        </div>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -422,9 +426,9 @@ export default function AdminPage() {
         <Card><Trash2 className="text-rose-500" /><p className="mt-3 text-sm font-bold text-slate-500">상품</p><p className="mt-1 text-3xl font-black">{data.products.length}</p></Card>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-lg bg-cloud p-2">
+      <div className="flex flex-wrap gap-2 rounded-[1.5rem] border border-[#efd7e7] bg-white/80 p-2 shadow-soft">
         {tabs.map(([key, label]) => (
-          <button key={key} type="button" onClick={() => setActiveTab(key)} className={`min-h-10 rounded-lg px-4 text-sm font-black ${activeTab === key ? "bg-ink text-white" : "text-slate-600 hover:bg-white"}`}>
+          <button key={key} type="button" onClick={() => setActiveTab(key)} className={`min-h-11 rounded-2xl px-5 text-sm font-black transition ${activeTab === key ? "bg-gradient-to-r from-[#ff6f9b] to-[#a36ce0] text-white shadow-soft" : "text-slate-600 hover:bg-[#fff1f7]"}`}>
             {label}
           </button>
         ))}

@@ -137,7 +137,7 @@ export function MarketBoard({
       <Card className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (
-            <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-3 py-2 text-sm font-black ${filter === item ? "bg-berry text-white" : "bg-slate-100 text-slate-600 hover:bg-mint/60"}`}>
+            <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-4 py-2 text-sm font-black ${filter === item ? "bg-[#ff6f9b] text-white" : "bg-white text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]"}`}>
               {item}
             </button>
           ))}
@@ -151,21 +151,21 @@ export function MarketBoard({
       {formOpen ? (
         <Card className="grid gap-3">
           <div className="grid gap-3 md:grid-cols-3">
-            <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-11 rounded-lg border px-3">
+            <select value={form.gallerySlug} onChange={(event) => setForm({ ...form, gallerySlug: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3">
               {galleries.map((gallery) => <option key={gallery.slug} value={gallery.slug}>{gallery.name}</option>)}
             </select>
-            <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-11 rounded-lg border px-3">
+            <select value={form.tradeType} onChange={(event) => setForm({ ...form, tradeType: event.target.value as TradeType })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3">
               <option value="sell">판매</option>
               <option value="exchange">교환</option>
               <option value="giveaway">나눔</option>
             </select>
-            <input value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="가격" />
+            <input value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="가격" />
           </div>
-          <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="제목" />
-          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-28 rounded-lg border p-3" placeholder="설명" />
+          <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="제목" />
+          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-28 rounded-2xl border border-[#ead8f4] p-3" placeholder="설명" />
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <input value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="min-h-11 rounded-lg border px-3" placeholder="지역 또는 거래 방식" />
-            <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-black ring-1 ring-slate-200">
+            <input value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="min-h-11 rounded-2xl border border-[#ead8f4] px-3" placeholder="지역 또는 거래 방식" />
+            <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-black ring-1 ring-[#ead8f4]">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               이미지 업로드
               <input type="file" accept="image/*" className="hidden" onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])} />
@@ -179,22 +179,22 @@ export function MarketBoard({
         </Card>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-4">
         {filtered.map((item) => (
-            <Card key={item.id} className="overflow-hidden p-0">
+            <Card key={item.id} className="grid gap-5 overflow-hidden p-4 md:grid-cols-[15rem_1fr_auto] md:items-center">
               <Link href={`/market/${item.id}`} className="block">
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#f7f2fb]">
+                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="240px" /> : null}
                 </div>
               </Link>
-              <div className="space-y-3 p-4">
+              <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {item.galleries?.name ? <Badge>{item.galleries.name}</Badge> : null}
                   <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
                   <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
                 </div>
-                <Link href={`/market/${item.id}`} className="block text-lg font-black hover:text-berry">{item.title}</Link>
-                <p className="text-2xl font-black">{tradeValueLabel(item.trade_type, item.price)}</p>
+                <Link href={`/market/${item.id}`} className="block text-xl font-black text-[#2f2352] hover:text-[#ff6f9b]">{item.title}</Link>
+                <p className="text-2xl font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
                 <div className="flex flex-wrap gap-2 text-sm font-bold text-slate-500">
                   <span className="rounded-full bg-cloud px-3 py-1">{item.region || "거래 방식 미입력"}</span>
                   <span className="rounded-full bg-cloud px-3 py-1">{formatDateTime(item.created_at)}</span>
@@ -202,6 +202,7 @@ export function MarketBoard({
                 <p className="text-sm font-bold text-slate-500">작성자 {item.profiles?.nickname ?? item.profiles?.email ?? "회원"}</p>
                 <p className="line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
               </div>
+              <Link href={`/market/${item.id}`} className="hidden text-[#8b61c8] md:block">›</Link>
             </Card>
         ))}
       </div>

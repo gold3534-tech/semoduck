@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, ChevronLeft, ChevronRight, Heart, HeartHandshake, Loader2, MessageCircle, PenLine, Settings, Star, Trash2, UserRound } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, Heart, HeartHandshake, Loader2, MessageCircle, PenLine, Settings, Star, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,18 +117,19 @@ export default function MyPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="grid gap-5 lg:grid-cols-[1fr_28rem]">
+      <Card className="relative overflow-hidden rounded-[2rem] border-2 border-[#ead0f4] bg-white/80 p-8 shadow-[0_18px_60px_rgba(126,80,178,0.08)] lg:grid lg:grid-cols-[1fr_28rem] lg:gap-5">
+        <div className="pointer-events-none absolute right-8 top-8 hidden text-7xl md:block">✨</div>
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-lg bg-ink text-white">
-            <UserRound size={28} />
+          <div className="relative h-32 w-32 overflow-hidden rounded-full bg-[#fff0f6] ring-8 ring-[#ffe4f0]">
+            <Image src="/semoduck-profile-duck.png" alt="" fill className="object-cover" sizes="128px" />
           </div>
           <div>
-            <p className="text-sm font-black text-berry">마이페이지</p>
-            <h1 className="text-2xl font-black">{activity.profile.nickname}</h1>
+            <p className="text-sm font-black text-[#ff6f9b]">마이페이지</p>
+            <h1 className="text-3xl font-black text-[#3a285f]">{activity.profile.nickname}</h1>
             <p className="text-sm font-bold text-slate-500">{activity.profile.email}</p>
           </div>
         </div>
-        <div className="rounded-lg bg-cloud p-4">
+        <div className="rounded-2xl bg-[#f8f2fb] p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-sm font-black">
               <Settings size={16} />
@@ -145,7 +147,7 @@ export default function MyPage() {
                 <button
                   key={interest}
                   onClick={() => setSelectedInterests((current) => (active ? current.filter((item) => item !== interest) : [...current, interest]))}
-                  className={`rounded-full px-3 py-1.5 text-xs font-black ${active ? "bg-pink-100 text-pink-700" : "bg-white text-slate-500"}`}
+                  className={`rounded-full px-3 py-1.5 text-xs font-black ${active ? "bg-[#ffe1ec] text-[#f05f8e]" : "bg-white text-slate-500"}`}
                 >
                   {interest}
                 </button>
@@ -158,8 +160,8 @@ export default function MyPage() {
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map(([label, value, Icon, href]) => {
           const inner = (
-            <Card className={href ? "transition hover:bg-pink-50" : ""}>
-              <Icon size={20} className="text-berry" />
+            <Card className={href ? "transition hover:-translate-y-1 hover:bg-[#fff5fa]" : ""}>
+              <Icon size={20} className="text-[#9d6de1]" />
               <p className="mt-3 text-sm font-bold text-slate-500">{label}</p>
               <p className="mt-1 text-2xl font-black">{value}</p>
             </Card>
@@ -189,7 +191,7 @@ export default function MyPage() {
           </div>
           <div className="space-y-3">
             {pagedPosts.map((post) => (
-              <div key={post.id} className="rounded-lg bg-cloud p-4 hover:bg-pink-50">
+              <div key={post.id} className="rounded-2xl bg-[#fbf4ff] p-4 hover:bg-[#fff5fa]">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <Link href={`/posts/${post.id}`} className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +235,7 @@ export default function MyPage() {
             <h2 className="font-black">내 댓글</h2>
             <div className="mt-3 space-y-2">
               {activity.comments.slice(0, 5).map((comment) => (
-                <Link key={comment.id} href={`/posts/${comment.posts?.id ?? ""}`} className="block rounded-lg bg-cloud p-3 text-sm font-bold text-slate-700 hover:text-berry">
+                <Link key={comment.id} href={`/posts/${comment.posts?.id ?? ""}`} className="block rounded-2xl bg-[#fbf4ff] p-3 text-sm font-bold text-slate-700 hover:text-[#ff6f9b]">
                   <p className="line-clamp-2">{comment.content}</p>
                   <p className="mt-1 text-xs text-slate-400">{comment.posts?.title} · {formatDateTime(comment.created_at)}</p>
                 </Link>
@@ -248,7 +250,7 @@ export default function MyPage() {
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {activity.followedGalleries.map((gallery) => (
-                <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-full bg-teal-100 px-3 py-2 text-sm font-black text-teal-700 hover:bg-teal-200">
+                <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-full bg-[#d8fbf4] px-3 py-2 text-sm font-black text-teal-700 hover:bg-teal-200">
                   {gallery.name}
                 </Link>
               ))}

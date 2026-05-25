@@ -15,11 +15,12 @@ export function OnboardingForm({ interests }: { interests: string[] }) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">관심사 온보딩</p>
-        <h1 className="mt-2 text-3xl font-black">좋아하는 장르와 키워드를 골라주세요</h1>
+      <Card className="relative overflow-hidden bg-gradient-to-br from-[#fff8fb] via-white to-[#f5edff] p-7">
+        <div className="pointer-events-none absolute right-8 top-6 text-5xl opacity-70">✨</div>
+        <p className="text-sm font-black text-[#ff6f9b]">관심사 온보딩</p>
+        <h1 className="mt-2 text-3xl font-black text-[#3a285f]">좋아하는 장르와 키워드를 골라주세요</h1>
         <p className="mt-3 text-slate-600">선택한 관심사는 추천 굿즈와 갤러리 탐색의 기본값으로 사용할 수 있습니다.</p>
-      </div>
+      </Card>
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
           {interests.map((interest) => {
@@ -29,7 +30,7 @@ export function OnboardingForm({ interests }: { interests: string[] }) {
                 key={interest}
                 onClick={() => toggle(interest)}
                 className={`flex min-h-14 items-center justify-between rounded-lg border px-4 text-left font-black transition ${
-                  active ? "border-berry bg-pink-50 text-berry" : "border-slate-200 bg-white text-slate-600 hover:border-mint"
+                  active ? "border-[#ff9bc0] bg-[#fff1f7] text-[#ff5f8d]" : "border-[#ead8f4] bg-white text-slate-600 hover:border-[#8bd8d0]"
                 }`}
               >
                 {interest}

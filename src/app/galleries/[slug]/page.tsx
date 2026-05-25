@@ -22,7 +22,8 @@ const galleryGoodsTerms: Record<string, string[]> = {
   onepiece: ["원피스", "One Piece", "루피"],
   stellive: ["스텔라이브", "Stellive", "Fanding"],
   "webtoon-goods": ["웹툰", "웹툰프렌즈", "WEBTOON FRIENDS"],
-  bts: ["BTS", "방탄소년단"]
+  bts: ["BTS", "방탄소년단"],
+  ghibli: ["지브리", "스튜디오 지브리", "도토리숲", "토토로", "키키", "하울"]
 };
 
 function termsForGallery(gallery: { slug: string; name: string; category: string }) {
@@ -66,12 +67,13 @@ export default async function GalleryDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
-      <Card className="grid gap-5 md:grid-cols-[1fr_auto]">
-        <div><Badge tone="mint">{gallery.category}</Badge><h1 className="mt-3 text-3xl font-black">{gallery.name}</h1><p className="mt-3 max-w-2xl leading-7 text-slate-600">{gallery.description}</p></div>
+      <Card className="relative grid gap-5 overflow-hidden rounded-[2rem] border-[#dfc5ee] bg-gradient-to-br from-[#fff8fb] via-white to-[#fff4fa] p-8 md:grid-cols-[1fr_auto]">
+        <div className="pointer-events-none absolute right-8 top-6 hidden text-7xl md:block">💬</div>
+        <div><Badge tone="mint">{gallery.category}</Badge><h1 className="mt-3 text-4xl font-black text-[#6f4ab4]">{gallery.name}</h1><p className="mt-3 max-w-2xl font-bold leading-7 text-slate-600">{gallery.description}</p></div>
         <div className="flex flex-col items-start justify-between gap-4 md:items-end"><div className="flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Users size={16} /> {Number(gallery.follower_count ?? 0).toLocaleString("ko-KR")} 팔로워</span><span>{Number(gallery.post_count ?? 0).toLocaleString("ko-KR")} 게시글</span></div><div className="flex flex-wrap gap-2">{officialSource ? <a href={officialSource.officialSiteUrl} target="_blank" rel="noopener noreferrer"><Button variant="secondary"><ExternalLink size={16} /> 공식 SNS</Button></a> : null}{officialSource?.officialShopUrl ? <a href={officialSource.officialShopUrl} target="_blank" rel="noopener noreferrer"><Button variant="secondary"><ExternalLink size={16} /> 공식몰</Button></a> : null}<FollowGalleryButton slug={slug} initialFollowed={Boolean(follow)} /><Link href={`/posts/new?gallery=${slug}`}><Button><PenLine size={16} /> 글쓰기</Button></Link></div></div>
       </Card>
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-        <section className="space-y-4"><h2 className="text-2xl font-black">갤러리 최신글</h2>{(posts ?? []).map((post) => { const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles; return <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.post_type)}</Badge><span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span><span className="text-xs font-bold text-slate-400">{formatDateTime(post.created_at)}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 text-sm font-bold text-slate-500">좋아요 {post.like_count} · 댓글 {post.comment_count} · 스크랩 {post.bookmark_count}</p></Card></Link>; })}{!(posts ?? []).length && <Card>아직 작성된 글이 없습니다.</Card>}</section>
+        <section className="space-y-4"><h2 className="text-2xl font-black text-[#2f2352]">갤러리 최신글</h2>{(posts ?? []).map((post) => { const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles; return <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-[#fff5fa]"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.post_type)}</Badge><span className="text-xs font-bold text-slate-500">{profile?.nickname ?? profile?.email ?? "회원"}</span><span className="text-xs font-bold text-slate-400">{formatDateTime(post.created_at)}</span></div><p className="mt-2 text-lg font-black text-[#2f2352]">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 text-sm font-bold text-slate-500">좋아요 {post.like_count} · 댓글 {post.comment_count} · 스크랩 {post.bookmark_count}</p></Card></Link>; })}{!(posts ?? []).length && <Card>아직 작성된 글이 없습니다.</Card>}</section>
         <aside className="space-y-4">
           <div><p className="text-sm font-black text-berry">공식몰 우선</p><h2 className="mt-1 text-xl font-black">이 갤러리 추천 굿즈</h2></div>
           <div className="grid gap-4">{goods.map((product) => <ProductCard key={product.id} product={product} />)}</div>

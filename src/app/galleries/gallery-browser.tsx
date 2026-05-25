@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Gamepad2, Grid3X3, MonitorPlay, Search, Sparkles, Star, Tv, Users } from "lucide-react";
 import { GalleryCard } from "@/components/gallery-card";
 import { Card } from "@/components/ui/card";
 import type { Gallery } from "@/types/domain";
 
 const categories = ["전체", "캐릭터", "게임", "애니", "웹툰", "아이돌", "버튜버"];
+const categoryIcons = [Grid3X3, Star, Gamepad2, Tv, MonitorPlay, Sparkles, Users];
 
 type ActivityResponse = {
   followedGalleries?: Array<{ slug?: string | null } | null>;
@@ -89,31 +90,43 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
   };
 
   return (
-    <>
+    <div className="grid gap-6 lg:grid-cols-[14rem_1fr]">
+      <aside className="space-y-4">
+        <Card className="grid gap-2 p-4">
+          {categories.map((item, index) => {
+            const Icon = categoryIcons[index] ?? Grid3X3;
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setCategory(item)}
+                className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-black transition ${
+                  category === item ? "bg-[#ffeaf1] text-[#f15f91]" : "text-[#4b3a6d] hover:bg-[#fff4fa]"
+                }`}
+              >
+                <Icon size={18} />
+                {item}
+              </button>
+            );
+          })}
+        </Card>
+        <Card className="bg-gradient-to-br from-[#fff8fb] to-[#fff1f7]">
+          <p className="font-black text-[#6f4ab4]">갤러리 제안</p>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">원하는 공간이 없다면 건의함에서 관리자에게 알려주세요.</p>
+        </Card>
+      </aside>
+      <div className="space-y-5">
       <Card className="grid gap-3 md:grid-cols-[1fr_auto]">
-        <div className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 focus-within:border-berry">
-          <Search size={18} className="text-slate-400" />
+        <div className="flex min-h-12 items-center gap-2 rounded-full border border-[#ead8f4] bg-white px-5 focus-within:border-[#b984e7]">
+          <Search size={18} className="text-[#8b61c8]" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="w-full outline-none"
+            className="w-full bg-transparent font-bold outline-none"
             placeholder="굿즈, 갤러리, 게시글 검색"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setCategory(item)}
-              className={`min-h-10 rounded-full px-4 text-sm font-black transition ${
-                category === item ? "bg-berry text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-mint/60 hover:text-ink"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+        <p className="self-center text-sm font-black text-slate-500">{filtered.length.toLocaleString("ko-KR")}개 갤러리</p>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -127,6 +140,7 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
           />
         ))}
       </div>
-    </>
+      </div>
+    </div>
   );
 }

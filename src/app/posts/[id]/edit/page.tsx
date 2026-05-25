@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { EditPostForm } from "@/app/posts/[id]/edit/edit-form";
+import { Card } from "@/components/ui/card";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -16,10 +17,10 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <p className="text-sm font-black text-berry">게시글 수정</p>
-        <h1 className="mt-2 text-3xl font-black">작성한 글을 다듬어요</h1>
-      </div>
+      <Card className="bg-gradient-to-br from-[#fff8fb] via-white to-[#f5edff] p-7">
+        <p className="text-sm font-black text-[#ff6f9b]">게시글 수정</p>
+        <h1 className="mt-2 text-3xl font-black text-[#3a285f]">작성한 글을 다듬어요</h1>
+      </Card>
       <EditPostForm postId={post.id} initialTitle={post.title} initialContent={post.content} />
     </div>
   );

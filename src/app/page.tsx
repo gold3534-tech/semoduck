@@ -1,11 +1,25 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Flame, MessageCircle, ShoppingBag, Sparkles, Star } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronRight,
+  Grid3X3,
+  Heart,
+  MessageCircle,
+  Package,
+  PenLine,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Store
+} from "lucide-react";
 import { HomeInterestCarousel, type HomeInterestItem } from "@/app/home-interest-carousel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
+import { formatDateTime, formatPrice, postTypeLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import { fallbackRecommendedProducts, productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -79,6 +93,11 @@ function shuffled<T>(items: T[]) {
     .map(({ item }) => item);
 }
 
+function productPrice(product: Product) {
+  const prices = product.offers.map((offer) => offer.price).filter((price) => Number.isFinite(price) && price > 0);
+  return prices.length ? Math.min(...prices) : 0;
+}
+
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
   const authClient = await createServerSupabaseClient();
@@ -136,7 +155,7 @@ async function getHomeData() {
   const products = shuffled(primaryProductPool.length ? primaryProductPool : scoredProductPool)
     .slice(0, 8)
     .map((item) => item.product);
-  const galleries = interests.length
+  const recommendedGalleries = interests.length
     ? rawGalleries
         .map((gallery) => ({
           gallery,
@@ -144,9 +163,11 @@ async function getHomeData() {
         }))
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score || b.gallery.followerCount - a.gallery.followerCount)
-        .slice(0, 3)
+        .slice(0, 8)
         .map((item) => item.gallery)
-    : rawGalleries.slice(0, 3);
+    : rawGalleries.slice(0, 8);
+  const galleries = [...recommendedGalleries, ...rawGalleries.filter((gallery) => !recommendedGalleries.some((item) => item.id === gallery.id))].slice(0, 8);
+  const newGalleries = [...rawGalleries].sort((a, b) => a.name.localeCompare(b.name, "ko-KR")).slice(0, 5);
   const posts: Post[] = (postsResult.data ?? []).map((post) => {
     const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
     const gallery = Array.isArray(post.galleries) ? post.galleries[0] : post.galleries;
@@ -184,7 +205,7 @@ async function getHomeData() {
     ...displayProducts.map((product) => ({ kind: "official" as const, product })),
     ...randomMarketItems.map((market) => ({ kind: "market" as const, market }))
   ];
-  return { products: displayProducts, galleries, posts, marketItems: homePreviewMarketItems, interestItems, interests };
+  return { products: displayProducts, galleries, newGalleries, posts, marketItems: homePreviewMarketItems, interestItems, interests };
 }
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ code?: string; next?: string }> }) {
@@ -196,35 +217,154 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   const { products, galleries, posts, marketItems, interestItems, interests } = await getHomeData();
   const keywords = [...new Set([...(interests.length ? interests : []), ...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 6);
+  const productCards = products.slice(0, 6);
+  const quickKeywords = keywords.length ? keywords : ["쿠로미", "산리오", "포켓몬", "지브리", "롤"];
+  const featureCards = [
+    { title: "안전한 거래", body: "결제 없이 외부 링크와 유저거래 정보를 분리해서 보여줘요.", Icon: ShieldCheck },
+    { title: "공식몰 우선", body: "DB에 저장된 공식 굿즈를 검색 결과 상단에 연결해요.", Icon: Store },
+    { title: "덕질 글쓰기", body: "갤러리별 글과 상품 추천 흐름을 이어갈 수 있어요.", Icon: PenLine },
+    { title: "찜하고 다시보기", body: "마이페이지에서 관심사와 찜한 굿즈를 관리해요.", Icon: Heart }
+  ];
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-6 rounded-2xl bg-ink p-6 text-white shadow-soft md:grid-cols-[1.25fr_0.75fr] md:p-10">
-        <div className="flex min-h-[21rem] flex-col justify-between">
+    <div className="space-y-10">
+      <section className="relative overflow-hidden rounded-[2rem] border-2 border-[#ead0f4] bg-white/78 px-8 py-10 shadow-[0_18px_60px_rgba(126,80,178,0.08)] md:px-12 md:py-12">
+        <Image src="/semoduck-goods-hero.png" alt="" fill priority className="pointer-events-none object-cover object-right opacity-45" sizes="1536px" />
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_25rem] lg:items-center">
           <div>
-            <Badge tone="sun">팬덤 굿즈 커뮤니티</Badge>
-            <Image src="/semoduck-logo.svg" alt="세모덕" width={520} height={159} priority className="mt-5 h-auto w-full max-w-xs" />
-            <h1 className="mt-4 max-w-2xl text-4xl font-black leading-tight sm:text-5xl">추천 굿즈와 갤러리를 먼저 보여드려요</h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-white/75">세모덕에서 굿즈 검색, 갤러리 이야기, 유저거래를 한 번에 확인하세요.</p>
+            <p className="inline-flex rounded-2xl bg-[#fff3d6] px-5 py-2 text-base font-black text-[#c46a13]">팬덤 굿즈 커뮤니티</p>
+            <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[1.08] text-[#6f4ab4] md:text-7xl">추천 굿즈와 갤러리를 먼저 보여드려요</h1>
+            <p className="mt-6 max-w-2xl text-xl font-bold leading-9 text-[#4f4564]">세모덕에서 굿즈 검색, 갤러리 이야기, 유저거래를 한 번에 확인하세요.</p>
+            <form action="/goods" className="mt-8 flex max-w-3xl items-center gap-3 rounded-full border-2 border-[#a36ce0] bg-white px-5 py-3 shadow-[0_14px_40px_rgba(163,108,224,0.14)]">
+              <Search size={22} className="text-[#6f4ab4]" />
+              <input name="q" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none placeholder:text-slate-400" placeholder="쿠로미 키링" />
+              <button className="hidden rounded-full bg-[#ff6f9b] px-5 py-2 text-sm font-black text-white sm:inline-flex">검색</button>
+            </form>
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-sm font-bold text-[#5e4b76]">
+              <span>인기 검색어</span>
+              {quickKeywords.map((keyword) => (
+                <Link key={keyword} href={`/goods?q=${encodeURIComponent(keyword)}`} className="rounded-full bg-white px-4 py-2 text-[#7a54b9] ring-1 ring-[#ead8f4] hover:bg-[#fff0f6]">
+                  {keyword}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/goods" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-6 text-sm font-black text-[#3a285f] shadow-sm ring-1 ring-[#ead8f4]">
+                굿즈 검색하기 <ArrowRight size={17} />
+              </Link>
+              <Link href="/posts/new" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff6f9b] to-[#a56be8] px-6 text-sm font-black text-white shadow-sm">
+                <PenLine size={17} /> 글쓰기
+              </Link>
+              <Link href="/market" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-6 text-sm font-black text-[#3a285f] shadow-sm ring-1 ring-[#ead8f4]">
+                <ShoppingBag size={17} /> 유저거래
+              </Link>
+            </div>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/goods" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-black text-ink">굿즈 검색하기 <ArrowRight size={17} /></Link>
-            <Link href="/posts/new" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-white/10 px-5 py-3 text-sm font-black text-white ring-1 ring-white/20">글쓰기</Link>
+          <div className="rounded-[1.5rem] border border-[#f2cddd] bg-white/72 p-5 shadow-[0_18px_55px_rgba(255,111,155,0.14)]">
+            <div className="flex items-center gap-2 text-lg font-black text-[#6f4ab4]"><Sparkles size={22} /> 오늘의 추천</div>
+            <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{interests.length ? "내 관심사와 맞는 공식 굿즈를 먼저 보여줘요." : "인기 굿즈와 최근 등록 상품을 섞어서 보여줘요."}</p>
+            <div className="mt-5 grid gap-3">
+              {productCards.slice(0, 3).map((product) => (
+                <Link key={product.id} href={`/goods/${product.id}`} className="grid grid-cols-[5rem_1fr_auto] items-center gap-3 rounded-2xl border border-[#f4dbe7] bg-white p-3 transition hover:-translate-y-0.5 hover:shadow-soft">
+                  <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
+                    {product.image ? <Image src={product.image} alt="" fill className="object-cover" sizes="80px" /> : <Package className="m-auto mt-6 text-[#b89dde]" />}
+                  </div>
+                  <div className="min-w-0">
+                    <Badge tone="pink">공식</Badge>
+                    <p className="mt-1 line-clamp-1 font-black text-[#2f2352]">{product.title}</p>
+                    <p className="text-sm font-black text-[#ff5f8d]">{productPrice(product) ? formatPrice(productPrice(product)) : "가격 확인"}</p>
+                  </div>
+                  <ChevronRight size={18} className="text-[#8b61c8]" />
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="grid content-end gap-3">
-          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-sun"><Sparkles size={17} /> 추천 기준</div><p className="mt-3 leading-7 text-white/80">{interests.length ? "마이페이지 관심사를 기준으로 갤러리를 추천합니다." : "관심사가 없는 계정에는 활동이 많은 갤러리와 기본 추천 굿즈를 보여줍니다."}</p></Card>
-          <Card className="bg-white/10 text-white ring-1 ring-white/15"><div className="flex items-center gap-2 text-sm font-black text-mint"><Flame size={17} /> 추천 키워드</div><div className="mt-3 flex flex-wrap gap-2">{keywords.map((keyword) => <span key={keyword} className="rounded-full bg-white/12 px-3 py-1 text-sm font-bold">#{keyword}</span>)}</div></Card>
         </div>
       </section>
 
-      <section>
-        <HomeInterestCarousel items={interestItems} interests={interests} />
+      <section className="rounded-[1.75rem] border border-[#f1dbe8] bg-white/78 p-4 shadow-soft md:p-6">
+        <div className="mb-5 flex items-end justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-black text-[#ff6f9b]"><Grid3X3 size={16} /> 추천 굿즈</div>
+            <h2 className="mt-1 text-2xl font-black text-[#2f2352]">내 관심사 기반 상품</h2>
+          </div>
+          <Link href="/goods" className="text-sm font-black text-[#6f4ab4]">더 보기</Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {productCards.map((product) => (
+            <Link key={product.id} href={`/goods/${product.id}`} className="group overflow-hidden rounded-2xl border border-[#f1dbe8] bg-white transition hover:-translate-y-1 hover:shadow-soft">
+              <div className="relative aspect-square bg-[#f7f2fb]">
+                {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="220px" /> : null}
+                <span className="absolute left-3 top-3 rounded-full bg-[#9d6de1] px-3 py-1 text-xs font-black text-white">추천</span>
+              </div>
+              <div className="p-4">
+                <p className="line-clamp-2 min-h-11 font-black text-[#2f2352]">{product.title}</p>
+                <p className="mt-2 text-lg font-black text-[#ff5f8d]">{productPrice(product) ? formatPrice(productPrice(product)) : "가격 확인"}</p>
+                <p className="mt-2 flex items-center justify-between text-xs font-bold text-slate-500"><span>{product.brand || product.category}</span><Heart size={18} className="text-[#ff7fa8]" /></p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div><div className="mb-4 flex items-end justify-between"><h2 className="text-2xl font-black">오늘의 인기글</h2><Link href="/galleries" className="text-sm font-black text-slate-500 hover:text-ink">갤러리로 이동</Link></div><div className="space-y-4">{posts.map((post) => <Link key={post.id} href={`/posts/${post.id}`} className="block"><Card className="transition hover:bg-pink-50"><div className="flex flex-wrap items-center gap-2"><Badge tone="pink">{postTypeLabel(post.type)}</Badge><span className="text-xs font-bold text-slate-500">{post.author}</span><span className="text-xs font-bold text-slate-400">{post.createdAt}</span></div><p className="mt-2 text-lg font-black text-ink">{post.title}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p><p className="mt-3 flex gap-4 text-sm font-bold text-slate-500"><span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span></p></Card></Link>)}{!posts.length && <Card>아직 게시글이 없습니다.</Card>}</div></div>
-        <div><div className="mb-4 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><ShoppingBag size={20} className="text-berry" /><h2 className="text-2xl font-black">최근 유저거래</h2></div><Link href="/market" className="text-sm font-black text-slate-500 hover:text-ink">유저거래로 이동</Link></div><div className="space-y-3">{marketItems.map((item) => <Link key={item.id} href={`/market/${item.id}`} className="block"><Card className="grid grid-cols-[4.5rem_1fr] gap-3 transition hover:bg-pink-50"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="72px" /> : null}</div><div className="min-w-0"><Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge><p className="mt-2 line-clamp-1 font-black">{item.title}</p><p className="mt-1 text-sm font-bold text-slate-500">{tradeValueLabel(item.trade_type, item.price)} · {item.galleries?.name ?? "갤러리"}</p></div></Card></Link>)}{!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}</div></div>
+      <HomeInterestCarousel items={interestItems} interests={interests} />
+
+      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div>
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="text-3xl font-black text-[#2f2352]">오늘의 인기글</h2>
+            <Link href="/galleries" className="text-sm font-black text-[#6f4ab4]">갤러리로 이동</Link>
+          </div>
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-2xl border border-[#f1dbe8] bg-white/82 p-5 shadow-sm transition hover:bg-[#fff5fa]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="pink">{postTypeLabel(post.type)}</Badge>
+                  <span className="text-xs font-bold text-slate-500">{post.author}</span>
+                  <span className="text-xs font-bold text-slate-400">{post.createdAt}</span>
+                </div>
+                <p className="mt-3 text-xl font-black text-[#3a285f]">{post.title}</p>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.content}</p>
+                <p className="mt-4 flex gap-4 text-sm font-bold text-slate-500">
+                  <span className="inline-flex items-center gap-1"><Star size={15} /> {post.likeCount}</span>
+                  <span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {post.commentCount}</span>
+                </p>
+              </Link>
+            ))}
+            {!posts.length && <Card>아직 게시글이 없습니다.</Card>}
+          </div>
+        </div>
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2"><Store size={24} className="text-[#9d6de1]" /><h2 className="text-3xl font-black text-[#2f2352]">최근 유저거래</h2></div>
+            <Link href="/market" className="text-sm font-black text-[#6f4ab4]">유저거래로 이동</Link>
+          </div>
+          <div className="space-y-3">
+            {marketItems.map((item) => (
+              <Link key={item.id} href={`/market/${item.id}`} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 rounded-2xl border border-[#f1dbe8] bg-white/82 p-4 shadow-sm transition hover:bg-[#fff5fa]">
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
+                  {item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="88px" /> : <ShoppingBag className="m-auto mt-7 text-[#b89dde]" />}
+                </div>
+                <div className="min-w-0">
+                  <Badge tone="mint">{tradeTypeLabel(item.trade_type)}</Badge>
+                  <p className="mt-2 line-clamp-1 font-black text-[#3a285f]">{item.title}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-500">{tradeValueLabel(item.trade_type, item.price)} · {item.galleries?.name ?? "갤러리"}</p>
+                </div>
+                <ChevronRight size={18} className="text-[#8b61c8]" />
+              </Link>
+            ))}
+            {!marketItems.length && <Card>아직 유저거래 글이 없습니다.</Card>}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-[1.75rem] border border-[#f1dbe8] bg-white/76 p-5 shadow-sm md:grid-cols-4">
+        {featureCards.map(({ title, body, Icon }) => (
+          <div key={title} className="flex gap-3 rounded-2xl bg-[#fff8fb] p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#f3e8ff] text-[#8b61c8]"><Icon size={22} /></div>
+            <div><p className="font-black text-[#6f4ab4]">{title}</p><p className="mt-1 text-sm font-bold leading-6 text-slate-500">{body}</p></div>
+          </div>
+        ))}
       </section>
     </div>
   );
