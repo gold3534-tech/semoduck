@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
+  nickname: z.string().trim().min(1).max(24).optional(),
   interests: z.array(z.string()).default([])
 });
 
@@ -15,6 +16,12 @@ export async function PATCH(request: Request) {
 
   const body = schema.parse(await request.json());
   const admin = createAdminSupabaseClient();
+
+  if (body.nickname) {
+    const { error: profileError } = await admin.from("profiles").update({ nickname: body.nickname }).eq("id", user.id);
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
+  }
+
   const { data: interestRows, error } = await admin.from("interests").select("id,name").in("name", body.interests);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -24,5 +31,5 @@ export async function PATCH(request: Request) {
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ interests: interestRows?.map((interest) => interest.name) ?? [] });
+  return NextResponse.json({ nickname: body.nickname, interests: interestRows?.map((interest) => interest.name) ?? [] });
 }

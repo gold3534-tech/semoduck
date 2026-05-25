@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Grid3X3, Heart, Loader2, Package, Search, ShieldCheck, Sparkles, Star, Truck } from "lucide-react";
+import { Grid3X3, Loader2, Package, Search, ShieldCheck, Sparkles, Star, Truck } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
+import { ProductLikeButton } from "@/components/product-like-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
 import { externalGoodsDetailHref } from "@/lib/goods-detail-link";
 import type { Product } from "@/types/domain";
-import Link from "next/link";
 
 type ExternalGoodsItem = {
   id: string;
@@ -140,30 +141,28 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
           {error && <p className="rounded-lg bg-amber-50 p-2.5 text-xs font-bold text-amber-700">{error}</p>}
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {pagedItems.map((item) => (
-              <Link key={item.id} href={externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category })} className="block h-full">
-                <Card className="group flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
-                    {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 280px" /> : null}
-                    <span className="absolute left-2 top-2 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
-                    <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">
-                      <Heart size={15} />
-                    </span>
+              <Card key={item.id} className="group relative flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5">
+                <Link href={externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category })} className="absolute inset-0 z-10" aria-label={`${item.title} 상세 보기`} />
+                <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
+                  {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover transition group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 280px" /> : null}
+                  <span className="absolute left-2 top-2 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
+                  <div className="absolute right-2 top-2 z-20">
+                    <ProductLikeButton productId={`external:${item.id}`} compact />
                   </div>
-                  <div className="flex flex-1 flex-col gap-2 p-2.5">
-                    <p className="line-clamp-2 text-sm font-black leading-5 text-[#2f2352]">{item.title}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Badge tone="mint">네이버</Badge>
-                      <Badge>{item.mallName}</Badge>
-                    </div>
-                    {item.category && <p className="line-clamp-1 text-[11px] font-bold text-slate-400">{item.category}</p>}
-                    <p className="mt-auto text-sm font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
-                    <span className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-xl bg-[#3a285f] px-3 text-xs font-black text-white">
-                      상세 보기
-                      <ExternalLink size={13} />
-                    </span>
+                </div>
+                <div className="flex flex-1 flex-col gap-2 p-2.5">
+                  <p className="line-clamp-2 text-sm font-black leading-5 text-[#2f2352]">{item.title}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge tone="mint">네이버</Badge>
+                    <Badge>{item.mallName}</Badge>
                   </div>
-                </Card>
-              </Link>
+                  {item.category && <p className="line-clamp-1 text-[11px] font-bold text-slate-400">{item.category}</p>}
+                  <div className="mt-auto flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                    <span className="rounded-full bg-[#fbf4ff] px-2.5 py-1 text-[11px] font-black text-[#6f4ab4]">상세 보기</span>
+                  </div>
+                </div>
+              </Card>
             ))}
           </div>
           {!items.length && !loading && <Card className="p-3 text-sm font-bold text-slate-500">검색 결과가 없습니다. 캐릭터명과 굿즈 종류를 같이 입력해 보세요.</Card>}

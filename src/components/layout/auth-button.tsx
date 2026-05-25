@@ -2,7 +2,7 @@
 
 import { LogIn, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -16,6 +16,8 @@ type SessionResponse = {
 
 export function AuthButton() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -80,8 +82,10 @@ export function AuthButton() {
     );
   }
 
+  const nextPath = `${pathname || "/"}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
   return (
-    <Link href="/login" className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-ink px-3 text-xs font-black text-white">
+    <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="inline-flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-ink px-3 text-xs font-black text-white">
       <LogIn size={13} />
       로그인
     </Link>

@@ -33,19 +33,19 @@ export async function GET() {
       .order("created_at", { ascending: false }),
     admin
       .from("post_reactions")
-      .select("created_at,posts(id,title,post_type,created_at,profiles(nickname),galleries(name,slug))")
+      .select("created_at,posts(id,title,post_type,created_at,like_count,comment_count,bookmark_count,profiles(nickname),galleries(name,slug))")
       .eq("user_id", user.id)
       .eq("type", "like")
       .order("created_at", { ascending: false }),
     admin
       .from("post_reactions")
-      .select("created_at,posts(id,title,post_type,created_at,profiles(nickname),galleries(name,slug))")
+      .select("created_at,posts(id,title,post_type,created_at,like_count,comment_count,bookmark_count,profiles(nickname),galleries(name,slug))")
       .eq("user_id", user.id)
       .eq("type", "bookmark")
       .order("created_at", { ascending: false }),
     admin.from("user_interests").select("interests(name)").eq("user_id", user.id),
     admin.from("interests").select("name").order("name"),
-    admin.from("gallery_follows").select("galleries(id,name,slug,category)").eq("user_id", user.id)
+    admin.from("gallery_follows").select("galleries(id,name,slug,category,thumbnail_url)").eq("user_id", user.id)
   ]);
 
   if (profileResult.error) {
