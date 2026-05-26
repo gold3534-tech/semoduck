@@ -1,8 +1,16 @@
 import { Suspense } from "react";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/app/login/login-form";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const supabase = await createServerSupabaseClient();
+  const { data } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
+  if (data.user) {
+    redirect("/");
+  }
+
   return (
     <div className="grid gap-5 py-4 lg:grid-cols-[1fr_24rem] lg:items-center">
       <section className="relative overflow-hidden rounded-[1.5rem] border border-[#efd7e7] bg-gradient-to-br from-[#fff8fb] via-[#fbf1ff] to-[#fffaf0] p-5 shadow-soft md:p-6">

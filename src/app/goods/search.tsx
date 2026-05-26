@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Grid3X3, Loader2, Package, Search, ShieldCheck, Sparkles, Star, Truck } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductLikeButton } from "@/components/product-like-button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,42 @@ export type RecommendedGoodsGroup = {
 
 const pageSize = 12;
 const quickTerms = ["쿠로미", "산리오", "포켓몬", "BTS", "원피스", "스파이패밀리"];
+
+function RecommendedGoodsCarousel({ group }: { group: RecommendedGoodsGroup }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    scrollerRef.current?.scrollBy({
+      left: direction === "left" ? -520 : 520,
+      behavior: "smooth"
+    });
+  };
+
+  return (
+    <div className="relative">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-black">{group.title}</h3>
+        {group.products.length > 4 ? (
+          <div className="flex gap-1.5">
+            <Button type="button" variant="secondary" className="h-8 min-h-8 w-8 rounded-full p-0" onClick={() => scroll("left")} aria-label={`${group.title} 이전`}>
+              <ChevronLeft size={16} />
+            </Button>
+            <Button type="button" variant="secondary" className="h-8 min-h-8 w-8 rounded-full p-0" onClick={() => scroll("right")} aria-label={`${group.title} 다음`}>
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+      <div ref={scrollerRef} className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {group.products.map((product) => (
+          <div key={product.id} className="min-w-[14rem] max-w-[14rem] snap-start md:min-w-[14.25rem] md:max-w-[14.25rem]">
+            <ProductCard product={product} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommendedGroups: RecommendedGoodsGroup[]; initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery || "쿠로미 키링");
@@ -109,22 +145,6 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
         </div>
       </section>
 
-      <Card className="grid gap-2 p-2.5 md:grid-cols-6">
-        {[
-          ["전체", Grid3X3],
-          ["인기", Star],
-          ["신상품", Sparkles],
-          ["거래중", Package],
-          ["공식 우선", ShieldCheck],
-          ["배송", Truck]
-        ].map(([label, Icon]) => (
-          <button key={label as string} type="button" className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-xs font-black text-[#4b3a6d] ring-1 ring-[#ead8f4] hover:bg-[#fff1f7]">
-            <Icon size={15} />
-            {label as string}
-          </button>
-        ))}
-      </Card>
-
       {searched ? (
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -185,14 +205,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
             <p className="mt-0.5 text-xs font-bold text-slate-500">관심사와 인기 주제를 기준으로 보여줍니다.</p>
           </div>
           {recommendedGroups.map((group) => (
-            <div key={group.title}>
-              <h3 className="mb-2 text-sm font-black">{group.title}</h3>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {group.products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </div>
+            <RecommendedGoodsCarousel key={group.title} group={group} />
           ))}
           {!recommendedGroups.length && <Card className="p-3 text-sm font-bold text-slate-500">관심사를 설정하면 추천 굿즈가 표시됩니다.</Card>}
         </section>

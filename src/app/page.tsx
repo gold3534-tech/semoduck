@@ -190,7 +190,7 @@ async function getHomeData() {
     : rawMarketItems.slice(0, 8);
   const rankedMarketItems = [...marketItems].sort((a, b) => Number(Boolean(b.image_url)) - Number(Boolean(a.image_url)) || (b.price ?? 0) - (a.price ?? 0));
   const homePreviewMarketItems = rankedMarketItems.slice(0, 3);
-  const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 3);
+  const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 8);
   return { products: displayProducts, galleries, newGalleries, posts, marketItems: homePreviewMarketItems, interests };
 }
 
@@ -230,16 +230,16 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </div>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-[1.55fr_0.9fr]">
-        <Card className="p-3">
+      <section className="grid items-start gap-3 lg:grid-cols-[1.55fr_0.9fr]">
+        <Card className="h-fit p-3">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">인기 갤러리</h2>
             <Link href="/galleries" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
           </div>
           <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
             {galleries.slice(0, 6).map((gallery) => (
-              <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-2xl border border-[#f1dbe8] bg-[#fff8fb] p-2 text-center">
-                <div className="relative mx-auto h-14 overflow-hidden rounded-xl bg-[#f7f2fb]">
+              <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-xl border border-[#f1dbe8] bg-[#fff8fb] p-1.5 text-center">
+                <div className="relative mx-auto h-12 overflow-hidden rounded-lg bg-[#f7f2fb]">
                   <Image src={gallery.thumbnail} alt="" fill className="object-cover" sizes="96px" />
                 </div>
                 <p className="mt-1 line-clamp-1 text-xs font-black text-[#2f2352]">{gallery.name}</p>

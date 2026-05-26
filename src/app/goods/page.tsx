@@ -114,11 +114,11 @@ async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
 
   const groups = await Promise.all(
     targets.map(async (interest) => {
-      const localProducts = await getLocalProducts(interest, 4);
-      if (localProducts.length >= 4) return { title: `${interest} 추천 굿즈`, products: localProducts };
+      const localProducts = await getLocalProducts(interest, 12);
+      if (localProducts.length >= 12) return { title: `${interest} 추천 굿즈`, products: localProducts };
 
       const external = await searchNaverShopping(`${termsForInterest(interest)[0]} 굿즈`, 12);
-      const externalProducts = external.items.slice(0, 4 - localProducts.length).map((item) => productFromExternal(item, interest));
+      const externalProducts = external.items.slice(0, 12 - localProducts.length).map((item) => productFromExternal(item, interest));
       return { title: `${interest} 추천 굿즈`, products: [...localProducts, ...externalProducts] };
     })
   );

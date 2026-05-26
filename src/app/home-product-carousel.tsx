@@ -32,12 +32,12 @@ export function HomeProductCarousel({ products }: { products: Product[] }) {
       >
         <ChevronLeft size={18} />
       </button>
-      <div ref={scrollerRef} className="flex snap-x gap-2 overflow-x-auto scroll-smooth px-8 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scrollerRef} className="flex snap-x gap-2 overflow-x-auto scroll-smooth px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {products.map((product) => {
           const price = productPrice(product);
 
           return (
-            <Link key={product.id} href={`/goods/${product.id}`} className="min-w-[5.4rem] max-w-[5.4rem] snap-start">
+            <Link key={product.id} href={`/goods/${product.id}`} className="min-w-[3.55rem] max-w-[3.55rem] snap-start sm:min-w-[3.75rem] sm:max-w-[3.75rem]">
               <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
                 {product.image ? <Image src={product.image} alt="" fill className="object-cover" sizes="96px" /> : <Package className="m-auto mt-6 text-[#b89dde]" />}
               </div>

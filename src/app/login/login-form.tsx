@@ -10,14 +10,9 @@ import { getSiteUrl } from "@/lib/site-url";
 
 type Mode = "signin" | "signup";
 
-function safeNext(value: string | null) {
-  return value?.startsWith("/") ? value : "/";
-}
-
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeNext(searchParams.get("next"));
   const callbackError = searchParams.get("error");
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -32,7 +27,6 @@ export function LoginForm() {
     try {
       const supabase = createBrowserSupabaseClient();
       const redirectUrl = new URL("/auth/callback", getSiteUrl());
-      redirectUrl.searchParams.set("next", next);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -63,13 +57,12 @@ export function LoginForm() {
           setMessage(error.message);
           return;
         }
-        router.replace(next);
+        router.replace("/");
         router.refresh();
         return;
       }
 
       const redirectUrl = new URL("/auth/callback", getSiteUrl());
-      redirectUrl.searchParams.set("next", next);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -87,7 +80,7 @@ export function LoginForm() {
       }
 
       if (data.session) {
-        router.replace(next);
+        router.replace("/");
         router.refresh();
         return;
       }
