@@ -3,15 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   Heart,
-  Package,
   Search,
   ShoppingBag,
   Sparkles,
   Star
 } from "lucide-react";
+import { HomeProductCarousel } from "@/app/home-product-carousel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, formatPrice, postTypeLabel, tradeValueLabel } from "@/lib/format";
+import { formatDateTime, postTypeLabel, tradeValueLabel } from "@/lib/format";
 import { fallbackRecommendedProducts, productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -203,7 +203,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   const { products, galleries, posts, marketItems, interests } = await getHomeData();
   const keywords = [...new Set([...(interests.length ? interests : []), ...products.map((p) => p.category), ...galleries.map((g) => g.name)])].slice(0, 10);
-  const productCards = products.slice(0, 5);
+  const productCards = products.slice(0, 8);
   const quickKeywords = keywords.length ? keywords : ["BTS", "산리오", "포켓몬", "원피스", "스텔라이브", "하이큐", "쿠로미", "키링"];
   const featureCards = [
     { title: "덕질 커뮤니티", body: "갤러리에서 덕질 친구들과 소통해요.", Icon: Heart },
@@ -264,24 +264,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </Card>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-3">
+      <section className="grid items-start gap-3 lg:grid-cols-3">
         <Card className="p-3">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">추천 굿즈</h2>
             <Link href="/goods" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
           </div>
-          <div className="grid grid-cols-5 gap-2">
-            {productCards.map((product) => (
-              <Link key={product.id} href={`/goods/${product.id}`} className="min-w-0">
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
-                  {product.image ? <Image src={product.image} alt="" fill className="object-cover" sizes="80px" /> : <Package className="m-auto mt-5 text-[#b89dde]" />}
-                  <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[#ff6f9b]"><Heart size={12} /></span>
-                </div>
-                <p className="mt-1 line-clamp-2 text-[11px] font-black text-[#2f2352]">{product.title}</p>
-                <p className="text-[11px] font-black text-[#ff5f8d]">{productPrice(product) ? formatPrice(productPrice(product)) : "가격 확인"}</p>
-              </Link>
-            ))}
-          </div>
+          <HomeProductCarousel products={productCards} />
         </Card>
 
         <Card className="p-3">

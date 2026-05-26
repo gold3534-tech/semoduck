@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Loader2, Plus, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, Plus, Upload } from "lucide-react";
 import { UploadedImagePreview } from "@/components/uploaded-image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import type { Gallery } from "@/types/domain";
+
+const pageSize = 10;
 
 type TradeType = "sell" | "exchange" | "giveaway";
 type MarketItem = {
@@ -69,11 +71,23 @@ export function MarketBoard({
   const [form, setForm] = useState<FormState>(emptyForm(galleries[0]?.slug ?? ""));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     if (filter === "전체") return items;
     return items.filter((item) => tradeTypeLabel(item.trade_type) === filter || tradeStatusLabel(item.status) === filter);
   }, [filter, items]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
 
   async function reload() {
     const response = await fetch("/api/market", { cache: "no-store" });
@@ -188,7 +202,7 @@ export function MarketBoard({
       ) : null}
 
       <div className="space-y-3">
-        {filtered.map((item) => (
+        {paginated.map((item) => (
           <Card key={item.id} className="grid gap-4 overflow-hidden p-3 md:grid-cols-[13rem_1fr_auto] md:items-center">
             <Link href={`/market/${item.id}`} className="block">
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#f7f2fb]">
@@ -217,7 +231,41 @@ export function MarketBoard({
             </Link>
           </Card>
         ))}
+        {!paginated.length ? (
+          <Card className="p-6 text-center text-sm font-bold text-slate-500">조건에 맞는 유저거래 글이 없습니다.</Card>
+        ) : null}
       </div>
+
+      {filtered.length > pageSize ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-3">
+          <p className="text-xs font-black text-slate-500">
+            {filtered.length.toLocaleString("ko-KR")}개 중 {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filtered.length)}개
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1}
+              aria-label="이전 페이지"
+              className="grid h-9 w-9 place-items-center rounded-full bg-white text-[#6f4ab4] ring-1 ring-[#ead8f4] transition hover:bg-[#fff1f7] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="min-w-16 text-center text-xs font-black text-[#3a285f]">
+              {page} / {pageCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+              disabled={page === pageCount}
+              aria-label="다음 페이지"
+              className="grid h-9 w-9 place-items-center rounded-full bg-white text-[#6f4ab4] ring-1 ring-[#ead8f4] transition hover:bg-[#fff1f7] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 }
