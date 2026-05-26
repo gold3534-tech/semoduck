@@ -9,6 +9,7 @@ import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { extractPostKeywords } from "@/lib/ai";
 import { formatPrice, sourceLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
@@ -39,7 +40,8 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
   const primaryOffer = offers[0];
   const displayPrice = primaryOffer?.price ? formatPrice(primaryOffer.price) : "가격 확인 필요";
   const images = [product.image_url].filter(Boolean) as string[];
-  const relatedTerms = detailTerms(product);
+  const aiPostKeywords = await extractPostKeywords(`${product.title}\n${product.brand ?? ""}\n${product.category ?? ""}\n${product.description ?? ""}`);
+  const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...detailTerms(product)])].slice(0, 8);
   const relatedFilters = relatedTerms.flatMap((term) => [`title.ilike.%${term}%`, `content.ilike.%${term}%`]);
   const { data: relatedPosts } = relatedFilters.length
     ? await supabase

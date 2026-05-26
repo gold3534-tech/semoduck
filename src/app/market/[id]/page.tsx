@@ -10,6 +10,7 @@ import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { extractPostKeywords } from "@/lib/ai";
 import { isAdminEmail } from "@/lib/auth";
 import { formatDateTime, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
@@ -51,7 +52,8 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
   const gallery = Array.isArray(item.galleries) ? item.galleries[0] : item.galleries;
   const normalizedItem = { ...item, galleries: gallery };
   const isOwner = currentUserId === item.seller_id;
-  const relatedTerms = relatedTermsForMarket(normalizedItem);
+  const aiPostKeywords = await extractPostKeywords(`${item.title}\n${item.description ?? ""}\n${gallery?.name ?? ""}`);
+  const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...relatedTermsForMarket(normalizedItem)])].slice(0, 8);
   const relatedFilters = relatedTerms.flatMap((term) => [`title.ilike.%${term}%`, `content.ilike.%${term}%`]);
   const { data: relatedPosts } = relatedFilters.length
     ? await supabase

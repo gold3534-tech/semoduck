@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { HelpCircle, ImageIcon, Info, Loader2, PenLine, Send, Upload } from "lucide-react";
+import { HelpCircle, ImageIcon, Info, Loader2, PenLine, Send, Sparkles, Upload } from "lucide-react";
 import { UploadedImagePreview } from "@/components/uploaded-image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
   const [tagText, setTagText] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState<"submit" | "image" | null>(null);
+  const [loading, setLoading] = useState<"submit" | "image" | "ai" | null>(null);
 
   const selectedGallery = galleries.find((gallery) => gallery.slug === gallerySlug);
   const recommendedGoods = recommendations[gallerySlug] ?? [];
@@ -91,6 +91,33 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
     setImageUrl(data.url);
   }
 
+  async function suggestTags() {
+    setLoading("ai");
+    setMessage("");
+    try {
+      const response = await fetch("/api/ai/extract-tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content })
+      });
+      const data = (await response.json()) as { tags?: string[]; product_keywords?: string[] };
+      const nextTags = [...(data.tags ?? []), ...(data.product_keywords ?? [])]
+        .map((tag) => tag.trim().replace(/^#/, ""))
+        .filter(Boolean)
+        .slice(0, 8);
+      if (nextTags.length) {
+        setTagText(nextTags.join(", "));
+        setMessage("AI가 태그와 굿즈 키워드를 추천했습니다.");
+      } else {
+        setMessage("추천할 태그를 찾지 못했습니다. 제목과 본문을 조금 더 적어주세요.");
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "AI 태그 추천에 실패했습니다.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
       <Card className="space-y-4 p-4">
@@ -129,6 +156,12 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
           태그
           <input value={tagText} onChange={(event) => setTagText(event.target.value)} className="min-h-10 rounded-2xl border border-[#ead8f4] px-3 text-sm outline-none focus:border-[#b984e7]" placeholder="쿠로미, 키링, 후기처럼 쉼표로 구분" />
         </label>
+        <div className="flex justify-end">
+          <Button type="button" variant="secondary" onClick={suggestTags} disabled={loading !== null || (!title && !content)} className="min-h-9 rounded-xl px-3 py-1.5 text-xs">
+            {loading === "ai" ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            AI 태그 추천
+          </Button>
+        </div>
         <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#b984e7] bg-[#fbf4ff] p-4 text-center text-sm font-bold text-slate-500 hover:border-[#ff6f9b]">
           {loading === "image" ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
           {imageUrl ? "이미지 업로드 완료" : "게시글 이미지 업로드"}

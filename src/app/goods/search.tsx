@@ -50,26 +50,28 @@ function RecommendedGoodsCarousel({ group }: { group: RecommendedGoodsGroup }) {
   };
 
   return (
-    <div className="relative">
-      <div className="mb-2 flex items-center justify-between gap-3">
+    <div>
+      <div className="mb-2">
         <h3 className="text-sm font-black">{group.title}</h3>
-        {group.products.length > 4 ? (
-          <div className="flex gap-1.5">
-            <Button type="button" variant="secondary" className="h-8 min-h-8 w-8 rounded-full p-0" onClick={() => scroll("left")} aria-label={`${group.title} 이전`}>
-              <ChevronLeft size={16} />
-            </Button>
-            <Button type="button" variant="secondary" className="h-8 min-h-8 w-8 rounded-full p-0" onClick={() => scroll("right")} aria-label={`${group.title} 다음`}>
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        ) : null}
       </div>
-      <div ref={scrollerRef} className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {group.products.map((product) => (
-          <div key={product.id} className="min-w-[14rem] max-w-[14rem] snap-start md:min-w-[14.25rem] md:max-w-[14.25rem]">
-            <ProductCard product={product} />
-          </div>
-        ))}
+      <div className="relative">
+        {group.products.length > 4 ? (
+          <>
+            <Button type="button" variant="secondary" className="absolute left-2 top-1/2 z-20 h-10 min-h-10 w-10 -translate-y-1/2 rounded-full bg-white/95 p-0 shadow-soft" onClick={() => scroll("left")} aria-label={`${group.title} 이전`}>
+              <ChevronLeft size={18} />
+            </Button>
+            <Button type="button" variant="secondary" className="absolute right-2 top-1/2 z-20 h-10 min-h-10 w-10 -translate-y-1/2 rounded-full bg-white/95 p-0 shadow-soft" onClick={() => scroll("right")} aria-label={`${group.title} 다음`}>
+              <ChevronRight size={18} />
+            </Button>
+          </>
+        ) : null}
+        <div ref={scrollerRef} className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {group.products.map((product) => (
+            <div key={product.id} className="min-w-[14rem] max-w-[14rem] snap-start md:min-w-[14.25rem] md:max-w-[14.25rem]">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

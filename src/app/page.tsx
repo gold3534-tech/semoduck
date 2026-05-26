@@ -213,43 +213,43 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   ];
 
   return (
-    <div className="space-y-3">
-      <section className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] bg-[#fff8fc] p-5 shadow-[0_14px_38px_rgba(126,80,178,0.07)]">
-        <Image src="/semoduck-goods-hero.png" alt="" width={420} height={260} priority className="pointer-events-none absolute bottom-0 right-16 hidden h-52 w-auto object-contain lg:block" />
-        <div className="relative max-w-md">
-          <h1 className="text-3xl font-black leading-tight text-[#4a347e]">
+    <div className="space-y-3 2xl:space-y-4 min-[1800px]:space-y-5">
+      <section className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] bg-[#fff8fc] p-5 shadow-[0_14px_38px_rgba(126,80,178,0.07)] 2xl:p-7 min-[1800px]:p-9">
+        <Image src="/semoduck-goods-hero.png" alt="" width={420} height={260} priority className="pointer-events-none absolute bottom-0 right-16 hidden h-52 w-auto object-contain lg:block 2xl:right-24 2xl:h-64 min-[1800px]:right-32 min-[1800px]:h-72 min-[2200px]:h-80" />
+        <div className="relative max-w-md 2xl:max-w-xl min-[1800px]:max-w-2xl">
+          <h1 className="text-3xl font-black leading-tight text-[#4a347e] 2xl:text-4xl min-[1800px]:text-5xl">
             세상의 모든 덕질,<br />
             <span className="text-[#ff6f9b]">세모덕</span>에서 한 번에!
           </h1>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#4f4564]">굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를 더 즐겁게 만들어줘요!</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/goods" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#6f4ab4] ring-1 ring-[#e5c7f1]"><Search size={16} /> 굿즈 검색</Link>
-            <Link href="/galleries" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#208b89] ring-1 ring-[#bfe8e6]"><Star size={16} /> 갤러리 둘러보기</Link>
-            <Link href="/market" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#ff5f8d] ring-1 ring-[#f4c5d7]"><Heart size={16} /> 유저거래 확인</Link>
+          <p className="mt-3 text-sm font-bold leading-6 text-[#4f4564] 2xl:text-base 2xl:leading-7">굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를 더 즐겁게 만들어줘요!</p>
+          <div className="mt-4 flex flex-wrap gap-2 2xl:mt-5 2xl:gap-3">
+            <Link href="/goods" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#6f4ab4] ring-1 ring-[#e5c7f1] 2xl:h-10 2xl:px-5 2xl:text-sm"><Search size={16} /> 굿즈 검색</Link>
+            <Link href="/galleries" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#208b89] ring-1 ring-[#bfe8e6] 2xl:h-10 2xl:px-5 2xl:text-sm"><Star size={16} /> 갤러리 둘러보기</Link>
+            <Link href="/market" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#ff5f8d] ring-1 ring-[#f4c5d7] 2xl:h-10 2xl:px-5 2xl:text-sm"><Heart size={16} /> 유저거래 확인</Link>
           </div>
         </div>
       </section>
 
-      <section className="grid items-start gap-3 lg:grid-cols-[1.55fr_0.9fr]">
-        <Card className="h-fit p-3">
+      <section className="grid gap-3 lg:grid-cols-[1.55fr_0.9fr]">
+        <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">인기 갤러리</h2>
             <Link href="/galleries" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
           </div>
-          <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-6 2xl:gap-3 min-[1800px]:gap-4">
             {galleries.slice(0, 6).map((gallery) => (
-              <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-xl border border-[#f1dbe8] bg-[#fff8fb] p-1.5 text-center">
-                <div className="relative mx-auto h-12 overflow-hidden rounded-lg bg-[#f7f2fb]">
-                  <Image src={gallery.thumbnail} alt="" fill className="object-cover" sizes="96px" />
+              <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-xl border border-[#f1dbe8] bg-[#fff8fb] p-1.5 text-center 2xl:p-2 min-[1800px]:p-2.5">
+                <div className="relative mx-auto h-12 overflow-hidden rounded-lg bg-[#f7f2fb] 2xl:h-16 min-[1800px]:h-20">
+                  <Image src={gallery.thumbnail} alt="" fill className="object-cover" sizes="(min-width: 1800px) 140px, (min-width: 1536px) 112px, 96px" />
                 </div>
-                <p className="mt-1 line-clamp-1 text-xs font-black text-[#2f2352]">{gallery.name}</p>
-                <p className="text-[11px] font-bold text-slate-500">{gallery.followerCount.toLocaleString("ko-KR")}명</p>
+                <p className="mt-1 line-clamp-1 text-xs font-black text-[#2f2352] 2xl:text-sm">{gallery.name}</p>
+                <p className="text-[11px] font-bold text-slate-500 2xl:text-xs">{gallery.followerCount.toLocaleString("ko-KR")}명</p>
               </Link>
             ))}
           </div>
         </Card>
 
-        <Card className="relative p-3">
+        <Card className="relative p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">오늘의 추천 키워드</h2>
             <Link href="/goods" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
@@ -264,8 +264,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </Card>
       </section>
 
-      <section className="grid items-start gap-3 lg:grid-cols-3">
-        <Card className="p-3">
+      <section className="grid gap-3 lg:grid-cols-3">
+        <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">추천 굿즈</h2>
             <Link href="/goods" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
@@ -273,7 +273,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           <HomeProductCarousel products={productCards} />
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">최근 인기 게시글</h2>
             <Link href="/galleries" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
@@ -290,21 +290,21 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </Card>
 
-        <Card className="relative overflow-hidden p-3">
+        <Card className="relative overflow-hidden p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">유저거래 핫딜</h2>
             <Link href="/market" className="text-xs font-black text-[#6f4ab4]">더보기</Link>
           </div>
           <div className="space-y-2">
             {marketItems.map((item) => (
-              <Link key={item.id} href={`/market/${item.id}`} className="grid grid-cols-[3.5rem_1fr] gap-2">
-                <div className="relative h-12 overflow-hidden rounded-xl bg-[#f7f2fb]">
-                  {item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="64px" /> : <ShoppingBag className="m-auto mt-3 text-[#b89dde]" />}
+              <Link key={item.id} href={`/market/${item.id}`} className="grid grid-cols-[3.5rem_1fr] gap-2 2xl:grid-cols-[4.25rem_1fr] 2xl:gap-3 min-[1800px]:grid-cols-[5rem_1fr]">
+                <div className="relative h-12 overflow-hidden rounded-xl bg-[#f7f2fb] 2xl:h-16 min-[1800px]:h-20">
+                  {item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="(min-width: 1800px) 80px, 64px" /> : <ShoppingBag className="m-auto mt-3 text-[#b89dde]" />}
                 </div>
                 <div className="min-w-0">
-                  <p className="line-clamp-1 text-xs font-black text-[#2f2352]">{item.title}</p>
-                  <p className="mt-1 text-xs font-black text-[#ff5f8d]">{tradeValueLabel(item.trade_type, item.price)}</p>
-                  <p className="text-[11px] font-bold text-slate-500">{item.galleries?.name ?? "갤러리"}</p>
+                  <p className="line-clamp-1 text-xs font-black text-[#2f2352] 2xl:text-sm">{item.title}</p>
+                  <p className="mt-1 text-xs font-black text-[#ff5f8d] 2xl:text-sm">{tradeValueLabel(item.trade_type, item.price)}</p>
+                  <p className="text-[11px] font-bold text-slate-500 2xl:text-xs">{item.galleries?.name ?? "갤러리"}</p>
                 </div>
               </Link>
             ))}
@@ -315,9 +315,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
       <section className="grid gap-3 md:grid-cols-4">
         {featureCards.map(({ title, body, Icon }) => (
-          <div key={title} className="flex gap-3 rounded-2xl bg-white/78 p-3 ring-1 ring-[#f1dbe8]">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#f3e8ff] text-[#8b61c8]"><Icon size={20} /></div>
-            <div><p className="text-sm font-black text-[#6f4ab4]">{title}</p><p className="mt-0.5 text-xs font-bold leading-5 text-slate-500">{body}</p></div>
+          <div key={title} className="flex gap-3 rounded-2xl bg-white/78 p-3 ring-1 ring-[#f1dbe8] 2xl:p-4 min-[1800px]:gap-4">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#f3e8ff] text-[#8b61c8] 2xl:h-12 2xl:w-12"><Icon size={20} /></div>
+            <div><p className="text-sm font-black text-[#6f4ab4] 2xl:text-base">{title}</p><p className="mt-0.5 text-xs font-bold leading-5 text-slate-500 2xl:text-sm 2xl:leading-6">{body}</p></div>
           </div>
         ))}
       </section>

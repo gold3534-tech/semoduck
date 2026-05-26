@@ -22,7 +22,7 @@ export async function GET() {
       .order("created_at", { ascending: false }),
     admin
       .from("comments")
-      .select("id,content,created_at,posts(id,title)")
+      .select("id,content,created_at,posts(id,title,post_type,created_at,like_count,comment_count,bookmark_count,galleries(name,slug))")
       .eq("user_id", user.id)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false }),

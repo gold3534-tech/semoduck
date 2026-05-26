@@ -28,7 +28,7 @@ type FollowedGallery = { id: string; name: string; slug: string; category: strin
 type ActivityResponse = {
   profile: Profile;
   posts: ActivityPost[];
-  comments: Array<{ id: string; content: string; created_at: string; posts?: { id: string; title: string } | null }>;
+  comments: Array<{ id: string; content: string; created_at: string; posts?: LinkedPost | LinkedPost[] | null }>;
   marketItems: ActivityMarketItem[];
   likedPosts: LinkedPost[];
   bookmarkedPosts: LinkedPost[];
@@ -38,11 +38,12 @@ type ActivityResponse = {
   counts: { posts: number; comments: number; bookmarks: number; likes: number; marketItems: number };
 };
 
-type TabKey = "profile" | "posts" | "bookmarks" | "likes" | "goods" | "market";
+type TabKey = "profile" | "posts" | "comments" | "bookmarks" | "likes" | "goods" | "market";
 
 const tabs: Array<[TabKey, string, LucideIcon]> = [
   ["profile", "프로필", UserRound],
   ["posts", "내가 쓴 글", PenLine],
+  ["comments", "댓글 쓴 글", MessageCircle],
   ["bookmarks", "스크랩한 글", Bookmark],
   ["likes", "좋아요 누른 글", Heart],
   ["goods", "찜한 굿즈", Star],
@@ -52,6 +53,7 @@ const tabs: Array<[TabKey, string, LucideIcon]> = [
 const tabTitles: Record<TabKey, string> = {
   profile: "프로필",
   posts: "내가 쓴 글",
+  comments: "댓글 쓴 글",
   bookmarks: "스크랩한 글",
   likes: "좋아요 누른 글",
   goods: "찜한 굿즈",
@@ -93,6 +95,38 @@ function postList(posts: LinkedPost[], emptyText: string, onDelete?: (postId: st
         </div>
       ))}
       {!posts.length ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">{emptyText}</p> : null}
+    </div>
+  );
+}
+
+function commentList(comments: ActivityResponse["comments"], emptyText: string) {
+  const visibleComments = comments.filter((comment) => {
+    const post = Array.isArray(comment.posts) ? comment.posts[0] : comment.posts;
+    return Boolean(post?.id);
+  });
+
+  return (
+    <div className="space-y-2">
+      {visibleComments.map((comment) => {
+        const post = Array.isArray(comment.posts) ? comment.posts[0] : comment.posts;
+        if (!post?.id) return null;
+
+        return (
+          <Link key={comment.id} href={`/posts/${post.id}`} className="block rounded-2xl bg-[#fbf4ff] p-3 transition hover:bg-[#fff5fa]">
+            <div className="flex flex-wrap items-center gap-2">
+              {post.post_type ? <Badge tone="pink">{postTypeLabel(post.post_type)}</Badge> : null}
+              <span className="text-xs font-bold text-slate-500">{post.galleries?.name ?? "갤러리"}</span>
+              <span className="text-xs font-bold text-slate-400">댓글 {formatDateTime(comment.created_at)}</span>
+            </div>
+            <p className="mt-2 line-clamp-1 font-black text-[#2f2352]">{post.title}</p>
+            <p className="mt-1 line-clamp-2 rounded-xl bg-white/80 px-3 py-2 text-xs font-bold leading-5 text-slate-600">{comment.content}</p>
+            <p className="mt-2 text-xs font-bold text-slate-500">
+              원글 좋아요 {post.like_count ?? 0} · 댓글 {post.comment_count ?? 0} · 스크랩 {post.bookmark_count ?? 0}
+            </p>
+          </Link>
+        );
+      })}
+      {!visibleComments.length ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">{emptyText}</p> : null}
     </div>
   );
 }
@@ -289,10 +323,14 @@ export default function MyPage() {
                 </div>
               </section>
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-3">
                 <section>
                   <h3 className="mb-3 text-lg font-black text-[#3a285f]">최근 내가 쓴 글</h3>
                   {postList(activity.posts.slice(0, 3), "아직 작성한 글이 없습니다.", deletePost)}
+                </section>
+                <section>
+                  <h3 className="mb-3 text-lg font-black text-[#3a285f]">최근 댓글 쓴 글</h3>
+                  {commentList(activity.comments.slice(0, 3), "아직 댓글 쓴 글이 없습니다.")}
                 </section>
                 <section>
                   <h3 className="mb-3 text-lg font-black text-[#3a285f]">최근 거래 내역</h3>
@@ -303,6 +341,7 @@ export default function MyPage() {
           ) : null}
 
           {activeTab === "posts" ? postList(activity.posts, "아직 작성한 글이 없습니다.", deletePost) : null}
+          {activeTab === "comments" ? commentList(activity.comments, "아직 댓글 쓴 글이 없습니다.") : null}
           {activeTab === "bookmarks" ? postList(activity.bookmarkedPosts, "아직 스크랩한 글이 없습니다.") : null}
           {activeTab === "likes" ? postList(activity.likedPosts, "아직 좋아요 누른 글이 없습니다.") : null}
           {activeTab === "goods" ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">찜한 굿즈 기능은 굿즈 찜 저장 API가 연결되면 이 영역에 표시됩니다.</p> : null}

@@ -8,6 +8,7 @@ import { PostActions } from "@/app/posts/[id]/post-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail } from "@/lib/auth";
+import { extractProductKeywords } from "@/lib/ai";
 import { formatDateTime, formatPrice, postTypeLabel } from "@/lib/format";
 import { fallbackRecommendedProducts, fallbackTags, keywordsForPost, productFromDbRow, productSelect, relatedProducts } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
@@ -39,8 +40,19 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const gallery = Array.isArray(post.galleries) ? post.galleries[0] : post.galleries;
   const dbTags = ((tagRows ?? []) as Array<{ tags?: { name?: string } | Array<{ name?: string }> | null }>).map((row) => Array.isArray(row.tags) ? row.tags[0]?.name : row.tags?.name).filter(Boolean) as string[];
   const tags = dbTags.length ? dbTags : fallbackTags({ title: post.title, content: post.content, gallerySlug: gallery?.slug, galleryName: gallery?.name });
-  const keywords = keywordsForPost({ title: post.title, content: post.content, gallerySlug: gallery?.slug, galleryName: gallery?.name, tags });
-  const localRelatedProducts = relatedProducts((productRows ?? []).map(productFromDbRow), keywords, 4);
+  const aiKeywords = await extractProductKeywords(`${post.title}\n${post.content}\n${tags.join(", ")}\n${gallery?.name ?? ""}`);
+  const keywords = [
+    ...aiKeywords.product_keywords,
+    ...keywordsForPost({ title: post.title, content: post.content, gallerySlug: gallery?.slug, galleryName: gallery?.name, tags })
+  ];
+  const productFilters = [...new Set(keywords)]
+    .filter(Boolean)
+    .slice(0, 8)
+    .flatMap((term) => [`title.ilike.%${term}%`, `brand.ilike.%${term}%`, `category.ilike.%${term}%`, `description.ilike.%${term}%`]);
+  const { data: relatedProductRows } = productFilters.length
+    ? await supabase.from("products").select(productSelect).or(productFilters.join(",")).eq("is_deleted", false).limit(80)
+    : { data: productRows };
+  const localRelatedProducts = relatedProducts((relatedProductRows ?? productRows ?? []).map(productFromDbRow), [...new Set(keywords)], 4);
   const goods = localRelatedProducts.length ? localRelatedProducts : fallbackRecommendedProducts(keywords, 4);
   const isOwner = currentUserId === post.user_id;
 
