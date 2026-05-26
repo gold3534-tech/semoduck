@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle, Star } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { postTypeLabel } from "@/lib/format";
@@ -10,7 +10,7 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <Card className="grid gap-4 sm:grid-cols-[10rem_1fr]">
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-100 sm:aspect-square">
-        <Image src={post.image} alt="" fill className="object-cover" sizes="160px" />
+        <SafeImage src={post.image} alt="" kind="product" className="h-full w-full object-cover" />
       </div>
       <div className="min-w-0">
         <div className="mb-2 flex flex-wrap items-center gap-2">

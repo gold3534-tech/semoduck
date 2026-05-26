@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Search, Sparkles } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, formatPrice, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
@@ -67,7 +67,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="block">
               <Card className="grid h-full grid-cols-[6rem_1fr] gap-3 transition hover:-translate-y-1 hover:bg-[#fff7fb]">
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f2fb]">
-                  {gallery.thumbnail_url ? <Image src={gallery.thumbnail_url} alt="" fill className="object-cover" sizes="96px" /> : null}
+                  <SafeImage src={gallery.thumbnail_url} alt="" kind="gallery" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0">
                   <Badge tone="mint">{gallery.category}</Badge>
@@ -92,7 +92,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <Link key={item.id} href={`/market/${item.id}`} className="block">
               <Card className="overflow-hidden p-0 transition hover:-translate-y-1 hover:bg-[#fff7fb]">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f2fb]">
-                  {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
+                  <SafeImage src={item.image_url} alt={item.title} kind="product" className="h-full w-full object-cover" />
                 </div>
                 <div className="space-y-2 p-4">
                   <div className="flex flex-wrap gap-2">
@@ -121,7 +121,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           {goods.map((item) => (
             <Card key={item.id} className="flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-1">
               <div className="relative aspect-square overflow-hidden bg-[#f7f2fb]">
-                {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" /> : null}
+                <SafeImage src={item.image} alt={item.title} kind="product" className="h-full w-full object-cover" />
               </div>
               <div className="flex flex-1 flex-col gap-2 p-4">
                 <p className="line-clamp-2 font-black">{item.title}</p>

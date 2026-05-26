@@ -78,7 +78,7 @@ export default async function ExternalGoodsDetailPage({ searchParams }: { search
                 <span>외부 판매 링크</span>
                 <span>찜 312</span>
               </div>
-              <p className="text-2xl font-black text-[#ff5f8d]">{price > 0 ? formatPrice(price) : "가격 확인 필요"}</p>
+              <p className="text-2xl font-black text-[#ff5f8d]">{formatPrice(price)}</p>
               <p className="text-sm font-bold leading-7 text-slate-600">세모덕이 검색 결과를 바탕으로 정리한 굿즈 설명 페이지입니다. 구매 전 판매처, 가격, 배송비, 정품 여부를 꼭 확인해 주세요.</p>
 
               <div className="rounded-2xl border border-[#efd7e7] bg-[#fbf4ff] p-3">

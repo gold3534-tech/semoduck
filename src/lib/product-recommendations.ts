@@ -25,7 +25,7 @@ export type ProductRow = {
 };
 
 export const productSelect =
-  "id,title,normalized_title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
+  "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
 
 function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
   return offer.mall_name === "네이버" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
@@ -158,7 +158,7 @@ export function productFromDbRow(row: ProductRow): Product {
       specialBenefit: offer.special_benefit ?? undefined,
       url: offer.url
     }))
-    .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || Number(a.isUsed) - Number(b.isUsed) || a.price - b.price);
+    .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || Number(a.isUsed) - Number(b.isUsed) || (a.price || Number.MAX_SAFE_INTEGER) - (b.price || Number.MAX_SAFE_INTEGER));
 
   return {
     id: row.id,
@@ -167,7 +167,7 @@ export function productFromDbRow(row: ProductRow): Product {
     brand: row.brand ?? "",
     category: row.category,
     description: row.description ?? "",
-    image: row.image_url ?? "/placeholder-goods.svg",
+    image: row.image_url ?? "/semoduck-icon.png",
     isOfficialProduct: row.is_official_product ?? false,
     tags: [row.category, row.brand].filter(Boolean) as string[],
     gallerySlugs: [],

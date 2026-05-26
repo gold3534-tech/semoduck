@@ -16,6 +16,19 @@ const tradeTypes: Array<{ value: TradeType; label: string; description: string }
   { value: "giveaway", label: "나눔", description: "무료로 나눠요." }
 ];
 
+async function readJsonOrError<T extends { error?: string }>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) return {} as T;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {
+      error: response.ok ? "서버 응답을 읽지 못했습니다." : `서버 응답 오류 (${response.status})`
+    } as T;
+  }
+}
+
 export function MarketWriteForm({ galleries }: { galleries: GalleryOption[] }) {
   const router = useRouter();
   const [gallerySlug, setGallerySlug] = useState(galleries[0]?.slug ?? "");
@@ -35,7 +48,7 @@ export function MarketWriteForm({ galleries }: { galleries: GalleryOption[] }) {
     form.set("file", file);
     form.set("bucket", "market-images");
     const response = await fetch("/api/uploads", { method: "POST", body: form });
-    const data = (await response.json()) as { url?: string; error?: string };
+    const data = await readJsonOrError<{ url?: string; error?: string }>(response);
     setLoading(null);
     if (!response.ok || !data.url) {
       setMessage(data.error ?? "이미지 업로드에 실패했습니다.");
@@ -61,12 +74,12 @@ export function MarketWriteForm({ galleries }: { galleries: GalleryOption[] }) {
           imageUrl
         })
       });
-      const data = (await response.json()) as { id?: string; error?: string };
       if (response.status === 401) {
         router.push("/login");
         router.refresh();
         return;
       }
+      const data = await readJsonOrError<{ id?: string; error?: string }>(response);
       if (!response.ok || !data.id) {
         setMessage(data.error ?? "거래 글 등록에 실패했습니다.");
         setLoading(null);

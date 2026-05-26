@@ -11,7 +11,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ error: "업로드 요청을 읽지 못했습니다." }, { status: 400 });
+  }
+
   const file = formData.get("file");
   const bucket = String(formData.get("bucket") ?? "market-images");
 

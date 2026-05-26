@@ -61,6 +61,13 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]*>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").trim();
 }
 
+function parsePrice(value: string | number | null | undefined) {
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : 0;
+  if (!value) return 0;
+  const parsed = Number(String(value).replace(/[^\d]/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 function normalizeQuery(query: string) {
   const trimmed = query.trim();
   if (!trimmed) return "쿠로미 키링";
@@ -120,7 +127,7 @@ export async function searchNaverShopping(
       category: [item.category1, item.category2, item.category3, item.category4].filter(Boolean).join(" > "),
       source: "naver_shopping" as const,
       mallName: item.mallName || "네이버 쇼핑",
-      price: Number(item.lprice || 0),
+      price: parsePrice(item.lprice),
       shippingFee: 0,
       condition: "new" as const,
       isOfficial: false,

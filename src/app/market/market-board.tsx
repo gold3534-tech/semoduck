@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SafeImage } from "@/components/safe-image";
 import { formatDateTime, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 import type { Gallery } from "@/types/domain";
 
@@ -92,7 +92,7 @@ export function MarketBoard({
           <Card key={item.id} className="grid gap-4 overflow-hidden p-3 md:grid-cols-[13rem_1fr_auto] md:items-center">
             <Link href={`/market/${item.id}`} className="block">
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-                {item.image_url ? <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="208px" /> : null}
+                <SafeImage src={item.image_url} alt={item.title} kind="product" className="h-full w-full object-cover" />
               </div>
             </Link>
             <div className="space-y-2">

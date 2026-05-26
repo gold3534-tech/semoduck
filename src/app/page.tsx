@@ -9,6 +9,7 @@ import {
   Star
 } from "lucide-react";
 import { HomeProductCarousel } from "@/app/home-product-carousel";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, postTypeLabel, tradeValueLabel } from "@/lib/format";
@@ -99,7 +100,7 @@ async function getHomeBaseDataUncached() {
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
     supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(160),
     supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
-    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(4),
+    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(6),
     supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(30)
   ]);
   return { productsResult, galleriesResult, postsResult, marketResult };
@@ -136,7 +137,7 @@ async function getHomeData() {
     slug: gallery.slug,
     description: gallery.description,
     category: gallery.category,
-    thumbnail: gallery.thumbnail_url ?? "/placeholder-goods.svg",
+    thumbnail: gallery.thumbnail_url ?? "/semoduck-icon.png",
     followerCount: gallery.follower_count ?? 0,
     postCount: gallery.post_count ?? 0,
     tags: [gallery.category].filter(Boolean)
@@ -163,8 +164,8 @@ async function getHomeData() {
   const highScore = Math.max(0, ...scoredProductPool.map((item) => item.score));
   const primaryProductPool = scoredProductPool.filter((item) => item.score >= Math.max(1, highScore - 4));
   const products = (primaryProductPool.length ? primaryProductPool : scoredProductPool)
-    .sort((a, b) => b.score - a.score || officialRank(b.product) - officialRank(a.product) || productPrice(a.product) - productPrice(b.product))
-    .slice(0, 8)
+    .sort((a, b) => b.score - a.score || b.product.bookmarkCount - a.product.bookmarkCount || officialRank(b.product) - officialRank(a.product) || productPrice(a.product) - productPrice(b.product))
+    .slice(0, 10)
     .map((item) => item.product);
   const recommendedGalleries = interests.length
     ? rawGalleries
@@ -194,7 +195,7 @@ async function getHomeData() {
       commentCount: post.comment_count ?? 0,
       bookmarkCount: post.bookmark_count ?? 0,
       createdAt: formatDateTime(post.created_at),
-      image: "/placeholder-goods.svg"
+      image: "/semoduck-icon.png"
     };
   });
   const rawMarketItems: MarketPreview[] = (marketResult.data ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries }));
@@ -211,7 +212,7 @@ async function getHomeData() {
     : rawMarketItems.slice(0, 8);
   const rankedMarketItems = [...marketItems].sort((a, b) => Number(Boolean(b.image_url)) - Number(Boolean(a.image_url)) || (b.price ?? 0) - (a.price ?? 0));
   const homePreviewMarketItems = rankedMarketItems.slice(0, 3);
-  const displayProducts = products.length ? products : fallbackRecommendedProducts(interests, 8);
+  const displayProducts = products.length >= 6 ? products : products.concat(fallbackRecommendedProducts(interests, 8)).filter((product, index, all) => all.findIndex((item) => item.id === product.id) === index).slice(0, 8);
   return { products: displayProducts, galleries, newGalleries, posts, marketItems: homePreviewMarketItems, interests };
 }
 
@@ -251,7 +252,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </div>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-[1.55fr_0.9fr]">
+      <section className="grid gap-3 md:grid-cols-[1.55fr_0.9fr]">
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">인기 갤러리</h2>
@@ -261,7 +262,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             {galleries.slice(0, 6).map((gallery) => (
               <Link key={gallery.id} href={`/galleries/${gallery.slug}`} className="rounded-xl border border-[#f1dbe8] bg-[#fff8fb] p-1.5 text-center 2xl:p-2 min-[1800px]:p-2.5">
                 <div className="relative mx-auto h-12 overflow-hidden rounded-lg bg-[#f7f2fb] 2xl:h-16 min-[1800px]:h-20">
-                  <Image src={gallery.thumbnail} alt="" fill className="object-cover" sizes="(min-width: 1800px) 140px, (min-width: 1536px) 112px, 96px" />
+                  <SafeImage src={gallery.thumbnail} alt="" kind="gallery" className="h-full w-full object-cover" />
                 </div>
                 <p className="mt-1 line-clamp-1 text-xs font-black text-[#2f2352] 2xl:text-sm">{gallery.name}</p>
                 <p className="text-[11px] font-bold text-slate-500 2xl:text-xs">{gallery.followerCount.toLocaleString("ko-KR")}명</p>
@@ -285,7 +286,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </Card>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-[minmax(18rem,1fr)_minmax(18rem,1fr)] xl:grid-cols-3">
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">추천 굿즈</h2>
@@ -320,7 +321,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             {marketItems.map((item) => (
               <Link key={item.id} href={`/market/${item.id}`} className="grid grid-cols-[3.5rem_1fr] gap-2 2xl:grid-cols-[4.25rem_1fr] 2xl:gap-3 min-[1800px]:grid-cols-[5rem_1fr]">
                 <div className="relative h-12 overflow-hidden rounded-xl bg-[#f7f2fb] 2xl:h-16 min-[1800px]:h-20">
-                  {item.image_url ? <Image src={item.image_url} alt="" fill className="object-cover" sizes="(min-width: 1800px) 80px, 64px" /> : <ShoppingBag className="m-auto mt-3 text-[#b89dde]" />}
+                  <SafeImage src={item.image_url} alt="" kind="product" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0">
                   <p className="line-clamp-1 text-xs font-black text-[#2f2352] 2xl:text-sm">{item.title}</p>
@@ -334,7 +335,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </Card>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {featureCards.map(({ title, body, Icon }) => (
           <div key={title} className="flex gap-3 rounded-2xl bg-white/78 p-3 ring-1 ring-[#f1dbe8] 2xl:p-4 min-[1800px]:gap-4">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#f3e8ff] text-[#8b61c8] 2xl:h-12 2xl:w-12"><Icon size={20} /></div>

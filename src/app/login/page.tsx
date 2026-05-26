@@ -17,7 +17,7 @@ export default async function LoginPage() {
       <Decorations />
       <main className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center px-5 py-4">
         <div className="mb-3 text-center">
-          <Image src="/semoduck-logo.png" alt="세모덕" width={300} height={116} priority className="mx-auto h-auto w-56 md:w-72" />
+          <Image src="/semoduck-logo.png" alt="세모덕" width={260} height={100} priority className="mx-auto h-auto w-48 object-contain md:w-60" />
           <p className="mt-1 text-xs font-black text-[#8b61c8] md:text-sm">덕질도, 소통도, 거래도! 세상의 모든 덕질이 모이는 곳</p>
         </div>
         <Suspense fallback={<div className="h-[30rem] w-full max-w-xl animate-pulse rounded-[2rem] bg-white/80" />}>

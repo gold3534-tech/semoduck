@@ -21,7 +21,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const body = createPostSchema.parse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "요청 본문을 읽지 못했습니다." }, { status: 400 });
+  }
+
+  const parsed = createPostSchema.safeParse(payload);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "입력값을 확인해주세요." }, { status: 400 });
+  }
+
+  const body = parsed.data;
   const admin = createAdminSupabaseClient();
 
   const { data: gallery, error: galleryError } = await admin.from("galleries").select("id").eq("slug", body.gallerySlug).single();
@@ -53,6 +65,7 @@ export async function POST(request: Request) {
   for (const rawTag of body.tags) {
     const tag = rawTag.trim().replace(/^#/, "");
     if (!tag) continue;
+
     const { data: tagRow } = await admin.from("tags").upsert({ name: tag }, { onConflict: "name" }).select("id").single();
     if (tagRow) {
       await admin.from("post_tags").upsert({ post_id: post.id, tag_id: tagRow.id });

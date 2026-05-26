@@ -44,7 +44,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const body = createSchema.parse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "요청 본문을 읽지 못했습니다." }, { status: 400 });
+  }
+
+  const parsed = createSchema.safeParse(payload);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "입력값을 확인해주세요." }, { status: 400 });
+  }
+
+  const body = parsed.data;
   const admin = createAdminSupabaseClient();
   const { data: gallery } = await admin.from("galleries").select("id").eq("slug", body.gallerySlug).single();
 

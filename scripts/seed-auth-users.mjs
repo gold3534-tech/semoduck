@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+﻿import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -32,157 +32,160 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
+const seedAdminPassword = must(env.SEED_ADMIN_PASSWORD, "SEED_ADMIN_PASSWORD");
+const seedUserPassword = must(env.SEED_USER_PASSWORD, "SEED_USER_PASSWORD");
+
 const seedUsers = [
-  { key: "admin", email: "gold3534@gmail.com", password: "admin1234", nickname: "세모덕관리자", role: "admin" },
-  { key: "sanrio", email: "gold3534+sanrio@gmail.com", password: "semo1234", nickname: "쿠로미수집가", role: "user" },
-  { key: "pokemon", email: "gold3534+pokemon@gmail.com", password: "semo1234", nickname: "카드정리요정", role: "user" },
-  { key: "onepiece", email: "gold3534+onepiece@gmail.com", password: "semo1234", nickname: "루피기어5", role: "user" },
-  { key: "webtoon", email: "gold3534+webtoon@gmail.com", password: "semo1234", nickname: "팝업줄서는중", role: "user" },
-  { key: "bts", email: "gold3534+bts@gmail.com", password: "semo1234", nickname: "보라MD", role: "user" },
-  { key: "stellive", email: "gold3534+stellive@gmail.com", password: "semo1234", nickname: "별빛굿즈러", role: "user" },
-  { key: "lol", email: "gold3534+lol@gmail.com", password: "semo1234", nickname: "미드차이", role: "user" },
-  { key: "market", email: "gold3534+market@gmail.com", password: "semo1234", nickname: "교환요정", role: "user" }
+  { key: "admin", email: "gold3534@gmail.com", password: seedAdminPassword, nickname: "?몃え?뺢?由ъ옄", role: "admin" },
+  { key: "sanrio", email: "gold3534+sanrio@gmail.com", password: seedUserPassword, nickname: "荑좊줈誘몄닔吏묎?", role: "user" },
+  { key: "pokemon", email: "gold3534+pokemon@gmail.com", password: seedUserPassword, nickname: "移대뱶?뺣━?붿젙", role: "user" },
+  { key: "onepiece", email: "gold3534+onepiece@gmail.com", password: seedUserPassword, nickname: "猷⑦뵾湲곗뼱5", role: "user" },
+  { key: "webtoon", email: "gold3534+webtoon@gmail.com", password: seedUserPassword, nickname: "?앹뾽以꾩꽌?붿쨷", role: "user" },
+  { key: "bts", email: "gold3534+bts@gmail.com", password: seedUserPassword, nickname: "蹂대씪MD", role: "user" },
+  { key: "stellive", email: "gold3534+stellive@gmail.com", password: seedUserPassword, nickname: "蹂꾨튆援우쫰??, role: "user" },
+  { key: "lol", email: "gold3534+lol@gmail.com", password: seedUserPassword, nickname: "誘몃뱶李⑥씠", role: "user" },
+  { key: "market", email: "gold3534+market@gmail.com", password: seedUserPassword, nickname: "援먰솚?붿젙", role: "user" }
 ];
 
 const galleries = [
-  { name: "산리오 갤러리", slug: "sanrio", description: "쿠로미, 마이멜로디, 시나모롤 굿즈와 재입고 정보를 나누는 공간", category: "캐릭터", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg", follower_count: 12430, post_count: 842 },
-  { name: "포켓몬 갤러리", slug: "pokemon", description: "포켓몬 카드, 키링, 인형, 팝업스토어 소식을 모아요", category: "게임", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg", follower_count: 9870, post_count: 620 },
-  { name: "원피스 갤러리", slug: "onepiece", description: "피규어, 점프샵, 한정판 예약 정보를 공유합니다", category: "애니", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg", follower_count: 7460, post_count: 411 },
-  { name: "웹툰 굿즈 갤러리", slug: "webtoon-goods", description: "웹툰 단행본 특전, 아크릴 스탠드, 팝업 굿즈 후기", category: "웹툰", thumbnail_url: "https://shopping-phinf.pstatic.net/main_1208387/12083870773.jpg", follower_count: 5320, post_count: 359 },
-  { name: "BTS 갤러리", slug: "bts", description: "포토카드, 앨범 특전, 공식 MD 구매 정보를 정리해요", category: "아이돌", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg", follower_count: 15110, post_count: 1203 },
-  { name: "스텔라이브 갤러리", slug: "stellive", description: "버튜버 굿즈, 방송 특전, 콜라보 카페 이야기를 모으는 갤러리", category: "버튜버", thumbnail_url: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg", follower_count: 4310, post_count: 288 },
-  { name: "롤 갤러리", slug: "lol", description: "롤드컵 굿즈, 팀 유니폼, 피규어와 교환 정보를 공유합니다", category: "게임", thumbnail_url: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg", follower_count: 6920, post_count: 503 }
+  { name: "?곕━??媛ㅻ윭由?, slug: "sanrio", description: "荑좊줈誘? 留덉씠硫쒕줈?? ?쒕굹紐⑤· 援우쫰? ?ъ엯怨??뺣낫瑜??섎늻??怨듦컙", category: "罹먮┃??, thumbnail_url: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg", follower_count: 12430, post_count: 842 },
+  { name: "?ъ폆紐?媛ㅻ윭由?, slug: "pokemon", description: "?ъ폆紐?移대뱶, ?ㅻ쭅, ?명삎, ?앹뾽?ㅽ넗???뚯떇??紐⑥븘??, category: "寃뚯엫", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg", follower_count: 9870, post_count: 620 },
+  { name: "?먰뵾??媛ㅻ윭由?, slug: "onepiece", description: "?쇨퇋?? ?먰봽?? ?쒖젙???덉빟 ?뺣낫瑜?怨듭쑀?⑸땲??, category: "?좊땲", thumbnail_url: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg", follower_count: 7460, post_count: 411 },
+  { name: "?뱁댆 援우쫰 媛ㅻ윭由?, slug: "webtoon-goods", description: "?뱁댆 ?⑦뻾蹂??뱀쟾, ?꾪겕由??ㅽ깲?? ?앹뾽 援우쫰 ?꾧린", category: "?뱁댆", thumbnail_url: "https://shopping-phinf.pstatic.net/main_1208387/12083870773.jpg", follower_count: 5320, post_count: 359 },
+  { name: "BTS 媛ㅻ윭由?, slug: "bts", description: "?ы넗移대뱶, ?⑤쾾 ?뱀쟾, 怨듭떇 MD 援щℓ ?뺣낫瑜??뺣━?댁슂", category: "?꾩씠??, thumbnail_url: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg", follower_count: 15110, post_count: 1203 },
+  { name: "?ㅽ뀛?쇱씠釉?媛ㅻ윭由?, slug: "stellive", description: "踰꾪뒠踰?援우쫰, 諛⑹넚 ?뱀쟾, 肄쒕씪蹂?移댄럹 ?댁빞湲곕? 紐⑥쑝??媛ㅻ윭由?, category: "踰꾪뒠踰?, thumbnail_url: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg", follower_count: 4310, post_count: 288 },
+  { name: "濡?媛ㅻ윭由?, slug: "lol", description: "濡ㅻ뱶而?援우쫰, ? ?좊땲?? ?쇨퇋?댁? 援먰솚 ?뺣낫瑜?怨듭쑀?⑸땲??, category: "寃뚯엫", thumbnail_url: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg", follower_count: 6920, post_count: 503 }
 ];
 
 const productSeeds = [
   {
     key: "kuromi-keyring",
-    title: "산리오 쿠로미 얼굴 인형 키링",
-    normalized_title: "산리오 쿠로미 키링",
-    brand: "산리오",
-    category: "캐릭터굿즈",
-    description: "네이버 쇼핑 결과 기반의 쿠로미 인형 키링입니다.",
+    title: "?곕━??荑좊줈誘??쇨뎬 ?명삎 ?ㅻ쭅",
+    normalized_title: "?곕━??荑좊줈誘??ㅻ쭅",
+    brand: "?곕━??,
+    category: "罹먮┃?곌동利?,
+    description: "?ㅼ씠踰??쇳븨 寃곌낵 湲곕컲??荑좊줈誘??명삎 ?ㅻ쭅?낅땲??",
     image_url: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg",
     is_official_product: false,
     offers: [
-      { source: "naver_shopping", mall_name: "21세기 문방구", price: 4900, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/11346986476" },
-      { source: "naver_shopping", mall_name: "The 하니샵", price: 11700, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13249263774" }
+      { source: "naver_shopping", mall_name: "21?멸린 臾몃갑援?, price: 4900, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/11346986476" },
+      { source: "naver_shopping", mall_name: "The ?섎땲??, price: 11700, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13249263774" }
     ]
   },
   {
     key: "pokemon-binder",
-    title: "포켓몬 카드 9포켓 바인더",
-    normalized_title: "포켓몬 카드 바인더",
-    brand: "포켓몬",
-    category: "게임굿즈",
-    description: "카드 수집용 9포켓 바인더입니다.",
+    title: "?ъ폆紐?移대뱶 9?ъ폆 諛붿씤??,
+    normalized_title: "?ъ폆紐?移대뱶 諛붿씤??,
+    brand: "?ъ폆紐?,
+    category: "寃뚯엫援우쫰",
+    description: "移대뱶 ?섏쭛??9?ъ폆 諛붿씤?붿엯?덈떎.",
     image_url: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg",
     is_official_product: false,
     offers: [
       { source: "naver_shopping", mall_name: "Basilisk", price: 8000, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/11080719169" },
-      { source: "naver_shopping", mall_name: "잇템잡화점", price: 6700, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/6507549767" }
+      { source: "naver_shopping", mall_name: "?뉙뀥?≫솕??, price: 6700, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/6507549767" }
     ]
   },
   {
     key: "onepiece-figure",
-    title: "원피스 루피 기어5 피규어",
-    normalized_title: "원피스 루피 기어5 피규어",
-    brand: "원피스",
-    category: "애니굿즈",
-    description: "루피 기어5 디자인 피규어입니다.",
+    title: "?먰뵾??猷⑦뵾 湲곗뼱5 ?쇨퇋??,
+    normalized_title: "?먰뵾??猷⑦뵾 湲곗뼱5 ?쇨퇋??,
+    brand: "?먰뵾??,
+    category: "?좊땲援우쫰",
+    description: "猷⑦뵾 湲곗뼱5 ?붿옄???쇨퇋?댁엯?덈떎.",
     image_url: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg",
     is_official_product: true,
     offers: [
-      { source: "naver_shopping", mall_name: "페간샵", price: 23000, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/11717586939" },
-      { source: "naver_shopping", mall_name: "큰부자", price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/10333111816" }
+      { source: "naver_shopping", mall_name: "?섍컙??, price: 23000, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/11717586939" },
+      { source: "naver_shopping", mall_name: "?곕???, price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/10333111816" }
     ]
   },
   {
     key: "webtoon-acrylic",
-    title: "네이버 웹툰 아크릴 스탠드 랜덤 챰",
-    normalized_title: "웹툰 아크릴 스탠드 챰",
-    brand: "웹툰샵",
-    category: "웹툰굿즈",
-    description: "웹툰샵에서 판매되는 랜덤 아크릴 스탠드/챰 굿즈입니다.",
+    title: "?ㅼ씠踰??뱁댆 ?꾪겕由??ㅽ깲???쒕뜡 梨?,
+    normalized_title: "?뱁댆 ?꾪겕由??ㅽ깲??梨?,
+    brand: "?뱁댆??,
+    category: "?뱁댆援우쫰",
+    description: "?뱁댆?듭뿉???먮ℓ?섎뒗 ?쒕뜡 ?꾪겕由??ㅽ깲??梨?援우쫰?낅땲??",
     image_url: "https://shopping-phinf.pstatic.net/main_1208387/12083870773.jpg",
     is_official_product: true,
     offers: [
-      { source: "naver_shopping", mall_name: "웹툰샵", price: 3000, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/392160127" },
-      { source: "naver_shopping", mall_name: "웹툰샵", price: 3500, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/4679439558" }
+      { source: "naver_shopping", mall_name: "?뱁댆??, price: 3000, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/392160127" },
+      { source: "naver_shopping", mall_name: "?뱁댆??, price: 3500, shipping_fee: 3000, condition: "new", is_official: true, is_used: false, url: "https://smartstore.naver.com/main/products/4679439558" }
     ]
   },
   {
     key: "bts-binder",
-    title: "BTS 포토카드 바인더",
-    normalized_title: "BTS 포토카드 바인더",
+    title: "BTS ?ы넗移대뱶 諛붿씤??,
+    normalized_title: "BTS ?ы넗移대뱶 諛붿씤??,
     brand: "BTS",
-    category: "아이돌굿즈",
-    description: "포토카드 보관용 바인더입니다.",
+    category: "?꾩씠?뚭동利?,
+    description: "?ы넗移대뱶 蹂닿???諛붿씤?붿엯?덈떎.",
     image_url: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg",
     is_official_product: false,
     offers: [
       { source: "naver_shopping", mall_name: "GouShop", price: 17500, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/12142610372" },
-      { source: "naver_shopping", mall_name: "KIWICK", price: 55000, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, special_benefit: "달마중 굿즈", url: "https://smartstore.naver.com/main/products/8015303214" }
+      { source: "naver_shopping", mall_name: "KIWICK", price: 55000, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, special_benefit: "?щ쭏以?援우쫰", url: "https://smartstore.naver.com/main/products/8015303214" }
     ]
   },
   {
     key: "stellive-album",
-    title: "스텔라이브 STAR TRAIL 앨범 굿즈",
-    normalized_title: "스텔라이브 STAR TRAIL 앨범",
-    brand: "스텔라이브",
-    category: "버튜버굿즈",
-    description: "스텔라이브 앨범과 관련 굿즈입니다.",
+    title: "?ㅽ뀛?쇱씠釉?STAR TRAIL ?⑤쾾 援우쫰",
+    normalized_title: "?ㅽ뀛?쇱씠釉?STAR TRAIL ?⑤쾾",
+    brand: "?ㅽ뀛?쇱씠釉?,
+    category: "踰꾪뒠踰꾧동利?,
+    description: "?ㅽ뀛?쇱씠釉??⑤쾾怨?愿??援우쫰?낅땲??",
     image_url: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg",
     is_official_product: false,
     offers: [
-      { source: "naver_shopping", mall_name: "스컬데이 일렉트릭", price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13384931910" },
-      { source: "naver_shopping", mall_name: "귀호강 주파수", price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13384947686" }
+      { source: "naver_shopping", mall_name: "?ㅼ뺄?곗씠 ?쇰젆?몃┃", price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13384931910" },
+      { source: "naver_shopping", mall_name: "洹?멸컯 二쇳뙆??, price: 19800, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/13384947686" }
     ]
   },
   {
     key: "lol-uniform",
-    title: "롤드컵 T1 스타일 유니폼 자켓",
-    normalized_title: "롤드컵 유니폼 자켓",
+    title: "濡ㅻ뱶而?T1 ?ㅽ????좊땲???먯폆",
+    normalized_title: "濡ㅻ뱶而??좊땲???먯폆",
     brand: "T1",
-    category: "게임굿즈",
-    description: "롤드컵 분위기의 팀 유니폼/자켓 상품입니다.",
+    category: "寃뚯엫援우쫰",
+    description: "濡ㅻ뱶而?遺꾩쐞湲곗쓽 ? ?좊땲???먯폆 ?곹뭹?낅땲??",
     image_url: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg",
     is_official_product: false,
     offers: [
-      { source: "naver_shopping", mall_name: "11번가", price: 45500, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9345655507&tid=1000000061" },
-      { source: "naver_shopping", mall_name: "감마즈무역상사", price: 67790, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/11118978827" }
+      { source: "naver_shopping", mall_name: "11踰덇?", price: 45500, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9345655507&tid=1000000061" },
+      { source: "naver_shopping", mall_name: "媛먮쭏利덈Т??긽??, price: 67790, shipping_fee: 3000, condition: "new", is_official: false, is_used: false, url: "https://smartstore.naver.com/main/products/11118978827" }
     ]
   }
 ];
 
 const posts = [
-  { gallery: "sanrio", user: "sanrio", title: "[구매고민] 쿠로미 키링 정품 어디서 사?", content: "네이버에 가격 차이가 꽤 나서 공식몰이랑 비교 중이에요. 예약 특전 있는 판매처도 있나요?", post_type: "purchase_help", like_count: 128, comment_count: 2, bookmark_count: 56 },
-  { gallery: "sanrio", user: "market", title: "산리오 얼굴 인형 키링 실물 후기", content: "가방에 달면 생각보다 큼직해요. 실버비즈가 사진보다 반짝이고 쿠로미 색감도 괜찮습니다.", post_type: "review", like_count: 67, comment_count: 1, bookmark_count: 21 },
-  { gallery: "pokemon", user: "pokemon", title: "포켓몬 카드 바인더 360장짜리 써본 사람?", content: "바실리스크 바인더가 가격은 괜찮은데 카드가 휘는지 궁금해요. 슬리브 끼운 상태로 들어가나요?", post_type: "question", like_count: 89, comment_count: 1, bookmark_count: 22 },
-  { gallery: "pokemon", user: "market", title: "포켓몬 카드 앨범 교환 기준 정리", content: "9포켓, 4포켓, 지퍼형 기준으로 장단점 정리했어요. 어린이 선물용이면 지퍼형이 안전합니다.", post_type: "info", like_count: 54, comment_count: 0, bookmark_count: 31 },
-  { gallery: "onepiece", user: "onepiece", title: "기어5 루피 피규어 정품 구분 포인트", content: "박스 홀로그램, 받침대 마감, 머리카락 도색을 보면 대략 구분됩니다. 너무 싼 매물은 조심하세요.", post_type: "info", like_count: 112, comment_count: 0, bookmark_count: 48 },
-  { gallery: "onepiece", user: "market", title: "그란디스타 루피 예약가 괜찮나요?", content: "배송비 포함 2만원대면 괜찮아 보이는데, 재판 가능성 있으면 기다릴지 고민입니다.", post_type: "purchase_help", like_count: 45, comment_count: 0, bookmark_count: 19 },
-  { gallery: "webtoon-goods", user: "webtoon", title: "웹툰샵 아크릴 랜덤 챰 후기", content: "랜덤이라 중복이 좀 있지만 가격이 낮아서 교환하기 좋아요. 보호필름이 있어서 벗겨야 깨끗합니다.", post_type: "review", like_count: 73, comment_count: 0, bookmark_count: 35 },
-  { gallery: "bts", user: "bts", title: "BTS 포토카드 바인더 특전 있는 곳 정리", content: "공식 MD와 외부몰 특전 차이가 있어서 표로 정리해봤어요. 유저 제보 링크도 확인 필요합니다.", post_type: "info", like_count: 152, comment_count: 1, bookmark_count: 73 },
-  { gallery: "stellive", user: "stellive", title: "스텔라이브 STAR TRAIL 앨범 굿즈 링크 모음", content: "네이버 검색 결과에 같은 이미지로 여러 몰이 떠서 가격과 배송비 기준으로 비교했습니다.", post_type: "info", like_count: 66, comment_count: 0, bookmark_count: 27 },
-  { gallery: "lol", user: "lol", title: "롤드컵 유니폼 사이즈 실측 공유", content: "평소 M 입는데 이번 유니폼은 어깨가 살짝 좁습니다. 교환글 올리기 전에 참고하세요.", post_type: "review", like_count: 76, comment_count: 0, bookmark_count: 29 }
+  { gallery: "sanrio", user: "sanrio", title: "[援щℓ怨좊?] 荑좊줈誘??ㅻ쭅 ?뺥뭹 ?대뵒????", content: "?ㅼ씠踰꾩뿉 媛寃?李⑥씠媛 苑??섏꽌 怨듭떇紐곗씠??鍮꾧탳 以묒씠?먯슂. ?덉빟 ?뱀쟾 ?덈뒗 ?먮ℓ泥섎룄 ?덈굹??", post_type: "purchase_help", like_count: 128, comment_count: 2, bookmark_count: 56 },
+  { gallery: "sanrio", user: "market", title: "?곕━???쇨뎬 ?명삎 ?ㅻ쭅 ?ㅻЪ ?꾧린", content: "媛諛⑹뿉 ?щ㈃ ?앷컖蹂대떎 ?쇱쭅?댁슂. ?ㅻ쾭鍮꾩쫰媛 ?ъ쭊蹂대떎 諛섏쭩?닿퀬 荑좊줈誘??됯컧??愿쒖갖?듬땲??", post_type: "review", like_count: 67, comment_count: 1, bookmark_count: 21 },
+  { gallery: "pokemon", user: "pokemon", title: "?ъ폆紐?移대뱶 諛붿씤??360?μ쭨由??⑤낯 ?щ엺?", content: "諛붿떎由ъ뒪??諛붿씤?붽? 媛寃⑹? 愿쒖갖???移대뱶媛 ?섎뒗吏 沅곴툑?댁슂. ?щ━釉??쇱슫 ?곹깭濡??ㅼ뼱媛?섏슂?", post_type: "question", like_count: 89, comment_count: 1, bookmark_count: 22 },
+  { gallery: "pokemon", user: "market", title: "?ъ폆紐?移대뱶 ?⑤쾾 援먰솚 湲곗? ?뺣━", content: "9?ъ폆, 4?ъ폆, 吏?쇳삎 湲곗??쇰줈 ?λ떒???뺣━?덉뼱?? ?대┛???좊Ъ?⑹씠硫?吏?쇳삎???덉쟾?⑸땲??", post_type: "info", like_count: 54, comment_count: 0, bookmark_count: 31 },
+  { gallery: "onepiece", user: "onepiece", title: "湲곗뼱5 猷⑦뵾 ?쇨퇋???뺥뭹 援щ텇 ?ъ씤??, content: "諛뺤뒪 ?濡쒓렇?? 諛쏆묠? 留덇컧, 癒몃━移대씫 ?꾩깋??蹂대㈃ ???援щ텇?⑸땲?? ?덈Т ??留ㅻЪ? 議곗떖?섏꽭??", post_type: "info", like_count: 112, comment_count: 0, bookmark_count: 48 },
+  { gallery: "onepiece", user: "market", title: "洹몃??붿뒪? 猷⑦뵾 ?덉빟媛 愿쒖갖?섏슂?", content: "諛곗넚鍮??ы븿 2留뚯썝?硫?愿쒖갖??蹂댁씠?붾뜲, ?ы뙋 媛?μ꽦 ?덉쑝硫?湲곕떎由댁? 怨좊??낅땲??", post_type: "purchase_help", like_count: 45, comment_count: 0, bookmark_count: 19 },
+  { gallery: "webtoon-goods", user: "webtoon", title: "?뱁댆???꾪겕由??쒕뜡 梨??꾧린", content: "?쒕뜡?대씪 以묐났??醫 ?덉?留?媛寃⑹씠 ??븘??援먰솚?섍린 醫뗭븘?? 蹂댄샇?꾨쫫???덉뼱??踰쀪꺼??源⑤걮?⑸땲??", post_type: "review", like_count: 73, comment_count: 0, bookmark_count: 35 },
+  { gallery: "bts", user: "bts", title: "BTS ?ы넗移대뱶 諛붿씤???뱀쟾 ?덈뒗 怨??뺣━", content: "怨듭떇 MD? ?몃?紐??뱀쟾 李⑥씠媛 ?덉뼱???쒕줈 ?뺣━?대뇬?댁슂. ?좎? ?쒕낫 留곹겕???뺤씤 ?꾩슂?⑸땲??", post_type: "info", like_count: 152, comment_count: 1, bookmark_count: 73 },
+  { gallery: "stellive", user: "stellive", title: "?ㅽ뀛?쇱씠釉?STAR TRAIL ?⑤쾾 援우쫰 留곹겕 紐⑥쓬", content: "?ㅼ씠踰?寃??寃곌낵??媛숈? ?대?吏濡??щ윭 紐곗씠 ?좎꽌 媛寃⑷낵 諛곗넚鍮?湲곗??쇰줈 鍮꾧탳?덉뒿?덈떎.", post_type: "info", like_count: 66, comment_count: 0, bookmark_count: 27 },
+  { gallery: "lol", user: "lol", title: "濡ㅻ뱶而??좊땲???ъ씠利??ㅼ륫 怨듭쑀", content: "?됱냼 M ?낅뒗???대쾲 ?좊땲?쇱? ?닿묠媛 ?댁쭩 醫곸뒿?덈떎. 援먰솚湲 ?щ━湲??꾩뿉 李멸퀬?섏꽭??", post_type: "review", like_count: 76, comment_count: 0, bookmark_count: 29 }
 ];
 
 const comments = [
-  { postTitle: "[구매고민] 쿠로미 키링 정품 어디서 사?", user: "market", content: "공식몰은 비싸도 특전이 확실해서 저는 거기 추천해요.", like_count: 12 },
-  { postTitle: "[구매고민] 쿠로미 키링 정품 어디서 사?", user: "sanrio", content: "네이버 판매처는 리뷰 확인하고 사는 게 좋아요.", like_count: 8 },
-  { postTitle: "포켓몬 카드 바인더 360장짜리 써본 사람?", user: "pokemon", content: "슬리브 끼운 카드도 들어가는데 너무 꽉 채우면 휘어요.", like_count: 5 },
-  { postTitle: "BTS 포토카드 바인더 특전 있는 곳 정리", user: "bts", content: "특전 있는 몰은 품절이 빨라서 알림 켜두는 게 좋더라고요.", like_count: 7 }
+  { postTitle: "[援щℓ怨좊?] 荑좊줈誘??ㅻ쭅 ?뺥뭹 ?대뵒????", user: "market", content: "怨듭떇紐곗? 鍮꾩떥???뱀쟾???뺤떎?댁꽌 ???嫄곌린 異붿쿇?댁슂.", like_count: 12 },
+  { postTitle: "[援щℓ怨좊?] 荑좊줈誘??ㅻ쭅 ?뺥뭹 ?대뵒????", user: "sanrio", content: "?ㅼ씠踰??먮ℓ泥섎뒗 由щ럭 ?뺤씤?섍퀬 ?щ뒗 寃?醫뗭븘??", like_count: 8 },
+  { postTitle: "?ъ폆紐?移대뱶 諛붿씤??360?μ쭨由??⑤낯 ?щ엺?", user: "pokemon", content: "?щ━釉??쇱슫 移대뱶???ㅼ뼱媛?붾뜲 ?덈Т 苑?梨꾩슦硫??섏뼱??", like_count: 5 },
+  { postTitle: "BTS ?ы넗移대뱶 諛붿씤???뱀쟾 ?덈뒗 怨??뺣━", user: "bts", content: "?뱀쟾 ?덈뒗 紐곗? ?덉젅??鍮⑤씪???뚮┝ 耳쒕몢??寃?醫뗫뜑?쇨퀬??", like_count: 7 }
 ];
 
 const marketItems = [
-  { user: "sanrio", gallery: "sanrio", product: "kuromi-keyring", trade_type: "transfer", title: "쿠로미 얼굴 키링 미개봉 양도", description: "중복 구매해서 정가 이하로 양도합니다. 댓글 문의만 받아요.", price: 7000, region: "서울 홍대", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg" },
-  { user: "pokemon", gallery: "pokemon", product: "pokemon-binder", trade_type: "exchange", title: "포켓몬 카드 바인더 교환 구해요", description: "9포켓 바인더를 지퍼형 바인더와 교환 희망합니다.", price: 0, region: "부산 서면", status: "reserved", image_url: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg" },
-  { user: "onepiece", gallery: "onepiece", product: "onepiece-figure", trade_type: "giveaway", title: "원피스 루피 피규어 박스만 나눔", description: "피규어 박스 보관용으로 필요하신 분께 나눔합니다.", price: 0, region: "인천 부평", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg" },
-  { user: "webtoon", gallery: "webtoon-goods", product: "webtoon-acrylic", trade_type: "exchange", title: "웹툰 아크릴 챰 중복 교환", description: "랜덤 챰 중복이 나와서 다른 캐릭터와 교환 원합니다.", price: 0, region: "서울 합정", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_1208387/12083870773.jpg" },
-  { user: "bts", gallery: "bts", product: "bts-binder", trade_type: "giveaway", title: "BTS 포토카드 바인더 속지 나눔", description: "바인더 속지 여분이 있어 나눔합니다. 상태는 새상품입니다.", price: 0, region: "대구 동성로", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg" },
-  { user: "stellive", gallery: "stellive", product: "stellive-album", trade_type: "exchange", title: "스텔라이브 앨범 특전 교환", description: "중복 특전이 있어 다른 멤버 특전과 교환하고 싶어요.", price: 0, region: "광주 충장로", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg" },
-  { user: "lol", gallery: "lol", product: "lol-uniform", trade_type: "transfer", title: "롤드컵 유니폼 L 양도", description: "실착 1회, 상태 좋습니다. 사이즈 미스로 양도합니다.", price: 43000, region: "대전 둔산", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg" }
+  { user: "sanrio", gallery: "sanrio", product: "kuromi-keyring", trade_type: "transfer", title: "荑좊줈誘??쇨뎬 ?ㅻ쭅 誘멸컻遊??묐룄", description: "以묐났 援щℓ?댁꽌 ?뺢? ?댄븯濡??묐룄?⑸땲?? ?볤? 臾몄쓽留?諛쏆븘??", price: 7000, region: "?쒖슱 ?띾?", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg" },
+  { user: "pokemon", gallery: "pokemon", product: "pokemon-binder", trade_type: "exchange", title: "?ъ폆紐?移대뱶 諛붿씤??援먰솚 援ы빐??, description: "9?ъ폆 諛붿씤?붾? 吏?쇳삎 諛붿씤?붿? 援먰솚 ?щ쭩?⑸땲??", price: 0, region: "遺???쒕㈃", status: "reserved", image_url: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg" },
+  { user: "onepiece", gallery: "onepiece", product: "onepiece-figure", trade_type: "giveaway", title: "?먰뵾??猷⑦뵾 ?쇨퇋??諛뺤뒪留??섎닎", description: "?쇨퇋??諛뺤뒪 蹂닿??⑹쑝濡??꾩슂?섏떊 遺꾧퍡 ?섎닎?⑸땲??", price: 0, region: "?몄쿇 遺??, status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg" },
+  { user: "webtoon", gallery: "webtoon-goods", product: "webtoon-acrylic", trade_type: "exchange", title: "?뱁댆 ?꾪겕由?梨?以묐났 援먰솚", description: "?쒕뜡 梨?以묐났???섏????ㅻⅨ 罹먮┃?곗? 援먰솚 ?먰빀?덈떎.", price: 0, region: "?쒖슱 ?⑹젙", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_1208387/12083870773.jpg" },
+  { user: "bts", gallery: "bts", product: "bts-binder", trade_type: "giveaway", title: "BTS ?ы넗移대뱶 諛붿씤???띿? ?섎닎", description: "諛붿씤???띿? ?щ텇???덉뼱 ?섎닎?⑸땲?? ?곹깭???덉긽?덉엯?덈떎.", price: 0, region: "?援??숈꽦濡?, status: "active", image_url: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg" },
+  { user: "stellive", gallery: "stellive", product: "stellive-album", trade_type: "exchange", title: "?ㅽ뀛?쇱씠釉??⑤쾾 ?뱀쟾 援먰솚", description: "以묐났 ?뱀쟾???덉뼱 ?ㅻⅨ 硫ㅻ쾭 ?뱀쟾怨?援먰솚?섍퀬 ?띠뼱??", price: 0, region: "愿묒＜ 異⑹옣濡?, status: "active", image_url: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg" },
+  { user: "lol", gallery: "lol", product: "lol-uniform", trade_type: "transfer", title: "濡ㅻ뱶而??좊땲??L ?묐룄", description: "?ㅼ갑 1?? ?곹깭 醫뗭뒿?덈떎. ?ъ씠利?誘몄뒪濡??묐룄?⑸땲??", price: 43000, region: "????붿궛", status: "active", image_url: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg" }
 ];
 
 async function findAuthUser(email) {
@@ -334,9 +337,10 @@ try {
   await seedMarket(userIds, galleryIds, productIds);
 
   console.log("\nSupabase demo seed complete.");
-  console.log("Admin: gold3534@gmail.com / admin1234");
-  console.log("User password for all demo accounts: semo1234");
+  console.log("Admin seed user ready: gold3534@gmail.com");
+  console.log("Seed user accounts are ready.");
 } catch (error) {
   console.error(error);
   process.exit(1);
 }
+

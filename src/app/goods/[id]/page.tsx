@@ -36,9 +36,9 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
   const offers = (product.product_offers ?? [])
     .filter((offer: any) => !isPriceCompareOffer(offer))
-    .sort((a: any, b: any) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || 0) - Number(b.price || 0));
+    .sort((a: any, b: any) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || Number.MAX_SAFE_INTEGER) - Number(b.price || Number.MAX_SAFE_INTEGER));
   const primaryOffer = offers[0];
-  const displayPrice = primaryOffer?.price ? formatPrice(primaryOffer.price) : "가격 확인 필요";
+  const displayPrice = formatPrice(primaryOffer?.price);
   const images = [product.image_url].filter(Boolean) as string[];
   const aiPostKeywords = await extractPostKeywords(`${product.title}\n${product.brand ?? ""}\n${product.category ?? ""}\n${product.description ?? ""}`);
   const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...detailTerms(product)])].slice(0, 8);

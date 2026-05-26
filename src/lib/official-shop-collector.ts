@@ -138,9 +138,11 @@ function attr(tag: string, name: string) {
   return match?.[1] ?? "";
 }
 
-function parsePrice(value: string) {
-  const match = value.replace(/,/g, "").match(/(\d{3,})\s*원/);
-  return match ? Number(match[1]) : 0;
+function parsePrice(value: string | number | null | undefined) {
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : 0;
+  if (!value) return 0;
+  const parsed = Number(String(value).replace(/[^\d]/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
 function isSaleEnded(value: string) {
@@ -154,6 +156,18 @@ function availabilityLabel(value: string) {
 function scoreTitle(title: string, keywords: string[]) {
   const lowered = title.toLowerCase();
   return keywords.filter((keyword) => lowered.includes(keyword.toLowerCase())).length;
+}
+
+function isLikelyProductUrl(url: string) {
+  return /\/product\/|product_no=|productNo=|product-detail/i.test(url);
+}
+
+function isNonProductLink(title: string, url: string) {
+  const nonProductTitles = ["전체상품목록 바로가기", "본문 바로가기", "전체메뉴", "상품 Q&A", "상품 사용후기", "{{{productName}}}", "{{productName}}", "자세히보기 -->"];
+  return (
+    nonProductTitles.some((needle) => title.includes(needle)) ||
+    /\/board\/|\/cs\/event\/|#(category|contents|none)$|\/category\/\d+$|\/brand\/\d+$|\{\{productNo\}\}/i.test(url)
+  );
 }
 
 function uniqueByKeyOrUrl(items: OfficialProductCandidate[]) {
@@ -191,6 +205,8 @@ function extractCandidates(source: CollectSource, html: string) {
     const title = decodeHtml(imageTitle || textTitle).replace(/\s*(품절|sold out|new|best)\s*/gi, " ").trim();
 
     if (title.length < 3) continue;
+    if (!isLikelyProductUrl(url)) continue;
+    if (isNonProductLink(title, url)) continue;
     if (!scoreTitle(title, source.titleKeywords) && !url.includes("product")) continue;
     if (/^(전체|로그인|회원가입|장바구니|검색|더보기)$/i.test(title)) continue;
 
@@ -289,7 +305,7 @@ async function collectPokemonStoreProducts() {
         description: "Pokemon Store Korea에서 수집한 공식 상품입니다.",
         imageUrl: image ? (image.startsWith("//") ? `https:${image}` : image) : undefined,
         mallName: "Pokemon Store Korea",
-        price: Number(item.salePrice || item.immediateDiscountAmt || item.minSalePrice || 0),
+        price: parsePrice(item.salePrice || item.immediateDiscountAmt || item.minSalePrice),
         shippingFee: 0,
         url: `https://www.pokemonstore.co.kr/pages/product/product-detail.html?productNo=${productNo}`,
         source: "official_shop",
@@ -366,7 +382,7 @@ async function collectDotorisupProducts() {
         description: "도토리숲 공식샵에서 수집한 스튜디오 지브리 공식 상품입니다.",
         imageUrl: image ? (image.startsWith("//") ? `https:${image}` : image) : undefined,
         mallName: "도토리숲",
-        price: Number(item.salePrice || item.minSalePrice || 0),
+        price: parsePrice(item.salePrice || item.minSalePrice),
         shippingFee: 2500,
         url: `https://www.dotorisup.com/product/detail/${item.productNo}`,
         source: "official_shop",
@@ -440,7 +456,7 @@ async function collectFandingProducts() {
         description: "Fanding 스텔라이브 공식 숍에서 수집한 상품입니다.",
         imageUrl: product.sThumbnailUrl || undefined,
         mallName: "Fanding 스텔라이브",
-        price: Number(product.iPrice || product.iRegularPrice || 0),
+        price: parsePrice(product.iPrice || product.iRegularPrice),
         shippingFee: 0,
         url: `https://fanding.kr/@stellive/shop/${product.iProductNo}`,
         source: "official_shop",
@@ -511,7 +527,7 @@ async function collectNaverOfficialMallProducts({ query, gallerySlug, brand, cat
         description: `${mallName}에서 확인한 공식/브랜드스토어 상품입니다.`,
         imageUrl: item.image || undefined,
         mallName,
-        price: Number(item.lprice || 0),
+        price: parsePrice(item.lprice),
         shippingFee: 0,
         url: item.link,
         source: "naver_shopping",

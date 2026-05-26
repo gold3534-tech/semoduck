@@ -26,6 +26,19 @@ function productPrice(product: Product) {
   return prices.length ? Math.min(...prices) : 0;
 }
 
+async function readJsonOrError<T extends { error?: string }>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) return {} as T;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {
+      error: response.ok ? "서버 응답을 읽지 못했습니다." : `서버 응답 오류 (${response.status})`
+    } as T;
+  }
+}
+
 export function WriteForm({ galleries, recommendations }: { galleries: GalleryOption[]; recommendations: Record<string, Product[]> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,12 +69,12 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gallerySlug, postType, title, content, tags, imageUrl })
       });
-      const data = (await response.json()) as { id?: string; error?: string };
       if (response.status === 401) {
         router.push("/login?next=/posts/new");
         router.refresh();
         return;
       }
+      const data = await readJsonOrError<{ id?: string; error?: string }>(response);
       if (!response.ok || !data.id) {
         setMessage(data.error ?? "게시글 등록에 실패했습니다.");
         setLoading(null);
@@ -82,7 +95,7 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
     form.set("file", file);
     form.set("bucket", "post-images");
     const response = await fetch("/api/uploads", { method: "POST", body: form });
-    const data = (await response.json()) as { url?: string; error?: string };
+    const data = await readJsonOrError<{ url?: string; error?: string }>(response);
     setLoading(null);
     if (!response.ok || !data.url) {
       setMessage(data.error ?? "이미지 업로드에 실패했습니다.");
@@ -100,7 +113,11 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, content })
       });
-      const data = (await response.json()) as { tags?: string[]; product_keywords?: string[] };
+      const data = await readJsonOrError<{ tags?: string[]; product_keywords?: string[]; error?: string }>(response);
+      if (!response.ok) {
+        setMessage(data.error ?? "AI 태그 추천에 실패했습니다.");
+        return;
+      }
       const nextTags = [...(data.tags ?? []), ...(data.product_keywords ?? [])]
         .map((tag) => tag.trim().replace(/^#/, ""))
         .filter(Boolean)
@@ -200,7 +217,7 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
                 <div className="min-w-0">
                   <Badge tone="mint">{product.isOfficialProduct ? "공식" : product.category}</Badge>
                   <p className="mt-1 line-clamp-2 text-xs font-black text-[#2f2352]">{product.title}</p>
-                  <p className="mt-1 text-xs font-black text-[#ff5f8d]">{productPrice(product) ? formatPrice(productPrice(product)) : "가격 확인"}</p>
+                  <p className="mt-1 text-xs font-black text-[#ff5f8d]">{formatPrice(productPrice(product))}</p>
                 </div>
               </div>
             ))}

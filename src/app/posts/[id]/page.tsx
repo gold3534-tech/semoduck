@@ -5,6 +5,7 @@ import { ExternalLink, MessageCircle, ShoppingCart } from "lucide-react";
 import { CommentActions } from "@/app/posts/[id]/comment-actions";
 import { CommentForm } from "@/app/posts/[id]/comment-form";
 import { PostActions } from "@/app/posts/[id]/post-actions";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail } from "@/lib/auth";
@@ -69,7 +70,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           <div className="mt-3 flex flex-wrap gap-2">{(tags.length ? tags : ["세모덕"]).map((tag) => <Badge key={tag}>#{tag}</Badge>)}</div>
           {post.image_url ? (
             <div className="relative mt-4 aspect-[16/7] overflow-hidden rounded-[1.25rem] bg-[#f7f2fb] ring-1 ring-[#efd7e7]">
-              <Image src={post.image_url} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 720px" />
+              <SafeImage src={post.image_url} alt="" kind="product" className="h-full w-full object-cover" />
             </div>
           ) : null}
           <PostActions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} initialLiked={false} initialBookmarked={false} isOwner={isOwner} isAdmin={isAdmin} />
@@ -109,12 +110,12 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
             return (
               <Card key={product.id} className="grid grid-cols-[5.5rem_1fr] gap-3 p-3">
                 <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
-                  {product.image ? <Image src={product.image} alt="" fill className="object-cover" sizes="88px" /> : null}
+                  <SafeImage src={product.image} alt="" kind="product" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0">
                   <Badge tone="pink">{product.isOfficialProduct ? "인기" : product.category}</Badge>
                   <p className="mt-2 line-clamp-2 text-sm font-black text-[#2f2352]">{product.title}</p>
-                  <p className="mt-2 text-sm font-black text-[#ff5f8d]">{price ? formatPrice(price) : "가격 확인"}</p>
+                  <p className="mt-2 text-sm font-black text-[#ff5f8d]">{formatPrice(price)}</p>
                   <Link href={offer?.url ?? `/goods/${product.id}`} target={offer?.url ? "_blank" : undefined} className="mt-2 inline-flex h-8 items-center gap-1 rounded-full bg-[#3a285f] px-3 text-xs font-black text-white">
                     <ShoppingCart size={13} /> 링크 <ExternalLink size={12} />
                   </Link>

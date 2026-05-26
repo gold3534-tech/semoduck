@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchNaverShopping, type NormalizedExternalOffer } from "@/lib/external/naver-shopping";
+import { searchOfficialProductsWithOpenSearch } from "@/lib/external/opensearch-official-products";
 import { productFromDbRow, productSelect } from "@/lib/product-recommendations";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
@@ -50,6 +51,39 @@ function normalizeProductName(value: string) {
     .replace(/라이엇\s*스토어|공식|정품|굿즈|예약판매|판매중/gi, " ")
     .replace(/[^\p{L}\p{N}]+/gu, "")
     .toLowerCase();
+}
+
+function queryTokens(query: string) {
+  return query
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 1 && !["굿즈", "상품", "공식"].includes(token));
+}
+
+function relevanceScore(item: NormalizedExternalOffer, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  const compactQuery = compactText(normalizedQuery);
+  const tokens = queryTokens(query);
+  const title = item.title.toLowerCase();
+  const compactTitle = compactText(title);
+  const metadata = `${item.brand ?? ""} ${item.category ?? ""} ${item.mallName ?? ""}`.toLowerCase();
+  let score = 0;
+
+  if (normalizedQuery && title.includes(normalizedQuery)) score += 120;
+  if (compactQuery && compactTitle.includes(compactQuery)) score += 90;
+
+  for (const token of tokens) {
+    const compactToken = compactText(token);
+    if (title.includes(token) || compactTitle.includes(compactToken)) score += 28;
+    if (metadata.includes(token) || compactText(metadata).includes(compactToken)) score += 10;
+  }
+
+  if (item.isOfficial) score += 4;
+  if (item.image) score += 2;
+  if (item.price > 0) score += 1;
+  return score;
 }
 
 function isPriceCompareLink(item: NormalizedExternalOffer) {
@@ -120,8 +154,8 @@ export async function GET(request: Request) {
   const queries = expandedQueries(query);
   const externalBudget = Math.max(24, Math.floor(requestedDisplay / queries.length));
 
-  const [officialItems, pages] = await Promise.all([
-    getOfficialDbItems(query),
+  const [openSearchOfficialItems, pages] = await Promise.all([
+    searchOfficialProductsWithOpenSearch(query, 80).catch(() => null),
     Promise.all(
       queries.flatMap((expandedQuery) =>
         Array.from({ length: Math.ceil(externalBudget / 100) }, (_, index) => {
@@ -132,11 +166,14 @@ export async function GET(request: Request) {
       )
     )
   ]);
+  const officialItems = openSearchOfficialItems ?? (await getOfficialDbItems(query));
 
   const first = pages[0];
   const seen = new Set<string>();
   const items = [...officialItems, ...pages.flatMap((page) => page.items).filter((item) => !isPriceCompareLink(item))]
-    .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial))
+    .map((item) => ({ item, score: relevanceScore(item, query) }))
+    .sort((a, b) => b.score - a.score || Number(b.item.isOfficial) - Number(a.item.isOfficial) || (a.item.price || Number.MAX_SAFE_INTEGER) - (b.item.price || Number.MAX_SAFE_INTEGER))
+    .map(({ item }) => item)
     .filter((item) => {
       const key = normalizeProductName(item.title);
       if (!key || seen.has(key)) return false;

@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { SafeImage } from "@/components/safe-image";
 
 export function ProductImageGallery({ images, title }: { images: string[]; title: string }) {
   const cleanImages = useMemo(() => images.filter(Boolean), [images]);
@@ -18,7 +18,7 @@ export function ProductImageGallery({ images, title }: { images: string[]; title
   return (
     <div>
       <div className="relative aspect-[16/9] max-h-[34rem] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-        {current ? <Image src={current} alt={title} fill priority className="object-contain" sizes="720px" /> : null}
+        <SafeImage src={current} alt={title} kind="product" loading="eager" className="h-full w-full object-contain" />
         {hasMany ? (
           <>
             <button type="button" onClick={() => move(-1)} className="absolute left-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[#6f4ab4] ring-1 ring-[#ead8f4]">
@@ -41,7 +41,7 @@ export function ProductImageGallery({ images, title }: { images: string[]; title
                 onClick={() => setIndex(imageIndex)}
                 className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#f7f2fb] ring-2 ${index === imageIndex ? "ring-[#9b63d6]" : "ring-[#ead8f4]"}`}
               >
-                <Image src={image} alt="" fill className="object-cover" sizes="80px" />
+                <SafeImage src={image} alt="" kind="product" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

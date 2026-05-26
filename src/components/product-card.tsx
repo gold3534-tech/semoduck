@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProductLikeButton } from "@/components/product-like-button";
+import { SafeImage } from "@/components/safe-image";
 import { formatPrice } from "@/lib/format";
 import { externalGoodsDetailHref } from "@/lib/goods-detail-link";
 import type { Product } from "@/types/domain";
@@ -25,9 +25,9 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(255,111,155,0.12)]">
       <Link href={href} aria-label={`${product.title} 상세 보기`} className="absolute inset-0 z-10" />
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
-        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover transition group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 260px" /> : null}
-        <div className="absolute right-2 top-2 z-20">
+      <div className="relative aspect-[4/3] overflow-hidden bg-white">
+        <SafeImage src={product.image} alt={product.title} kind="product" className="h-full w-full object-contain p-3 transition group-hover:scale-[1.03]" />
+        <div className="absolute right-3 top-3 z-20">
           <ProductLikeButton productId={product.id} initialCount={product.bookmarkCount} compact />
         </div>
       </div>
@@ -39,7 +39,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.offers.some((offer) => offer.specialBenefit) && <Badge tone="sun">특전</Badge>}
         </div>
         <div className="mt-auto flex items-center justify-between gap-2">
-          <p className="text-sm font-black text-[#ff5f8d]">{prices.length ? formatPrice(lowest) : "가격 확인 필요"}</p>
+          <p className="text-sm font-black text-[#ff5f8d]">{prices.length ? formatPrice(lowest) : "가격 정보 없음"}</p>
           <span className="rounded-full bg-[#fbf4ff] px-2.5 py-1 text-[11px] font-black text-[#6f4ab4]">상세 보기</span>
         </div>
       </div>

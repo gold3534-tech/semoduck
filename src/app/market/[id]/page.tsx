@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, Heart, MapPin, MessageCircle, Package, Send, UserRound } from "lucide-react";
@@ -7,6 +6,7 @@ import { InquiryForm } from "@/app/market/[id]/inquiry-form";
 import { MarketOwnerActions } from "@/app/market/[id]/owner-actions";
 import { RelatedPostList, type RelatedPostItem } from "@/components/related-post-list";
 import { ReportButton } from "@/components/report-button";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -51,6 +51,8 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
   const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
   const gallery = Array.isArray(item.galleries) ? item.galleries[0] : item.galleries;
   const normalizedItem = { ...item, galleries: gallery };
+  const imageCandidates = [item.image_url].filter((url): url is string => Boolean(url));
+  const mainImage = imageCandidates[0] ?? null;
   const isOwner = currentUserId === item.seller_id;
   const aiPostKeywords = await extractPostKeywords(`${item.title}\n${item.description ?? ""}\n${gallery?.name ?? ""}`);
   const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...relatedTermsForMarket(normalizedItem)])].slice(0, 8);
@@ -77,8 +79,22 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="space-y-3">
-          <Card className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_28rem]">
+          <Card className="space-y-4 p-4">
             <div className="space-y-3">
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-[#f7f2fb] sm:aspect-[16/9]">
+                <SafeImage src={mainImage} alt={item.title} kind="product" loading="eager" className="h-full w-full object-contain" />
+                <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">
+                  <Heart size={18} />
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                {(imageCandidates.length ? imageCandidates : [mainImage]).slice(0, 5).map((image, index) => (
+                  <div key={`${image ?? "fallback"}-${index}`} className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb] ring-1 ring-[#ead8f4]">
+                    <SafeImage src={image} alt="" kind="product" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={item.status === "active" ? "pink" : "sun"}>{tradeStatusLabel(item.status)}</Badge>
                 {gallery?.name ? <Badge>{gallery.name}</Badge> : null}
@@ -123,24 +139,6 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
                 {isOwner || isAdmin ? <MarketOwnerActions marketItemId={id} currentStatus={item.status} canEdit={isOwner} /> : null}
               </div>
             </div>
-
-            <div>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-                {item.image_url ? <Image src={item.image_url} alt={item.title} fill priority className="object-cover" sizes="448px" /> : null}
-                <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">
-                  <Heart size={18} />
-                </span>
-              </div>
-              {item.image_url ? (
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {[0, 1, 2, 3].map((index) => (
-                    <div key={index} className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb] ring-1 ring-[#ead8f4]">
-                      <Image src={item.image_url} alt="" fill className="object-cover" sizes="96px" />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
           </Card>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -173,7 +171,9 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
                 <UserRound size={18} /> 판매자 정보
               </h2>
               <div className="mt-4 flex items-center gap-3">
-                <Image src="/semoduck-profile-duck.png" alt="" width={64} height={64} className="rounded-full bg-[#fbf4ff]" />
+                <div className="h-16 w-16 overflow-hidden rounded-full bg-[#fbf4ff]">
+                  <SafeImage src="/semoduck-profile-duck.png" alt="" kind="profile" className="h-full w-full object-contain" />
+                </div>
                 <div>
                   <p className="font-black text-[#2f2352]">{profile?.nickname ?? profile?.email ?? "세모덕러"}</p>
                   <p className="mt-1 text-xs font-bold text-slate-500">평균 응답 10분 이내 · 매너 좋은 덕질러</p>

@@ -15,7 +15,7 @@ async function getGalleries(): Promise<Gallery[]> {
     slug: gallery.slug,
     description: gallery.description,
     category: gallery.category,
-    thumbnail: gallery.thumbnail_url ?? "/placeholder-goods.svg",
+    thumbnail: gallery.thumbnail_url ?? "/semoduck-icon.png",
     followerCount: gallery.follower_count ?? 0,
     postCount: gallery.post_count ?? 0,
     tags: [gallery.category].filter(Boolean)

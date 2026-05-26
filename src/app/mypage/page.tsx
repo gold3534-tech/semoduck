@@ -9,7 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, formatPrice, postTypeLabel, tradeStatusLabel, tradeTypeLabel } from "@/lib/format";
+import { formatDateTime, postTypeLabel, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 
 type Profile = { email: string; nickname: string; role: "admin" | "user" | "guest" };
 type LinkedPost = {
@@ -406,7 +406,7 @@ function MarketList({ items }: { items: ActivityMarketItem[] }) {
               {tradeTypeLabel(item.trade_type)} · {tradeStatusLabel(item.status)}
             </p>
           </div>
-          <p className="text-sm font-black text-[#2f2352]">{formatPrice(item.price)}</p>
+          <p className="text-sm font-black text-[#2f2352]">{tradeValueLabel(item.trade_type, item.price)}</p>
         </Link>
       ))}
       {!items.length ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">아직 거래 내역이 없습니다.</p> : null}

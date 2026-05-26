@@ -9,12 +9,17 @@
     "start": "next start",
     "lint": "next lint",
     "seed:auth": "node scripts/seed-auth-users.mjs",
+    "seed:demo-users": "node scripts/create-demo-login-users.mjs",
     "check:supabase": "node scripts/check-supabase-setup.mjs",
     "setup:storage": "node scripts/setup-storage-buckets.mjs",
+    "opensearch:index": "node scripts/index-official-products-opensearch.mjs",
+    "report:zero-prices": "node scripts/report-zero-price-official-products.mjs",
+    "report:non-product-offers": "node scripts/cleanup-non-product-official-offers.mjs",
     "typecheck": "tsc --noEmit",
     "test:smoke": "node tests/smoke/pages.mjs"
   },
   "dependencies": {
+    "@opensearch-project/opensearch": "^3.6.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "clsx": "^2.1.1",

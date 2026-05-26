@@ -1,12 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Chrome, Eye, EyeOff, Loader2, LockKeyhole, UserRound } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-import { getSiteUrl } from "@/lib/site-url";
+
+function getAuthCallbackUrl(next: string) {
+  const origin = window.location.origin;
+  const redirectUrl = new URL("/auth/callback", origin);
+  redirectUrl.searchParams.set("next", next === "/login" || next === "/signup" ? "/" : next);
+  return redirectUrl.toString();
+}
+
+function friendlyAuthMessage(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("rate limit")) return "요청이 잠시 많아요. 잠시 후 다시 시도해 주세요.";
+  if (lower.includes("invalid login credentials")) return "아이디 또는 비밀번호를 확인해 주세요.";
+  if (lower.includes("email not confirmed")) return "이메일 인증을 먼저 완료해 주세요.";
+  return message || "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,20 +38,18 @@ export function LoginForm() {
     setMessage("");
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectUrl = new URL("/auth/callback", getSiteUrl());
-      redirectUrl.searchParams.set("next", next);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: redirectUrl.toString() }
+        options: { redirectTo: getAuthCallbackUrl(next) }
       });
 
       if (error) {
-        setMessage(error.message);
+        setMessage(friendlyAuthMessage(error.message));
         setLoading(null);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Google 로그인 요청에 실패했습니다.");
+      setMessage(error instanceof Error ? friendlyAuthMessage(error.message) : "Google 로그인 요청에 실패했습니다.");
       setLoading(null);
     }
   }
@@ -52,7 +63,7 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       setLoading(null);
       if (error) {
-        setMessage(error.message);
+        setMessage(friendlyAuthMessage(error.message));
         return;
       }
 
@@ -60,16 +71,13 @@ export function LoginForm() {
       router.refresh();
     } catch (error) {
       setLoading(null);
-      setMessage(error instanceof Error ? error.message : "로그인 요청에 실패했습니다.");
+      setMessage(error instanceof Error ? friendlyAuthMessage(error.message) : "로그인 요청에 실패했습니다.");
     }
   }
 
   return (
     <section className="w-full max-w-lg rounded-[1.75rem] border border-[#ead8f4] bg-white/86 px-7 py-6 shadow-[0_22px_70px_rgba(126,80,178,0.13)] backdrop-blur md:px-10">
-      <div className="text-center">
-        <Image src="/semoduck-logo.png" alt="세모덕" width={210} height={82} className="mx-auto h-auto w-40" />
-        <p className="mt-1 text-sm font-bold text-[#70657f]">세모덕에서 덕질을 더 즐겁게 시작해보세요!</p>
-      </div>
+      <p className="text-center text-sm font-bold text-[#70657f]">세모덕에서 덕질을 더 즐겁게 시작해보세요!</p>
 
       <form onSubmit={submit} className="mt-5 space-y-3">
         <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">

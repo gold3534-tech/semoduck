@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductLikeButton } from "@/components/product-like-button";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -166,9 +167,9 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
               <Card key={item.id} className="group relative flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5">
                 <Link href={externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category })} className="absolute inset-0 z-10" aria-label={`${item.title} 상세 보기`} />
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
-                  {item.image ? <Image src={item.image} alt={item.title} fill className="object-cover transition group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 280px" /> : null}
-                  <span className="absolute left-2 top-2 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
-                  <div className="absolute right-2 top-2 z-20">
+                  <SafeImage src={item.image} alt={item.title} kind="product" className="h-full w-full object-contain bg-white p-3 transition group-hover:scale-[1.03]" />
+                  <span className="absolute left-3 top-3 z-20 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
+                  <div className="absolute right-3 top-3 z-20">
                     <ProductLikeButton productId={`external:${item.id}`} compact />
                   </div>
                 </div>

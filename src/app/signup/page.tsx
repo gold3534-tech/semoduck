@@ -15,9 +15,9 @@ export default async function SignupPage() {
     <div className="relative left-1/2 min-h-screen w-screen -translate-x-1/2 overflow-hidden bg-[#fff9ff]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_22%,rgba(194,156,255,0.22),transparent_16rem),radial-gradient(circle_at_84%_24%,rgba(255,152,194,0.18),transparent_18rem),radial-gradient(circle_at_50%_100%,rgba(255,236,178,0.24),transparent_26rem)]" />
       <Decorations />
-      <main className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center px-5 py-10">
-        <div className="mb-5 text-center">
-          <Image src="/semoduck-logo.png" alt="세모덕" width={360} height={140} priority className="mx-auto h-auto w-72 md:w-96" />
+      <main className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center px-5 py-5">
+        <div className="mb-3 text-center">
+          <Image src="/semoduck-logo.png" alt="세모덕" width={260} height={100} priority className="mx-auto h-auto w-48 object-contain md:w-60" />
           <p className="mt-2 text-sm font-black text-[#8b61c8] md:text-base">좋아하는 것들을 모으고 이야기할 내 덕질 공간을 만들어보세요</p>
         </div>
         <Suspense fallback={<div className="h-[32rem] w-full max-w-xl animate-pulse rounded-[2rem] bg-white/80" />}>

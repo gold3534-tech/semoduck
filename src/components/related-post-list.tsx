@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, MessageCircle, Star } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { postTypeLabel } from "@/lib/format";
@@ -27,7 +27,7 @@ export function RelatedPostList({ title, posts, emptyText = "아직 관련 게�
         {posts.map((post) => (
           <Link key={post.id} href={`/posts/${post.id}`} className="grid grid-cols-[5.5rem_1fr] gap-3 rounded-2xl border border-[#f3dce9] bg-white/72 p-2 transition hover:-translate-y-0.5 hover:border-[#ff9fc0]">
             <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
-              {post.image_url ? <Image src={post.image_url} alt="" fill className="object-cover" sizes="88px" /> : null}
+              <SafeImage src={post.image_url} alt="" kind="product" className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0">
               <Badge tone="violet">{postTypeLabel(post.post_type)}</Badge>

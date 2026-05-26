@@ -1,6 +1,10 @@
-export function formatPrice(price: number) {
-  if (price === 0) return "나눔";
-  return new Intl.NumberFormat("ko-KR").format(price) + "원";
+export function hasValidPrice(price: number | null | undefined) {
+  return typeof price === "number" && Number.isFinite(price) && price > 0;
+}
+
+export function formatPrice(price: number | null | undefined, emptyText = "가격 정보 없음") {
+  if (!hasValidPrice(price)) return emptyText;
+  return new Intl.NumberFormat("ko-KR").format(price as number) + "원";
 }
 
 export function formatDateTime(value: string | Date) {
@@ -49,7 +53,7 @@ export function tradeStatusLabel(status: string) {
   return labels[status] ?? status;
 }
 
-export function tradeValueLabel(type: string, price: number) {
+export function tradeValueLabel(type: string, price: number | null | undefined) {
   if (type === "exchange") return "교환 희망";
   if (type === "giveaway") return "나눔";
   return formatPrice(price);

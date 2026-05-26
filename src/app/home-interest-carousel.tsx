@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ExternalLink, ShoppingBag } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatPrice, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
@@ -73,7 +73,7 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
   return (
     <Card className="flex min-w-[15.5rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[17rem]">
       <div className="relative aspect-[16/10] overflow-hidden rounded-t-lg bg-slate-100">
-        {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="272px" /> : null}
+        <SafeImage src={product.image} alt={product.title} kind="product" className="h-full w-full object-cover" />
       </div>
       <div className="flex flex-1 flex-col gap-2.5 p-3">
         <div className="flex flex-wrap gap-2">
@@ -81,7 +81,7 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
           <Badge tone="gray">{product.brand || product.category}</Badge>
         </div>
         <p className="line-clamp-2 font-black text-ink">{product.title}</p>
-        <p className="mt-auto text-base font-black">{price ? formatPrice(price) : "가격 확인 필요"}</p>
+        <p className="mt-auto text-base font-black">{formatPrice(price)}</p>
         <Link href={primaryOffer?.url ?? `/goods/${product.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-bold text-white">
           공식 판매처 열기
           <ExternalLink size={15} />
@@ -96,7 +96,7 @@ function MarketSlide({ market }: { market: MarketPreview }) {
     <Link href={`/market/${market.id}`} className="block min-w-[15.5rem] snap-start sm:min-w-[17rem]">
       <Card className="flex h-full flex-col overflow-hidden p-0 transition hover:bg-pink-50">
         <div className="relative aspect-[16/10] overflow-hidden rounded-t-lg bg-slate-100">
-          {market.image_url ? <Image src={market.image_url} alt={market.title} fill className="object-cover" sizes="272px" /> : <div className="grid h-full place-items-center text-slate-300"><ShoppingBag size={32} /></div>}
+          <SafeImage src={market.image_url} alt={market.title} kind="product" className="h-full w-full object-cover" />
         </div>
         <div className="flex flex-1 flex-col gap-2.5 p-3">
           <div className="flex flex-wrap gap-2">
