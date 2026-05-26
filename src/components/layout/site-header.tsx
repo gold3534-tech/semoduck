@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { Bell, MessageSquare, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { AuthButton } from "@/components/layout/auth-button";
 import { isAdminEmail } from "@/lib/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -22,6 +22,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [email, setEmail] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const hideHeader = pathname === "/login" || pathname === "/signup";
 
   async function loadSession() {
     try {
@@ -56,6 +57,8 @@ export function SiteHeader() {
 
   const nav = isAdminEmail(email) ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
 
+  if (hideHeader) return null;
+
   return (
     <header className="sticky top-0 z-30 border-b border-[#f1d6e5] bg-[#fffaf6]/92 backdrop-blur-xl">
       <div className="mx-auto grid min-h-16 w-full max-w-5xl grid-cols-[7.5rem_minmax(24rem,1fr)_minmax(14rem,20rem)_auto] items-center gap-3 px-5 py-2 xl:max-w-6xl xl:grid-cols-[7.5rem_minmax(28rem,1fr)_minmax(16rem,24rem)_auto] 2xl:max-w-[86rem] 2xl:grid-cols-[8rem_minmax(32rem,1fr)_minmax(18rem,28rem)_auto] min-[1800px]:max-w-[100rem] min-[1800px]:grid-cols-[8.5rem_minmax(38rem,1fr)_minmax(22rem,34rem)_auto] min-[2200px]:max-w-[116rem]">
@@ -78,12 +81,6 @@ export function SiteHeader() {
           <Search size={18} className="shrink-0 text-[#5c2f8f]" />
         </form>
         <div className="flex items-center justify-end gap-2">
-          <Link href="/mypage/likes" className="grid h-9 w-9 place-items-center rounded-full bg-white/80 text-[#2f2352] ring-1 ring-[#ead8f4]">
-            <Bell size={17} />
-          </Link>
-          <Link href="/posts/new" className="grid h-9 w-9 place-items-center rounded-full bg-white/80 text-[#2f2352] ring-1 ring-[#ead8f4]">
-            <MessageSquare size={17} />
-          </Link>
           <AuthButton />
         </div>
       </div>

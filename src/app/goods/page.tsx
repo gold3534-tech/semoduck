@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const groupSize = 10;
 
@@ -66,16 +67,17 @@ function productFromExternal(item: Awaited<ReturnType<typeof searchNaverShopping
 async function getUserInterests() {
   const authClient = await createServerSupabaseClient();
   const { data: auth } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
-  if (!auth.user) return [];
+  if (!auth.user) return { interests: [], isLoggedIn: false };
 
   const supabase = createDataSupabaseClient();
   const { data } = await supabase.from("user_interests").select("interests(name)").eq("user_id", auth.user.id);
-  return (data ?? [])
+  const interests = (data ?? [])
     .map((row: any) => {
       const interest = Array.isArray(row.interests) ? row.interests[0] : row.interests;
       return interest?.name as string | undefined;
     })
     .filter(Boolean) as string[];
+  return { interests, isLoggedIn: true };
 }
 
 function termsForInterest(interest: string) {
@@ -190,8 +192,13 @@ function mergeProducts(interest: string, localProducts: Product[], externalProdu
 }
 
 async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
-  const interests = await getUserInterests();
-  const targets = interests.length ? interests.filter((interest) => !new Set(["굿즈", "덕", "돌"]).has(interest)).slice(0, 5) : ["산리오", "포켓몬", "원피스"];
+  const { interests, isLoggedIn } = await getUserInterests();
+  const ignoredInterests = new Set(["굿즈", "덕", "돌"]);
+  const fallbackThemes = Object.keys(recommendationTerms).filter((interest) => !ignoredInterests.has(interest));
+  const randomFallbackThemes = [...fallbackThemes].sort(() => Math.random() - 0.5).slice(0, 3);
+  const targets = isLoggedIn
+    ? interests.filter((interest) => !ignoredInterests.has(interest)).slice(0, 5)
+    : randomFallbackThemes;
 
   const groups = await Promise.all(
     targets.map(async (interest) => {

@@ -104,7 +104,7 @@ async function getHomeData() {
   const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
     supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(600),
     supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
-    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(5),
+    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(4),
     supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(80)
   ]);
 

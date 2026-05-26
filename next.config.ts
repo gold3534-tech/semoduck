@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "image.toast.com" },
       { protocol: "https", hostname: "*.cdn-nhncommerce.com" },
       { protocol: "https", hostname: "shopby-images.cdn-nhncommerce.com" },
+      { protocol: "https", hostname: "*.cloudfront.net" },
       { protocol: "https", hostname: "*.supabase.co" }
     ]
   }

@@ -196,6 +196,7 @@ export default function MyPage() {
     }
     setEditing(false);
     await load();
+    router.refresh();
   }
 
   async function deletePost(postId: string) {

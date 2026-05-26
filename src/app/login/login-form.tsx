@@ -1,32 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Chrome, Loader2, Mail, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Chrome, Eye, EyeOff, Loader2, LockKeyhole, UserRound } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/site-url";
-
-type Mode = "signin" | "signup";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackError = searchParams.get("error");
-  const [mode, setMode] = useState<Mode>("signin");
+  const next = searchParams.get("next") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState(callbackError ?? "");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"login" | "google" | null>(null);
 
   async function signInWithGoogle() {
-    setLoading(true);
+    setLoading("google");
     setMessage("");
     try {
       const supabase = createBrowserSupabaseClient();
       const redirectUrl = new URL("/auth/callback", getSiteUrl());
+      redirectUrl.searchParams.set("next", next);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -35,113 +34,100 @@ export function LoginForm() {
 
       if (error) {
         setMessage(error.message);
-        setLoading(false);
+        setLoading(null);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Google 로그인 요청에 실패했습니다.");
-      setLoading(false);
+      setLoading(null);
     }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
+    setLoading("login");
     setMessage("");
     try {
       const supabase = createBrowserSupabaseClient();
-
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        setLoading(false);
-        if (error) {
-          setMessage(error.message);
-          return;
-        }
-        router.replace("/");
-        router.refresh();
-        return;
-      }
-
-      const redirectUrl = new URL("/auth/callback", getSiteUrl());
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name: nickname || email.split("@")[0] },
-          emailRedirectTo: redirectUrl.toString()
-        }
-      });
-      setLoading(false);
-
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      setLoading(null);
       if (error) {
         setMessage(error.message);
         return;
       }
 
-      if (data.session) {
-        router.replace("/");
-        router.refresh();
-        return;
-      }
-
-      setMessage("회원가입 메일을 확인해 주세요. 인증 후 보던 화면으로 돌아옵니다.");
+      router.replace(next === "/login" || next === "/signup" ? "/" : next);
+      router.refresh();
     } catch (error) {
-      setLoading(false);
-      setMessage(error instanceof Error ? error.message : "Supabase 인증 요청에 실패했습니다.");
+      setLoading(null);
+      setMessage(error instanceof Error ? error.message : "로그인 요청에 실패했습니다.");
     }
   }
 
   return (
-    <Card className="mx-auto max-w-md">
-      <div className="mb-6">
-        <p className="text-sm font-black text-berry">계정</p>
-        <h1 className="mt-2 text-3xl font-black">{mode === "signin" ? "로그인" : "회원가입"}</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Google 또는 이메일 계정으로 세모덕에 접속할 수 있습니다.</p>
+    <section className="w-full max-w-xl rounded-[2rem] border border-[#ead8f4] bg-white/86 px-8 py-9 shadow-[0_22px_70px_rgba(126,80,178,0.13)] backdrop-blur md:px-12">
+      <div className="text-center">
+        <h1 className="text-4xl font-black text-[#6f4ab4] md:text-5xl">로그인 <span className="text-[#ff6f9b]">♥</span></h1>
+        <p className="mt-3 text-sm font-bold text-[#70657f] md:text-base">세모덕에서 덕질을 더 즐겁게 시작해보세요!</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 rounded-lg bg-cloud p-1">
-        <button type="button" className={`min-h-10 rounded-md text-sm font-black ${mode === "signin" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signin")}>
-          로그인
-        </button>
-        <button type="button" className={`min-h-10 rounded-md text-sm font-black ${mode === "signup" ? "bg-white shadow-sm" : "text-slate-500"}`} onClick={() => setMode("signup")}>
-          회원가입
-        </button>
-      </div>
-
-      <button type="button" onClick={signInWithGoogle} disabled={loading} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white">
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <Chrome size={16} />}
-        Google로 계속하기
-      </button>
-
-      <div className="my-5 flex items-center gap-3 text-xs font-bold text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" />
-        또는
-        <span className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <form onSubmit={submit} className="space-y-3">
-        {mode === "signup" && (
-          <label className="grid gap-2 text-sm font-black">
-            닉네임
-            <input value={nickname} onChange={(event) => setNickname(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="세모덕러" />
-          </label>
-        )}
-        <label className="grid gap-2 text-sm font-black">
-          이메일
-          <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="you@example.com" />
+      <form onSubmit={submit} className="mt-7 space-y-4">
+        <label className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
+          <UserRound size={23} />
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#2f2352] outline-none placeholder:text-[#a9a0b8] md:text-base"
+            placeholder="아이디 또는 이메일을 입력하세요"
+          />
         </label>
-        <label className="grid gap-2 text-sm font-black">
-          비밀번호
-          <input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-4 outline-none focus:border-berry" placeholder="6자 이상" />
+
+        <label className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
+          <LockKeyhole size={23} />
+          <input
+            type={showPassword ? "text" : "password"}
+            required
+            minLength={6}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#2f2352] outline-none placeholder:text-[#a9a0b8] md:text-base"
+            placeholder="비밀번호를 입력하세요"
+          />
+          <button type="button" onClick={() => setShowPassword((current) => !current)} className="grid h-9 w-9 place-items-center rounded-full text-[#8b61c8]" aria-label="비밀번호 보기 전환">
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
         </label>
-        <Button className="w-full" disabled={loading}>
-          {loading ? <Loader2 size={16} className="animate-spin" /> : mode === "signin" ? <Mail size={16} /> : <UserPlus size={16} />}
-          {mode === "signin" ? "이메일로 로그인" : "이메일로 가입"}
-        </Button>
+
+        <label className="inline-flex items-center gap-2 text-sm font-bold text-[#6f5d86]">
+          <input type="checkbox" checked={keepSignedIn} onChange={(event) => setKeepSignedIn(event.target.checked)} className="h-4 w-4 accent-[#9b63d6]" />
+          로그인 상태 유지
+        </label>
+
+        <button disabled={loading !== null} className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9b7cf3] via-[#d986db] to-[#ff8cb1] text-lg font-black text-white shadow-[0_12px_30px_rgba(255,111,155,0.23)] transition hover:brightness-105 disabled:opacity-70">
+          {loading === "login" ? <Loader2 size={20} className="animate-spin" /> : "로그인"}
+        </button>
       </form>
 
-      {message && <p className="mt-4 rounded-lg bg-pink-50 p-3 text-sm font-bold leading-6 text-pink-700">{message}</p>}
-    </Card>
+      <div className="my-6 flex items-center gap-4 text-sm font-black text-[#8a7b9e]">
+        <span className="h-px flex-1 bg-[#ead8f4]" />
+        또는
+        <span className="h-px flex-1 bg-[#ead8f4]" />
+      </div>
+
+      <button type="button" onClick={signInWithGoogle} disabled={loading !== null} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-[#4f4564] ring-1 ring-[#e5ddee] shadow-sm transition hover:bg-[#fff7fb] disabled:opacity-70">
+        {loading === "google" ? <Loader2 size={18} className="animate-spin" /> : <Chrome size={18} />}
+        구글로 시작하기
+      </button>
+
+      <div className="mt-7 text-center">
+        <Link href={`/signup${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-sm font-black text-[#6f4ab4] hover:text-[#ff6f9b]">
+          회원가입
+        </Link>
+      </div>
+
+      {message && <p className="mt-5 rounded-2xl bg-pink-50 p-3 text-sm font-bold leading-6 text-pink-700">{message}</p>}
+      <p className="sr-only">{keepSignedIn ? "로그인 상태 유지 선택됨" : "로그인 상태 유지 해제됨"}</p>
+    </section>
   );
 }
