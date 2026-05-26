@@ -22,7 +22,7 @@ function expandedQueries(query: string) {
   const compact = trimmed.toLowerCase().replace(/\s+/g, "");
   const matched = synonymGroups.find((group) => group.some((word) => compact.includes(word.toLowerCase().replace(/\s+/g, ""))));
   const baseWords = matched ? matched : [stripGoodsWords(trimmed) || trimmed];
-  return [...new Set([trimmed, ...baseWords.map((word) => `${word} 굿즈`)])].slice(0, 6);
+  return [...new Set([trimmed, ...baseWords.map((word) => `${word} 굿즈`)])].slice(0, 4);
 }
 
 function dbSearchTerms(query: string) {
@@ -77,7 +77,7 @@ async function getOfficialDbItems(query: string) {
     .or(filters.join(","))
     .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(80);
 
   return (data ?? [])
     .map((row) => {
@@ -115,10 +115,10 @@ async function getOfficialDbItems(query: string) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") ?? "쿠로미 키링";
-  const requestedDisplay = Math.min(Math.max(Number(searchParams.get("display") ?? 300), 1), 1000);
+  const requestedDisplay = Math.min(Math.max(Number(searchParams.get("display") ?? 120), 1), 120);
   const start = Math.min(Math.max(Number(searchParams.get("start") ?? 1), 1), 1000);
   const queries = expandedQueries(query);
-  const externalBudget = Math.max(40, Math.floor(requestedDisplay / queries.length));
+  const externalBudget = Math.max(24, Math.floor(requestedDisplay / queries.length));
 
   const [officialItems, pages] = await Promise.all([
     getOfficialDbItems(query),

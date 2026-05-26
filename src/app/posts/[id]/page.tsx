@@ -29,11 +29,10 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const { data: userData } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
   const currentUserId = userData.user?.id ?? null;
   const isAdmin = isAdminEmail(userData.user?.email);
-  const [{ data: post }, { data: comments }, { data: tagRows }, { data: productRows }] = await Promise.all([
+  const [{ data: post }, { data: comments }, { data: tagRows }] = await Promise.all([
     supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,user_id,image_url,profiles(id,nickname,email),galleries(name,slug,category)").eq("id", id).eq("is_deleted", false).single(),
     supabase.from("comments").select("id,content,like_count,created_at,user_id,profiles(id,nickname,email)").eq("post_id", id).eq("is_deleted", false).order("created_at", { ascending: true }),
-    supabase.from("post_tags").select("tags(name)").eq("post_id", id),
-    supabase.from("products").select(productSelect).eq("is_deleted", false).limit(30)
+    supabase.from("post_tags").select("tags(name)").eq("post_id", id)
   ]);
   if (!post) notFound();
   const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
@@ -50,9 +49,9 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
     .slice(0, 8)
     .flatMap((term) => [`title.ilike.%${term}%`, `brand.ilike.%${term}%`, `category.ilike.%${term}%`, `description.ilike.%${term}%`]);
   const { data: relatedProductRows } = productFilters.length
-    ? await supabase.from("products").select(productSelect).or(productFilters.join(",")).eq("is_deleted", false).limit(80)
-    : { data: productRows };
-  const localRelatedProducts = relatedProducts((relatedProductRows ?? productRows ?? []).map(productFromDbRow), [...new Set(keywords)], 4);
+    ? await supabase.from("products").select(productSelect).or(productFilters.join(",")).eq("is_deleted", false).limit(40)
+    : { data: [] };
+  const localRelatedProducts = relatedProducts((relatedProductRows ?? []).map(productFromDbRow), [...new Set(keywords)], 4);
   const goods = localRelatedProducts.length ? localRelatedProducts : fallbackRecommendedProducts(keywords, 4);
   const isOwner = currentUserId === post.user_id;
 

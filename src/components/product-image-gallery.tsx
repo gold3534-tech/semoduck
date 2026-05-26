@@ -17,8 +17,8 @@ export function ProductImageGallery({ images, title }: { images: string[]; title
 
   return (
     <div>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#f7f2fb]">
-        {current ? <Image src={current} alt={title} fill priority className="object-cover" sizes="520px" /> : null}
+      <div className="relative aspect-[16/9] max-h-[34rem] overflow-hidden rounded-2xl bg-[#f7f2fb]">
+        {current ? <Image src={current} alt={title} fill priority className="object-contain" sizes="720px" /> : null}
         {hasMany ? (
           <>
             <button type="button" onClick={() => move(-1)} className="absolute left-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[#6f4ab4] ring-1 ring-[#ead8f4]">

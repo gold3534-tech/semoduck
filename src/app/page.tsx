@@ -87,6 +87,32 @@ function officialRank(product: Product) {
   return Number(product.isOfficialProduct || product.offers.some((offer) => offer.isOfficial));
 }
 
+let homeBaseCache:
+  | {
+      expiresAt: number;
+      data: Awaited<ReturnType<typeof getHomeBaseDataUncached>>;
+    }
+  | undefined;
+
+async function getHomeBaseDataUncached() {
+  const supabase = createDataSupabaseClient();
+  const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
+    supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(160),
+    supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
+    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(4),
+    supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(30)
+  ]);
+  return { productsResult, galleriesResult, postsResult, marketResult };
+}
+
+async function getHomeBaseData() {
+  const now = Date.now();
+  if (homeBaseCache && homeBaseCache.expiresAt > now) return homeBaseCache.data;
+  const data = await getHomeBaseDataUncached();
+  homeBaseCache = { data, expiresAt: now + 60_000 };
+  return data;
+}
+
 async function getHomeData() {
   const supabase = createDataSupabaseClient();
   const authClient = await createServerSupabaseClient();
@@ -101,12 +127,7 @@ async function getHomeData() {
     })
     .filter(Boolean) as string[];
 
-  const [productsResult, galleriesResult, postsResult, marketResult] = await Promise.all([
-    supabase.from("products").select(productSelect).order("is_official_product", { ascending: false }).order("created_at", { ascending: false }).limit(600),
-    supabase.from("galleries").select("id,name,slug,description,category,thumbnail_url,follower_count,post_count").order("follower_count", { ascending: false }).limit(30),
-    supabase.from("posts").select("id,title,content,post_type,like_count,comment_count,bookmark_count,created_at,galleries(slug),profiles(nickname)").eq("is_deleted", false).order("like_count", { ascending: false }).limit(4),
-    supabase.from("market_items").select("id,title,description,trade_type,price,image_url,galleries(name,slug)").in("status", ["active", "reserved"]).neq("trade_type", "transfer").order("created_at", { ascending: false }).limit(80)
-  ]);
+  const { productsResult, galleriesResult, postsResult, marketResult } = await getHomeBaseData();
 
   const rawProducts = (productsResult.data ?? []).map(productFromDbRow);
   const rawGalleries: Gallery[] = (galleriesResult.data ?? []).map((gallery) => ({

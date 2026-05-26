@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 const groupSize = 10;
+const recommendedGroupsCache = new Map<string, { expiresAt: number; groups: RecommendedGoodsGroup[] }>();
 
 const recommendationTerms: Record<string, string[]> = {
   BTS: ["BTS", "방탄소년단", "방탄", "BT21", "Weverse"],
@@ -139,6 +140,20 @@ function shuffleDaily<T extends { id: string }>(items: T[], interest: string, bu
   return [...items].sort((a, b) => seededValue(`${day}:${interest}:${bucket}:${a.id}`) - seededValue(`${day}:${interest}:${bucket}:${b.id}`));
 }
 
+async function withTimeout<T>(work: Promise<T>, fallback: T, timeoutMs = 1500) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function getLocalProducts(interest: string) {
   const supabase = createDataSupabaseClient();
   const filters = termsForInterest(interest).flatMap((term) => [`title.ilike.%${term}%`, `brand.ilike.%${term}%`]);
@@ -148,7 +163,7 @@ async function getLocalProducts(interest: string) {
     .or(filters.join(","))
     .order("is_official_product", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(160);
+    .limit(80);
 
   return (data ?? [])
     .map(productFromDbRow)
@@ -161,7 +176,7 @@ async function getLocalProducts(interest: string) {
 
 async function getExternalProducts(interest: string) {
   const terms = termsForInterest(interest);
-  const external = await searchNaverShopping(`${terms[0]} 굿즈`, 40);
+  const external = await withTimeout(searchNaverShopping(`${terms[0]} 굿즈`, 24), { items: [], usedMock: false, total: 0, query: terms[0] });
   return external.items.map((item) => productFromExternal(item, interest)).filter((product) => isRelevantProduct(product, interest));
 }
 
@@ -199,6 +214,9 @@ async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
   const targets = isLoggedIn
     ? interests.filter((interest) => !ignoredInterests.has(interest)).slice(0, 5)
     : randomFallbackThemes;
+  const cacheKey = targets.join("|");
+  const cached = recommendedGroupsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.groups;
 
   const groups = await Promise.all(
     targets.map(async (interest) => {
@@ -207,7 +225,9 @@ async function getRecommendedGroups(): Promise<RecommendedGoodsGroup[]> {
     })
   );
 
-  return groups.filter((group) => group.products.length);
+  const filteredGroups = groups.filter((group) => group.products.length);
+  recommendedGroupsCache.set(cacheKey, { groups: filteredGroups, expiresAt: Date.now() + 60_000 });
+  return filteredGroups;
 }
 
 export default async function GoodsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {

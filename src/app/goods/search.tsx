@@ -104,7 +104,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
     setPage(1);
 
     try {
-      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(nextKeyword)}&display=300`);
+      const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(nextKeyword)}&display=120`);
       const data = (await response.json()) as ExternalGoodsResponse;
       setItems(data.items);
       setNormalizedQuery(data.query);

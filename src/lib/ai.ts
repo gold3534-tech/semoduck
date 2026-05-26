@@ -13,6 +13,7 @@ const genericKeywords = new Set([
   "추천",
   "검색"
 ]);
+const promptCache = new Map<string, JsonValue | null>();
 
 function asStringArray(value: unknown, limit: number) {
   if (!Array.isArray(value)) return [];
@@ -44,10 +45,13 @@ function mergeKeywords(groups: string[][], limit: number) {
 async function callOllama(prompt: string): Promise<JsonValue | null> {
   const baseUrl = process.env.OLLAMA_BASE_URL;
   const model = process.env.OLLAMA_MODEL ?? "llama3.2:3b";
+  const cacheKey = `${model}:${prompt}`;
 
   if (!baseUrl) return null;
+  if (promptCache.has(cacheKey)) return promptCache.get(cacheKey) ?? null;
 
   try {
+    const timeout = Math.min(Number(process.env.OLLAMA_TIMEOUT_MS ?? 1800), 1800);
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,12 +65,15 @@ async function callOllama(prompt: string): Promise<JsonValue | null> {
           num_predict: 300
         }
       }),
-      signal: AbortSignal.timeout(Number(process.env.OLLAMA_TIMEOUT_MS ?? 8000))
+      signal: AbortSignal.timeout(timeout)
     });
     if (!response.ok) return null;
     const data = (await response.json()) as { response?: string };
-    return data.response ? (JSON.parse(data.response) as JsonValue) : null;
+    const parsed = data.response ? (JSON.parse(data.response) as JsonValue) : null;
+    promptCache.set(cacheKey, parsed);
+    return parsed;
   } catch {
+    promptCache.set(cacheKey, null);
     return null;
   }
 }

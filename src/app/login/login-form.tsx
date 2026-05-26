@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Chrome, Eye, EyeOff, Loader2, LockKeyhole, UserRound } from "lucide-react";
@@ -64,15 +65,15 @@ export function LoginForm() {
   }
 
   return (
-    <section className="w-full max-w-xl rounded-[2rem] border border-[#ead8f4] bg-white/86 px-8 py-9 shadow-[0_22px_70px_rgba(126,80,178,0.13)] backdrop-blur md:px-12">
+    <section className="w-full max-w-lg rounded-[1.75rem] border border-[#ead8f4] bg-white/86 px-7 py-6 shadow-[0_22px_70px_rgba(126,80,178,0.13)] backdrop-blur md:px-10">
       <div className="text-center">
-        <h1 className="text-4xl font-black text-[#6f4ab4] md:text-5xl">로그인 <span className="text-[#ff6f9b]">♥</span></h1>
-        <p className="mt-3 text-sm font-bold text-[#70657f] md:text-base">세모덕에서 덕질을 더 즐겁게 시작해보세요!</p>
+        <Image src="/semoduck-logo.png" alt="세모덕" width={210} height={82} className="mx-auto h-auto w-40" />
+        <p className="mt-1 text-sm font-bold text-[#70657f]">세모덕에서 덕질을 더 즐겁게 시작해보세요!</p>
       </div>
 
-      <form onSubmit={submit} className="mt-7 space-y-4">
-        <label className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
-          <UserRound size={23} />
+      <form onSubmit={submit} className="mt-5 space-y-3">
+        <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
+          <UserRound size={21} />
           <input
             type="email"
             required
@@ -83,8 +84,8 @@ export function LoginForm() {
           />
         </label>
 
-        <label className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
-          <LockKeyhole size={23} />
+        <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-[#e5ddee] bg-white px-4 text-[#9b63d6] shadow-sm focus-within:border-[#b984e7]">
+          <LockKeyhole size={21} />
           <input
             type={showPassword ? "text" : "password"}
             required
@@ -104,23 +105,23 @@ export function LoginForm() {
           로그인 상태 유지
         </label>
 
-        <button disabled={loading !== null} className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9b7cf3] via-[#d986db] to-[#ff8cb1] text-lg font-black text-white shadow-[0_12px_30px_rgba(255,111,155,0.23)] transition hover:brightness-105 disabled:opacity-70">
+        <button disabled={loading !== null} className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9b7cf3] via-[#d986db] to-[#ff8cb1] text-base font-black text-white shadow-[0_12px_30px_rgba(255,111,155,0.23)] transition hover:brightness-105 disabled:opacity-70">
           {loading === "login" ? <Loader2 size={20} className="animate-spin" /> : "로그인"}
         </button>
       </form>
 
-      <div className="my-6 flex items-center gap-4 text-sm font-black text-[#8a7b9e]">
+      <div className="my-4 flex items-center gap-4 text-sm font-black text-[#8a7b9e]">
         <span className="h-px flex-1 bg-[#ead8f4]" />
         또는
         <span className="h-px flex-1 bg-[#ead8f4]" />
       </div>
 
-      <button type="button" onClick={signInWithGoogle} disabled={loading !== null} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-[#4f4564] ring-1 ring-[#e5ddee] shadow-sm transition hover:bg-[#fff7fb] disabled:opacity-70">
+      <button type="button" onClick={signInWithGoogle} disabled={loading !== null} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-[#4f4564] ring-1 ring-[#e5ddee] shadow-sm transition hover:bg-[#fff7fb] disabled:opacity-70">
         {loading === "google" ? <Loader2 size={18} className="animate-spin" /> : <Chrome size={18} />}
         구글로 시작하기
       </button>
 
-      <div className="mt-7 text-center">
+      <div className="mt-5 text-center">
         <Link href={`/signup${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-sm font-black text-[#6f4ab4] hover:text-[#ff6f9b]">
           회원가입
         </Link>

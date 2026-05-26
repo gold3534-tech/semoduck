@@ -103,7 +103,8 @@ export async function searchNaverShopping(
         "X-Naver-Client-Id": clientId,
         "X-Naver-Client-Secret": clientSecret
       },
-      next: { revalidate: 60 * 10 }
+      next: { revalidate: 60 * 10 },
+      signal: AbortSignal.timeout(Number(process.env.NAVER_SEARCH_TIMEOUT_MS ?? 2500))
     });
 
     if (!response.ok) {

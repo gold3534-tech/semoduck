@@ -65,7 +65,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="space-y-3">
-          <Card className="p-4">
+          <Card className="p-3 md:p-4">
             <div className="relative">
               <ProductImageGallery images={images} title={product.title} />
               <div className="absolute left-3 top-3">
@@ -76,19 +76,19 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="mint">{product.category}</Badge>
                 {product.brand ? <Badge>{product.brand}</Badge> : null}
                 {primaryOffer?.is_official ? <Badge tone="pink">인증 판매처</Badge> : null}
               </div>
-              <h1 className="text-3xl font-black leading-tight text-[#3a285f] md:text-4xl">{product.title}</h1>
+              <h1 className="text-2xl font-black leading-tight text-[#3a285f] md:text-3xl">{product.title}</h1>
               <div className="flex flex-wrap items-center gap-3 text-sm font-bold text-slate-500">
                 <span className="text-[#f8b83e]">★★★★★</span>
                 <span>4.9</span>
                 <span>찜 312</span>
               </div>
-              <p className="text-2xl font-black text-[#ff5f8d]">{displayPrice}</p>
+              <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">{displayPrice}</p>
               <p className="text-sm font-bold leading-7 text-slate-600">{product.description || `${product.title}의 판매 링크와 관련 게시글을 함께 확인해 보세요.`}</p>
 
               {primaryOffer ? (
