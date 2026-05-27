@@ -49,6 +49,18 @@ create table public.gallery_follows (
   unique (user_id, gallery_id)
 );
 
+create table public.gallery_official_sources (
+  id uuid primary key default uuid_generate_v4(),
+  gallery_id uuid not null references public.galleries(id) on delete cascade,
+  official_site_url text not null,
+  official_shop_url text,
+  shop_label text,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (gallery_id)
+);
+
 create table public.posts (
   id uuid primary key default uuid_generate_v4(),
   gallery_id uuid references public.galleries(id) on delete set null,
@@ -154,20 +166,6 @@ create table public.market_inquiries (
   updated_at timestamptz not null default now()
 );
 
-create table public.link_submissions (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid references public.profiles(id) on delete set null,
-  product_id uuid references public.products(id) on delete set null,
-  title text not null,
-  url text not null,
-  source text not null,
-  price integer,
-  is_official boolean not null default false,
-  status text not null default 'pending',
-  created_at timestamptz not null default now(),
-  reviewed_at timestamptz
-);
-
 create table public.reports (
   id uuid primary key default uuid_generate_v4(),
   reporter_id uuid references public.profiles(id) on delete set null,
@@ -181,6 +179,7 @@ create table public.reports (
 alter table public.profiles enable row level security;
 alter table public.user_interests enable row level security;
 alter table public.gallery_follows enable row level security;
+alter table public.gallery_official_sources enable row level security;
 alter table public.posts enable row level security;
 alter table public.comments enable row level security;
 alter table public.post_reactions enable row level security;
@@ -188,11 +187,11 @@ alter table public.products enable row level security;
 alter table public.product_offers enable row level security;
 alter table public.market_items enable row level security;
 alter table public.market_inquiries enable row level security;
-alter table public.link_submissions enable row level security;
 alter table public.reports enable row level security;
 
 create policy "profiles readable by owner" on public.profiles for select using (auth.uid() = id);
 create policy "profiles update by owner" on public.profiles for update using (auth.uid() = id);
+create policy "public gallery official sources read" on public.gallery_official_sources for select using (true);
 create policy "public posts read" on public.posts for select using (is_deleted = false);
 create policy "public comments read" on public.comments for select using (is_deleted = false);
 create policy "own reactions read" on public.post_reactions for select using (auth.uid() = user_id);

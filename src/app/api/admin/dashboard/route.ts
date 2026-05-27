@@ -16,9 +16,8 @@ export async function GET() {
   const session = await requireAdmin();
   if (session.error) return session.error;
 
-  const [reportsResult, linksResult, offersResult, galleriesResult, productsResult, suggestionsResult] = await Promise.all([
+  const [reportsResult, offersResult, galleriesResult, productsResult, suggestionsResult] = await Promise.all([
     session.admin.from("reports").select("id,reporter_id,target_type,target_id,category,detail,reason,status,created_at").order("created_at", { ascending: false }),
-    session.admin.from("link_submissions").select("id,title,url,source,price,is_official,status,created_at").order("created_at", { ascending: false }),
     session.admin.from("product_offers").select("id,mall_name,url,price,source,is_official,products(title)").order("created_at", { ascending: false }).limit(30),
     session.admin.from("galleries").select("id,name,slug,thumbnail_url,follower_count,post_count").order("name"),
     session.admin.from("products").select("id,title,category,brand,image_url,report_count,is_deleted").eq("is_deleted", false).order("created_at", { ascending: false }).limit(50),
@@ -56,7 +55,6 @@ export async function GET() {
             ? markets.get(report.target_id) ?? null
             : products.get(report.target_id) ?? null
     })),
-    linkSubmissions: linksResult.data ?? [],
     productOffers: offersResult.data ?? [],
     galleries: galleriesResult.data ?? [],
     products: productsResult.data ?? [],

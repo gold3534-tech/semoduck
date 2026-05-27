@@ -16,6 +16,7 @@
     "report:zero-prices": "node scripts/report-zero-price-official-products.mjs",
     "report:non-product-offers": "node scripts/cleanup-non-product-official-offers.mjs",
     "audit:db": "node scripts/audit-database.mjs",
+    "fix:zero-price-offers": "node scripts/fix-zero-price-official-products.mjs",
     "pretypecheck": "node scripts/clean-typecheck-cache.mjs",
     "typecheck": "tsc --noEmit",
     "test:smoke": "node tests/smoke/pages.mjs"
