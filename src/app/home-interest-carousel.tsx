@@ -58,7 +58,6 @@ export function HomeInterestCarousel({
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-black text-berry">내 관심사 기반</p>
           <h2 className="text-xl font-black">공식 굿즈와 유저거래</h2>
           <p className="mt-1 text-sm font-bold text-slate-500">
             {interests.length
@@ -124,9 +123,9 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
   const mallName = primaryOffer?.mallName || product.brand || product.category;
 
   return (
-    <Card className="relative flex min-w-[11.25rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[12rem]">
+    <Card className="relative flex min-w-[9.75rem] max-w-[9.75rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[10.5rem] sm:max-w-[10.5rem]">
       <Link href={href} className="group block">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg bg-slate-100">
+        <div className="relative aspect-[1.15/1] overflow-hidden rounded-t-lg bg-slate-100">
           <SafeImage
             src={product.image}
             alt={product.title}
@@ -140,12 +139,12 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
             <Badge tone="pink">공식몰</Badge>
           </div>
 
-          <p className="line-clamp-2 text-xs font-black leading-5 text-ink">
+          <p className="line-clamp-2 text-xs font-black leading-5 text-[#2f2352]">
             {product.title}
           </p>
 
           <p className="line-clamp-1 text-[11px] font-bold text-slate-500">
-            {mallName || "판매처 확인"}
+            {mallName || "공식 굿즈"}
           </p>
 
           <p className="text-xs font-black text-[#ff5f8d]">
@@ -161,10 +160,10 @@ function MarketSlide({ market }: { market: MarketPreview }) {
   return (
     <Link
       href={`/market/${market.id}`}
-      className="block min-w-[11.25rem] snap-start sm:min-w-[12rem]"
+      className="block min-w-[9.75rem] max-w-[9.75rem] snap-start sm:min-w-[10.5rem] sm:max-w-[10.5rem]"
     >
       <Card className="flex h-full flex-col overflow-hidden p-0 transition hover:bg-pink-50">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg bg-slate-100">
+        <div className="relative aspect-[1.15/1] overflow-hidden rounded-t-lg bg-slate-100">
           <SafeImage
             src={market.image_url}
             alt={market.title}
@@ -179,7 +178,7 @@ function MarketSlide({ market }: { market: MarketPreview }) {
             <Badge tone="gray">{tradeTypeLabel(market.trade_type)}</Badge>
           </div>
 
-          <p className="line-clamp-2 text-xs font-black leading-5 text-ink">
+          <p className="line-clamp-2 text-xs font-black leading-5 text-[#2f2352]">
             {market.title}
           </p>
 

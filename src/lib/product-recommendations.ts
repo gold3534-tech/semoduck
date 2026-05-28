@@ -1,216 +1,427 @@
-import type { Product } from "@/types/domain";
+import type { Product, ProductOffer } from "@/types/domain";
 
-export type ProductRow = {
+type ProductOfferRow = {
+  id?: string | null;
+  product_id?: string | null;
+  source?: string | null;
+  mall_name?: string | null;
+  price?: number | string | null;
+  shipping_fee?: number | string | null;
+  condition?: string | null;
+  is_official?: boolean | null;
+  is_used?: boolean | null;
+  special_benefit?: string | null;
+  url?: string | null;
+};
+
+type ProductDbRow = {
   id: string;
   title: string;
-  normalized_title: string;
+  normalized_title?: string | null;
   brand?: string | null;
-  category: string;
+  category?: string | null;
   description?: string | null;
   image_url?: string | null;
   is_official_product?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   bookmark_count?: number | null;
-  product_offers?: Array<{
-    id: string;
-    source: Product["offers"][number]["source"];
-    mall_name: string;
-    price: number;
-    shipping_fee: number;
-    condition: Product["offers"][number]["condition"];
-    is_official: boolean;
-    is_used: boolean;
-    special_benefit?: string | null;
-    url: string;
-  }> | null;
+  product_offers?: ProductOfferRow[] | ProductOfferRow | null;
+  offers?: ProductOfferRow[] | ProductOfferRow | null;
 };
 
-export const productSelect =
-  "id,title,normalized_title,brand,category,description,image_url,is_official_product,bookmark_count,product_offers(id,source,mall_name,price,shipping_fee,condition,is_official,is_used,special_benefit,url)";
+export const productSelect = `
+  id,
+  title,
+  normalized_title,
+  brand,
+  category,
+  description,
+  image_url,
+  is_official_product,
+  created_at,
+  updated_at,
+  product_offers (
+    id,
+    product_id,
+    source,
+    mall_name,
+    price,
+    shipping_fee,
+    condition,
+    is_official,
+    is_used,
+    special_benefit,
+    url
+  )
+`;
 
-function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
-  return offer.mall_name === "네이버" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^\d.-]/g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
 }
 
-function fallbackOffer(id: string, query: string, price: number) {
+function normalizeTitle(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeArray<T>(value: T[] | T | null | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function cleanTag(value: string | null | undefined) {
+  return value?.trim().replace(/^#/, "") ?? "";
+}
+
+function unique(items: string[]) {
+  return [...new Set(items.map((item) => item.trim()).filter(Boolean))];
+}
+
+function normalizeOfferSource(
+  source: string | null | undefined,
+  isOfficial?: boolean | null,
+  isUsed?: boolean | null
+): ProductOffer["source"] {
+  const value = source?.trim();
+
+  if (
+    value === "official_shop" ||
+    value === "naver_shopping" ||
+    value === "coupang" ||
+    value === "user_submission" ||
+    value === "internal_market" ||
+    value === "external_search"
+  ) {
+    return value;
+  }
+
+  if (
+    value === "official" ||
+    value === "official_mall" ||
+    value === "official_store" ||
+    value === "brand_shop" ||
+    value === "brand_store"
+  ) {
+    return "official_shop";
+  }
+
+  if (
+    value === "naver" ||
+    value === "naver_shop" ||
+    value === "naver_store" ||
+    value === "shopping"
+  ) {
+    return "naver_shopping";
+  }
+
+  if (value === "user" || value === "market" || value === "used") {
+    return "internal_market";
+  }
+
+  if (isOfficial) return "official_shop";
+  if (isUsed) return "internal_market";
+
+  return "external_search";
+}
+
+function normalizeOfferCondition(
+  condition: string | null | undefined
+): ProductOffer["condition"] {
+  const value = condition?.trim();
+
+  if (
+    value === "new" ||
+    value === "used" ||
+    value === "opened_unused" ||
+    value === "damaged" ||
+    value === "unknown"
+  ) {
+    return value;
+  }
+
+  return "unknown";
+}
+
+function guessGallerySlugs(row: ProductDbRow) {
+  const text = `${row.title ?? ""} ${row.brand ?? ""} ${row.category ?? ""} ${
+    row.description ?? ""
+  }`.toLowerCase();
+
+  const slugs: string[] = [];
+
+  if (text.includes("bts") || text.includes("방탄")) {
+    slugs.push("bts");
+  }
+
+  if (text.includes("포켓몬") || text.includes("pokemon")) {
+    slugs.push("pokemon");
+  }
+
+  if (
+    text.includes("산리오") ||
+    text.includes("쿠로미") ||
+    text.includes("시나모롤") ||
+    text.includes("헬로키티") ||
+    text.includes("마이멜로디") ||
+    text.includes("폼폼푸린") ||
+    text.includes("포차코")
+  ) {
+    slugs.push("sanrio");
+  }
+
+  if (
+    text.includes("롤") ||
+    text.includes("리그오브레전드") ||
+    text.includes("리그 오브 레전드") ||
+    text.includes("league of legends") ||
+    text.includes("라이엇")
+  ) {
+    slugs.push("lol");
+  }
+
+  if (text.includes("스텔라이브") || text.includes("stellive")) {
+    slugs.push("stellive");
+  }
+
+  if (text.includes("원피스") || text.includes("one piece")) {
+    slugs.push("onepiece");
+  }
+
+  if (
+    text.includes("지브리") ||
+    text.includes("ghibli") ||
+    text.includes("토토로") ||
+    text.includes("키키") ||
+    text.includes("하울")
+  ) {
+    slugs.push("ghibli");
+  }
+
+  return unique(slugs);
+}
+
+function offerFromRow(row: ProductOfferRow): ProductOffer {
   return {
-    id,
-    source: "naver_shopping" as const,
-    mallName: "네이버 쇼핑",
-    price,
-    shippingFee: 3000,
-    condition: "new" as const,
-    isOfficial: false,
-    isUsed: false,
-    url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(query)}`
+    id: row.id ?? "",
+    source: normalizeOfferSource(row.source, row.is_official, row.is_used),
+    mallName: row.mall_name ?? row.source ?? "판매처",
+    price: toNumber(row.price),
+    shippingFee: toNumber(row.shipping_fee),
+    condition: normalizeOfferCondition(row.condition),
+    isOfficial: Boolean(row.is_official),
+    isUsed: Boolean(row.is_used),
+    specialBenefit: row.special_benefit ?? undefined,
+    url: row.url ?? "",
   };
 }
 
-const fallbackProducts: Product[] = [
-  {
-    id: "fallback-bts-photocard",
-    title: "BTS 포토카드 바인더",
-    normalizedTitle: "bts 포토카드 바인더",
-    brand: "BTS",
-    category: "아이돌굿즈",
-    description: "포토카드 보관과 특전 정리에 어울리는 바인더입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8968712/89687121077.jpg",
-    isOfficialProduct: false,
-    tags: ["BTS", "아이돌", "포토카드", "바인더", "굿즈"],
-    gallerySlugs: ["bts"],
-    bookmarkCount: 418,
-    offers: [fallbackOffer("fallback-offer-bts", "BTS 포토카드 바인더", 17500)]
-  },
-  {
-    id: "fallback-pokemon-binder",
-    title: "포켓몬 카드 9포켓 바인더",
-    normalizedTitle: "포켓몬 카드 9포켓 바인더",
-    brand: "포켓몬",
-    category: "게임굿즈",
-    description: "포켓몬 카드 수집용 바인더와 슬리브를 찾는 팬에게 맞는 상품입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8862522/88625229498.jpg",
-    isOfficialProduct: false,
-    tags: ["포켓몬", "게임", "카드", "바인더", "굿즈"],
-    gallerySlugs: ["pokemon"],
-    bookmarkCount: 220,
-    offers: [fallbackOffer("fallback-offer-pokemon", "포켓몬 카드 바인더", 8000)]
-  },
-  {
-    id: "fallback-stellive-album",
-    title: "스텔라이브 앨범 굿즈",
-    normalizedTitle: "스텔라이브 앨범 굿즈",
-    brand: "스텔라이브",
-    category: "버튜버굿즈",
-    description: "스텔라이브 앨범과 특전 구성을 확인하기 좋은 굿즈입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_9092944/90929442246.jpg",
-    isOfficialProduct: false,
-    tags: ["스텔라이브", "버튜버", "앨범", "특전", "굿즈"],
-    gallerySlugs: ["stellive"],
-    bookmarkCount: 121,
-    offers: [fallbackOffer("fallback-offer-stellive", "스텔라이브 앨범 굿즈", 19800)]
-  },
-  {
-    id: "fallback-t1-uniform",
-    title: "T1 롤드컵 유니폼",
-    normalizedTitle: "t1 롤드컵 유니폼",
-    brand: "T1",
-    category: "게임굿즈",
-    description: "e스포츠 유니폼을 찾는 팬에게 맞는 상품입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_6001792/60017927980.jpg",
-    isOfficialProduct: false,
-    tags: ["롤", "T1", "게임", "유니폼", "LCK"],
-    gallerySlugs: ["lol"],
-    bookmarkCount: 201,
-    offers: [fallbackOffer("fallback-offer-t1", "T1 롤드컵 유니폼", 45500)]
-  },
-  {
-    id: "fallback-onepiece-figure",
-    title: "원피스 루피 기어5 피규어",
-    normalizedTitle: "원피스 루피 기어5 피규어",
-    brand: "원피스",
-    category: "애니굿즈",
-    description: "정품 여부와 판매 링크 확인이 중요한 원피스 피규어입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8926209/89262097406.jpg",
-    isOfficialProduct: true,
-    tags: ["원피스", "애니", "루피", "피규어", "굿즈"],
-    gallerySlugs: ["onepiece"],
-    bookmarkCount: 186,
-    offers: [fallbackOffer("fallback-offer-onepiece", "원피스 루피 기어5 피규어", 23000)]
-  },
-  {
-    id: "fallback-kuromi-keyring",
-    title: "산리오 쿠로미 아크릴 키링",
-    normalizedTitle: "산리오 쿠로미 아크릴 키링",
-    brand: "산리오",
-    category: "캐릭터굿즈",
-    description: "쿠로미 팬들이 많이 찾는 키링 굿즈입니다.",
-    image: "https://shopping-phinf.pstatic.net/main_8889149/88891496807.10.jpg",
-    isOfficialProduct: false,
-    tags: ["쿠로미", "산리오", "캐릭터", "키링", "굿즈"],
-    gallerySlugs: ["sanrio"],
-    bookmarkCount: 342,
-    offers: [fallbackOffer("fallback-offer-kuromi", "쿠로미 키링", 4900)]
-  }
-];
+export function productFromDbRow(row: ProductDbRow): Product {
+  const rawOffers = normalizeArray(row.product_offers ?? row.offers);
 
-const galleryKeywordMap: Record<string, string[]> = {
-  sanrio: ["산리오", "쿠로미", "캐릭터", "키링"],
-  pokemon: ["포켓몬", "게임", "카드", "바인더"],
-  onepiece: ["원피스", "애니", "루피", "피규어"],
-  "webtoon-goods": ["웹툰", "아크릴", "팝업"],
-  bts: ["BTS", "아이돌", "포토카드", "바인더"],
-  stellive: ["스텔라이브", "버튜버", "앨범", "특전"],
-  lol: ["롤", "T1", "게임", "유니폼", "LCK"],
-  ghibli: ["지브리", "스튜디오 지브리", "도토리숲", "토토로", "키키", "하울"]
-};
+  const offers = rawOffers
+    .map(offerFromRow)
+    .filter((offer) => offer.id || offer.url || offer.mallName);
 
-export function productFromDbRow(row: ProductRow): Product {
-  const offers = (row.product_offers ?? [])
-    .filter((offer) => !isPriceCompareOffer(offer))
-    .map((offer) => ({
-      id: offer.id,
-      source: offer.source,
-      mallName: offer.mall_name,
-      price: offer.price,
-      shippingFee: offer.shipping_fee,
-      condition: offer.condition,
-      isOfficial: offer.is_official,
-      isUsed: offer.is_used,
-      specialBenefit: offer.special_benefit ?? undefined,
-      url: offer.url
-    }))
-    .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || Number(a.isUsed) - Number(b.isUsed) || (a.price || Number.MAX_SAFE_INTEGER) - (b.price || Number.MAX_SAFE_INTEGER));
+  const title = row.title ?? "이름 없는 굿즈";
+  const brand = row.brand ?? "";
+  const category = row.category ?? "";
+  const description = row.description ?? "";
+  const image = row.image_url || "/placeholder-goods.svg";
+  const gallerySlugs = guessGallerySlugs(row);
+
+  const tags = unique([
+    cleanTag(brand),
+    cleanTag(category),
+    ...gallerySlugs,
+  ]);
+
+  const isOfficialProduct =
+    Boolean(row.is_official_product) ||
+    offers.some((offer) => offer.isOfficial);
 
   return {
     id: row.id,
-    title: row.title,
-    normalizedTitle: row.normalized_title,
-    brand: row.brand ?? "",
-    category: row.category,
-    description: row.description ?? "",
-    image: row.image_url ?? "/semoduck-icon.png",
-    isOfficialProduct: row.is_official_product ?? false,
-    tags: [row.category, row.brand].filter(Boolean) as string[],
-    gallerySlugs: [],
+    title,
+    normalizedTitle: row.normalized_title || normalizeTitle(title),
+    brand,
+    category,
+    description,
+    image,
+    isOfficialProduct,
+    tags,
+    gallerySlugs,
     bookmarkCount: row.bookmark_count ?? 0,
-    offers
+    offers,
   };
 }
 
-export function keywordsForPost(input: { title: string; content: string; gallerySlug?: string | null; galleryName?: string | null; tags?: string[] }) {
-  const text = `${input.title} ${input.content} ${input.galleryName ?? ""} ${(input.tags ?? []).join(" ")}`.toLowerCase();
-  const keywords = new Set<string>([...(input.gallerySlug ? galleryKeywordMap[input.gallerySlug] ?? [] : []), ...(input.tags ?? [])]);
-  const candidates = ["쿠로미", "산리오", "키링", "정품", "포켓몬", "카드", "바인더", "원피스", "루피", "피규어", "지브리", "토토로", "키키", "하울", "BTS", "포토카드", "스텔라이브", "롤", "T1", "유니폼", "아크릴", "특전"];
+export function productPrice(product: Product) {
+  const prices = product.offers
+    .map((offer) => offer.price)
+    .filter((price) => Number.isFinite(price) && price > 0);
 
-  for (const keyword of candidates) {
-    if (text.includes(keyword.toLowerCase())) keywords.add(keyword);
-  }
-
-  return [...keywords].filter(Boolean);
+  return prices.length ? Math.min(...prices) : 0;
 }
 
-export function fallbackTags(input: { title: string; content: string; gallerySlug?: string | null; galleryName?: string | null }, limit = 5) {
-  return keywordsForPost(input).slice(0, limit);
+export function fallbackTags({
+  title,
+  content,
+  gallerySlug,
+  galleryName,
+}: {
+  title?: string | null;
+  content?: string | null;
+  gallerySlug?: string | null;
+  galleryName?: string | null;
+}) {
+  const text = `${title ?? ""} ${content ?? ""} ${gallerySlug ?? ""} ${
+    galleryName ?? ""
+  }`.toLowerCase();
+
+  const tags: string[] = [];
+
+  if (galleryName) tags.push(galleryName);
+  if (gallerySlug) tags.push(gallerySlug);
+
+  if (text.includes("bts") || text.includes("방탄")) tags.push("BTS");
+  if (text.includes("포켓몬") || text.includes("pokemon")) tags.push("포켓몬");
+  if (text.includes("산리오")) tags.push("산리오");
+  if (text.includes("쿠로미")) tags.push("쿠로미");
+  if (text.includes("시나모롤")) tags.push("시나모롤");
+  if (text.includes("롤") || text.includes("리그")) tags.push("롤");
+  if (text.includes("스텔라이브")) tags.push("스텔라이브");
+  if (text.includes("원피스")) tags.push("원피스");
+  if (text.includes("지브리")) tags.push("지브리");
+
+  if (text.includes("피규어")) tags.push("피규어");
+  if (text.includes("키링")) tags.push("키링");
+  if (text.includes("포카") || text.includes("포토카드")) tags.push("포카");
+  if (text.includes("바인더")) tags.push("바인더");
+  if (text.includes("인형")) tags.push("인형");
+  if (text.includes("아크릴")) tags.push("아크릴");
+  if (text.includes("유니폼")) tags.push("유니폼");
+  if (text.includes("오르골")) tags.push("오르골");
+
+  return unique(tags).slice(0, 8);
 }
 
-export function relatedProducts(products: Product[], keywords: string[], limit = 4) {
-  const normalizedKeywords = keywords.map((keyword) => keyword.toLowerCase()).filter(Boolean);
-  const scored = products.map((product) => {
-    const text = `${product.title} ${product.brand} ${product.category} ${product.description} ${product.tags.join(" ")} ${product.gallerySlugs.join(" ")}`.toLowerCase();
-    const score = normalizedKeywords.reduce((sum, keyword) => sum + (text.includes(keyword) ? 1 : 0), 0);
-    return { product, score };
+export function keywordsForPost({
+  title,
+  content,
+  gallerySlug,
+  galleryName,
+  tags = [],
+}: {
+  title?: string | null;
+  content?: string | null;
+  gallerySlug?: string | null;
+  galleryName?: string | null;
+  tags?: string[];
+}) {
+  const base = fallbackTags({
+    title,
+    content,
+    gallerySlug,
+    galleryName,
   });
 
-  return scored
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score || Number(b.product.isOfficialProduct) - Number(a.product.isOfficialProduct) || b.product.bookmarkCount - a.product.bookmarkCount)
-    .slice(0, limit)
-    .map((item) => item.product);
+  return unique([
+    ...tags,
+    ...base,
+    title ?? "",
+    galleryName ?? "",
+    gallerySlug ?? "",
+  ]).slice(0, 12);
 }
 
-export function fallbackRecommendedProducts(keywords: string[] = [], limit = 4) {
-  const related = relatedProducts(fallbackProducts, keywords, limit);
-  return related
-    .concat(fallbackProducts)
-    .filter((product, index, all) => all.findIndex((item) => item.id === product.id) === index)
-    .slice(0, limit);
+/**
+ * 실제 추천에는 쓰지 않는 것을 권장.
+ * 기존 코드에서 아직 import 중일 수 있어서 빌드 호환용으로 남겨둠.
+ */
+export function fallbackRecommendedProducts(
+  interests: string[] = [],
+  count = 4
+): Product[] {
+  const keyword = interests[0] ?? "굿즈";
+
+  const fallbackProducts: Product[] = [
+    {
+      id: "fallback-kuromi-keyring",
+      title: "쿠로미 키링",
+      normalizedTitle: "쿠로미 키링",
+      brand: "산리오",
+      category: "키링",
+      description: "fallback display item",
+      image: "/placeholder-goods.svg",
+      isOfficialProduct: false,
+      tags: ["산리오", "쿠로미", "키링"],
+      gallerySlugs: ["sanrio"],
+      bookmarkCount: 0,
+      offers: [],
+    },
+    {
+      id: "fallback-pokemon-binder",
+      title: "포켓몬 카드 바인더",
+      normalizedTitle: "포켓몬 카드 바인더",
+      brand: "포켓몬",
+      category: "바인더",
+      description: "fallback display item",
+      image: "/placeholder-goods.svg",
+      isOfficialProduct: false,
+      tags: ["포켓몬", "바인더"],
+      gallerySlugs: ["pokemon"],
+      bookmarkCount: 0,
+      offers: [],
+    },
+    {
+      id: "fallback-bts-photocard-binder",
+      title: "BTS 포토카드 바인더",
+      normalizedTitle: "bts 포토카드 바인더",
+      brand: "BTS",
+      category: "바인더",
+      description: "fallback display item",
+      image: "/placeholder-goods.svg",
+      isOfficialProduct: false,
+      tags: ["BTS", "포카", "바인더"],
+      gallerySlugs: ["bts"],
+      bookmarkCount: 0,
+      offers: [],
+    },
+    {
+      id: "fallback-ghibli-musicbox",
+      title: "지브리 오르골",
+      normalizedTitle: "지브리 오르골",
+      brand: "지브리",
+      category: "오르골",
+      description: "fallback display item",
+      image: "/placeholder-goods.svg",
+      isOfficialProduct: false,
+      tags: ["지브리", "오르골"],
+      gallerySlugs: ["ghibli"],
+      bookmarkCount: 0,
+      offers: [],
+    },
+  ];
+
+  return fallbackProducts
+    .filter((product) => {
+      if (!keyword) return true;
+
+      const text = `${product.title} ${product.brand} ${
+        product.category
+      } ${product.tags.join(" ")}`.toLowerCase();
+
+      return text.includes(keyword.toLowerCase()) || interests.length === 0;
+    })
+    .slice(0, count);
 }
