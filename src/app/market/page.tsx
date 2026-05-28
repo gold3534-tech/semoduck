@@ -55,7 +55,7 @@ export default async function MarketPage() {
           fill
           priority
           sizes="(max-width: 768px) 100vw, 86rem"
-          className="pointer-events-none scale-[1.15] object-cover object-[62%_center]"
+          className="pointer-events-none scale-[1.13] object-cover object-[62%_center]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-white/94 via-white/78 to-white/30" />
         <div className="relative max-w-xl">
