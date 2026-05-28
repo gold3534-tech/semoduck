@@ -11,47 +11,77 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { extractPostKeywords } from "@/lib/ai";
 import { formatPrice, sourceLabel } from "@/lib/format";
+import { extractRelevantTokens, sortByRelevance } from "@/lib/relevance";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
 export const dynamic = "force-dynamic";
 
+type ProductRow = {
+  id: string;
+  title: string;
+  brand?: string | null;
+  category?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  is_official_product?: boolean | null;
+  product_offers?: Array<{
+    id: string;
+    source: string;
+    mall_name: string;
+    price: number;
+    shipping_fee: number;
+    is_official: boolean;
+    is_used: boolean;
+    special_benefit?: string | null;
+    url: string;
+  }> | null;
+};
+
 function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
-  return offer.mall_name === "네이버" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
+  return offer.mall_name === "네이버 가격비교" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
 }
 
-function detailTerms(product: { title: string; brand?: string | null; category?: string | null; description?: string | null }) {
-  return [...new Set([product.title, product.brand, product.category, ...(product.description ?? "").split(/\s+/).slice(0, 4)].filter(Boolean) as string[])].slice(0, 6);
+function detailTerms(product: ProductRow) {
+  return extractRelevantTokens([product.title, product.brand, product.category, product.description], 10);
 }
 
 export default async function GoodsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createDataSupabaseClient();
-  const { data: product } = await supabase
+  const { data } = await supabase
     .from("products")
     .select("id,title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,is_official,is_used,special_benefit,url)")
     .eq("id", id)
     .single();
 
+  const product = data as ProductRow | null;
   if (!product) notFound();
 
   const offers = (product.product_offers ?? [])
-    .filter((offer: any) => !isPriceCompareOffer(offer))
-    .sort((a: any, b: any) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || Number.MAX_SAFE_INTEGER) - Number(b.price || Number.MAX_SAFE_INTEGER));
+    .filter((offer) => !isPriceCompareOffer(offer))
+    .sort((a, b) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || Number.MAX_SAFE_INTEGER) - Number(b.price || Number.MAX_SAFE_INTEGER));
   const primaryOffer = offers[0];
-  const displayPrice = formatPrice(primaryOffer?.price);
   const images = [product.image_url].filter(Boolean) as string[];
+
   const aiPostKeywords = await extractPostKeywords(`${product.title}\n${product.brand ?? ""}\n${product.category ?? ""}\n${product.description ?? ""}`);
-  const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...detailTerms(product)])].slice(0, 8);
+  const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...detailTerms(product)])].slice(0, 10);
   const relatedFilters = relatedTerms.flatMap((term) => [`title.ilike.%${term}%`, `content.ilike.%${term}%`]);
-  const { data: relatedPosts } = relatedFilters.length
+  const { data: relatedPostRows } = relatedFilters.length
     ? await supabase
         .from("posts")
         .select("id,title,content,post_type,like_count,comment_count,image_url,galleries(name,slug)")
         .or(relatedFilters.join(","))
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
-        .limit(6)
+        .limit(30)
     : { data: [] };
+  const relatedPosts = sortByRelevance(
+    (relatedPostRows ?? []) as RelatedPostItem[],
+    relatedTerms,
+    (post) => [post.title, post.content, post.galleries?.name, post.galleries?.slug],
+    (post) => Number(post.like_count ?? 0) + Number(post.comment_count ?? 0),
+    25
+  ).slice(0, 6);
 
   return (
     <div className="space-y-3">
@@ -60,7 +90,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
         <span>&gt;</span>
         <Link href="/goods">굿즈검색</Link>
         <span>&gt;</span>
-        <span>{product.category}</span>
+        <span>{product.category ?? "굿즈"}</span>
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_23rem]">
@@ -78,17 +108,12 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
             <div className="mt-3 space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="mint">{product.category}</Badge>
+                {product.category ? <Badge tone="mint">{product.category}</Badge> : null}
                 {product.brand ? <Badge>{product.brand}</Badge> : null}
-                {primaryOffer?.is_official ? <Badge tone="pink">인증 판매처</Badge> : null}
+                {primaryOffer?.is_official ? <Badge tone="pink">공식 판매처</Badge> : null}
               </div>
               <h1 className="text-2xl font-black leading-tight text-[#3a285f] md:text-3xl">{product.title}</h1>
-              <div className="flex flex-wrap items-center gap-3 text-sm font-bold text-slate-500">
-                <span className="text-[#f8b83e]">★★★★★</span>
-                <span>4.9</span>
-                <span>찜 312</span>
-              </div>
-              <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">{displayPrice}</p>
+              <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">{formatPrice(primaryOffer?.price)}</p>
               <p className="text-sm font-bold leading-7 text-slate-600">{product.description || `${product.title}의 판매 링크와 관련 게시글을 함께 확인해 보세요.`}</p>
 
               {primaryOffer ? (
@@ -97,9 +122,7 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
                     <Image src="/semoduck-profile-duck.png" alt="" width={64} height={64} className="rounded-2xl" />
                     <div className="min-w-0 flex-1">
                       <p className="font-black text-[#3a285f]">{primaryOffer.mall_name}</p>
-                      <p className="mt-1 text-xs font-bold text-slate-500">
-                        {sourceLabel(primaryOffer.source)} · {primaryOffer.is_official ? "공식 판매처" : "외부 판매 링크"}
-                      </p>
+                      <p className="mt-1 text-xs font-bold text-slate-500">{sourceLabel(primaryOffer.source)} · {primaryOffer.is_official ? "공식 판매처" : "외부 판매 링크"}</p>
                     </div>
                   </div>
                   <a href={primaryOffer.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#6f4ab4] px-4 text-sm font-black text-white">
@@ -114,62 +137,34 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
           <Card className="grid gap-4 p-4 md:grid-cols-2">
             <div>
-              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
-                <Star size={18} className="text-[#f8b83e]" /> 상품 정보
-              </h2>
+              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Star size={18} className="text-[#f8b83e]" /> 상품 정보</h2>
               <dl className="mt-3 grid gap-2 text-sm font-bold text-slate-600">
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">판매처</dt>
-                  <dd>{primaryOffer?.mall_name ?? "확인 필요"}</dd>
-                </div>
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">배송</dt>
-                  <dd>{primaryOffer?.shipping_fee ? `배송비 ${formatPrice(primaryOffer.shipping_fee)}` : "판매처 확인"}</dd>
-                </div>
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">재고 여부</dt>
-                  <dd className="text-emerald-600">판매처 확인</dd>
-                </div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">판매처</dt><dd>{primaryOffer?.mall_name ?? "확인 필요"}</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">배송</dt><dd>{primaryOffer?.shipping_fee ? `배송비 ${formatPrice(primaryOffer.shipping_fee)}` : "판매처 확인"}</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">재고 여부</dt><dd className="text-emerald-600">판매처 확인</dd></div>
               </dl>
             </div>
             <div>
-              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
-                <Package size={18} /> 분류
-              </h2>
+              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Package size={18} /> 분류</h2>
               <dl className="mt-3 grid gap-2 text-sm font-bold text-slate-600">
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">카테고리</dt>
-                  <dd>{product.category}</dd>
-                </div>
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">캐릭터</dt>
-                  <dd>{product.brand || "미분류"}</dd>
-                </div>
-                <div className="grid grid-cols-[6rem_1fr]">
-                  <dt className="text-[#6f4ab4]">상태</dt>
-                  <dd>{product.is_official_product ? "공식 상품" : "외부 판매 상품"}</dd>
-                </div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">카테고리</dt><dd>{product.category ?? "미분류"}</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">브랜드</dt><dd>{product.brand || "미분류"}</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">상태</dt><dd>{product.is_official_product ? "공식 상품" : "외부 판매 상품"}</dd></div>
               </dl>
             </div>
           </Card>
 
           <Card className="p-4">
-            <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
-              <Heart size={18} className="text-[#ff6f9b]" /> 상품 소개
-            </h2>
-            <p className="mt-3 text-sm font-bold leading-7 text-slate-600">{product.description || "굿즈의 상세 설명은 판매처에서 확인할 수 있습니다. 세모덕에서는 관련 게시글과 판매 링크를 함께 모아 보여줍니다."}</p>
+            <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Heart size={18} className="text-[#ff6f9b]" /> 상품 소개</h2>
+            <p className="mt-3 text-sm font-bold leading-7 text-slate-600">{product.description || "굿즈 상세 설명은 판매처에서 확인할 수 있습니다. 세모덕에서는 관련 게시글과 판매 링크를 함께 모아 보여줍니다."}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs">
-                <ShieldCheck size={14} /> 판매처 확인
-              </Button>
-              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs">
-                <Truck size={14} /> 배송 확인
-              </Button>
+              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs"><ShieldCheck size={14} /> 판매처 확인</Button>
+              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs"><Truck size={14} /> 배송 확인</Button>
             </div>
           </Card>
         </div>
 
-        <RelatedPostList title="이 굿즈 이야기" posts={(relatedPosts ?? []) as RelatedPostItem[]} />
+        <RelatedPostList title="이 굿즈 이야기" posts={relatedPosts} />
       </div>
     </div>
   );

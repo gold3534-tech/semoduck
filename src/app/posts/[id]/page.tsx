@@ -11,7 +11,8 @@ import { Card } from "@/components/ui/card";
 import { isAdminEmail } from "@/lib/auth";
 import { extractProductKeywords } from "@/lib/ai";
 import { formatDateTime, formatPrice, postTypeLabel } from "@/lib/format";
-import { fallbackRecommendedProducts, fallbackTags, keywordsForPost, productFromDbRow, productSelect, relatedProducts } from "@/lib/product-recommendations";
+import { fallbackRecommendedProducts, fallbackTags, keywordsForPost, productFromDbRow, productSelect } from "@/lib/product-recommendations";
+import { sortByRelevance } from "@/lib/relevance";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/domain";
@@ -52,7 +53,13 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const { data: relatedProductRows } = productFilters.length
     ? await supabase.from("products").select(productSelect).or(productFilters.join(",")).eq("is_deleted", false).limit(40)
     : { data: [] };
-  const localRelatedProducts = relatedProducts((relatedProductRows ?? []).map(productFromDbRow), [...new Set(keywords)], 4);
+  const localRelatedProducts = sortByRelevance(
+    (relatedProductRows ?? []).map(productFromDbRow),
+    [...new Set([...keywords, post.title, post.content, gallery?.name, gallery?.slug].filter(Boolean) as string[])],
+    (product) => [product.title, product.normalizedTitle, product.brand, product.category, product.description, product.tags.join(" ")],
+    (product) => Number(product.isOfficialProduct) * 30 + product.bookmarkCount,
+    25
+  ).slice(0, 4);
   const goods = localRelatedProducts.length ? localRelatedProducts : fallbackRecommendedProducts(keywords, 4);
   const isOwner = currentUserId === post.user_id;
 

@@ -59,10 +59,10 @@ export function GalleryCard({ gallery, compact = false, rank, followed = false, 
         aria-label={`${gallery.name} 갤러리로 이동`}
         onClick={openGallery}
         onKeyDown={handleKeyDown}
-        className="group relative flex h-full min-h-[16rem] cursor-pointer flex-col rounded-2xl border border-[#f1dbe8] bg-white/90 p-3 text-center shadow-soft transition hover:-translate-y-0.5 hover:border-[#ff9fc0] focus:outline-none focus:ring-2 focus:ring-[#b984e7]/40"
+        className="group relative flex h-full min-h-[12.75rem] cursor-pointer flex-col rounded-2xl border border-[#f1dbe8] bg-white/90 p-3 text-center shadow-soft transition hover:-translate-y-0.5 hover:border-[#ff9fc0] focus:outline-none focus:ring-2 focus:ring-[#b984e7]/40"
       >
         {rank ? <span className="absolute left-3 top-3 z-20 grid h-7 w-7 place-items-center rounded-full bg-[#fff2bd] text-xs font-black text-[#c47b00]">{rank}</span> : null}
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#f7f2fb]">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#f7f2fb]">
           <SafeImage src={gallery.thumbnail} alt="" kind="gallery" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
         </div>
         <h2 className="mt-3 line-clamp-1 px-1 text-base font-black text-[#2f2352] transition group-hover:text-[#ff6f9b]">{gallery.name}</h2>

@@ -61,7 +61,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#f1d6e5] bg-[#fffaf6]/92 backdrop-blur-xl">
-      <div className="mx-auto grid min-h-16 w-full max-w-5xl grid-cols-[7.5rem_minmax(24rem,1fr)_minmax(14rem,20rem)_auto] items-center gap-3 px-5 py-2 xl:max-w-6xl xl:grid-cols-[7.5rem_minmax(28rem,1fr)_minmax(16rem,24rem)_auto] 2xl:max-w-[86rem] 2xl:grid-cols-[8rem_minmax(32rem,1fr)_minmax(18rem,28rem)_auto] min-[1800px]:max-w-[100rem] min-[1800px]:grid-cols-[8.5rem_minmax(38rem,1fr)_minmax(22rem,34rem)_auto] min-[2200px]:max-w-[116rem]">
+      <div className="mx-auto grid min-h-16 w-full max-w-5xl grid-cols-[7.25rem_minmax(20rem,1fr)_minmax(13rem,18rem)_auto] items-center gap-3 px-6 py-2 sm:px-8 xl:max-w-[68rem] xl:grid-cols-[7.25rem_minmax(23rem,1fr)_minmax(14rem,20rem)_auto] 2xl:max-w-[74rem] 2xl:grid-cols-[7.5rem_minmax(25rem,1fr)_minmax(15rem,22rem)_auto] 2xl:px-10 min-[1800px]:max-w-[86rem] min-[1800px]:grid-cols-[8rem_minmax(31rem,1fr)_minmax(18rem,27rem)_auto] min-[2200px]:max-w-[96rem]">
         <Link href="/" className="flex items-center" aria-label="세모덕 홈">
           <Image src="/semoduck-logo.png" alt="세모덕" width={128} height={48} priority className="h-auto w-28 object-contain" />
         </Link>

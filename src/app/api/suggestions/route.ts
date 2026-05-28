@@ -29,20 +29,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const parsed = suggestionSchema.safeParse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "요청 내용을 읽지 못했습니다. 다시 시도해 주세요." }, { status: 400 });
+  }
+
+  const parsed = suggestionSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "입력값을 확인해주세요." }, { status: 400 });
   }
 
   const body = parsed.data;
-  const admin = createAdminSupabaseClient();
+  let admin: ReturnType<typeof createAdminSupabaseClient>;
+  try {
+    admin = createAdminSupabaseClient();
+  } catch {
+    return NextResponse.json({ error: "서버 설정을 확인해 주세요. 관리자 키가 누락되었습니다." }, { status: 500 });
+  }
+
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      id: data.user.id,
+      email: data.user.email ?? null,
+      nickname: data.user.user_metadata?.name ?? data.user.email?.split("@")[0] ?? "세모덕 유저",
+      profile_image: data.user.user_metadata?.avatar_url ?? null
+    },
+    { onConflict: "id", ignoreDuplicates: true }
+  );
+
+  if (profileError) {
+    return NextResponse.json({ error: "프로필 정보를 준비하지 못했습니다. 다시 로그인한 뒤 시도해 주세요." }, { status: 500 });
+  }
+
   const { error } = await admin.from("admin_suggestions").insert({
     user_id: data.user.id,
     type: body.type,
     title: body.title,
     detail: body.detail,
     requested_gallery_name: body.galleryName || null,
-    requested_gallery_slug: null,
+    requested_gallery_slug: body.galleryName ? slugify(body.galleryName) : null,
     requested_gallery_category: body.galleryCategory || null
   });
 

@@ -124,7 +124,7 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
       </aside>
 
       <div className="space-y-4">
-        <section className="relative min-h-32 overflow-hidden rounded-2xl border border-[#ead0f4] bg-white/82 p-5 shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
+        <section className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-[#ead0f4] bg-white/82 p-6 shadow-[0_10px_26px_rgba(126,80,178,0.05)] md:min-h-[15rem]">
           <SafeImage src="/semoduck-gallery-hero.png" alt="" kind="banner" loading="eager" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-right opacity-90" />
           <div className="relative max-w-sm">
             <h1 className="text-2xl font-black text-[#6f4ab4] md:text-3xl">갤러리</h1>
