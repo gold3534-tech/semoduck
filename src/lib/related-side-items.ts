@@ -479,27 +479,27 @@ export async function getRelatedSideItems({
     };
   });
 
-  const productCandidates: CandidateItem[] = (productResult.data ?? [])
-    .map(productFromDbRow)
-    .filter((product) => {
-      return (
+  const productCandidates: CandidateItem[] = ((productResult.data ?? []) as any[])
+    .map((row): Product => productFromDbRow(row))
+    .filter((product: Product) => {
+        return (
         !product.id.startsWith("fallback-") &&
         !product.id.startsWith("naver-") &&
         product.offers.length > 0
-      );
+        );
     })
-    .map((product) => ({
-      kind: "product" as const,
-      id: product.id,
-      title: product.title,
-      brand: product.brand,
-      category: product.category,
-      description: product.description,
-      tags: product.tags,
-      gallerySlugs: product.gallerySlugs,
-      price: getProductPrice(product),
-      image: product.image,
-      href: `/goods/${product.id}`,
+    .map((product: Product) => ({
+        kind: "product" as const,
+        id: product.id,
+        title: product.title,
+        brand: product.brand,
+        category: product.category,
+        description: product.description,
+        tags: product.tags,
+        gallerySlugs: product.gallerySlugs,
+        price: getProductPrice(product),
+        image: product.image,
+        href: `/goods/${product.id}`,
     }));
 
   const naverCandidates: CandidateItem[] = (naverResult.items ?? [])
