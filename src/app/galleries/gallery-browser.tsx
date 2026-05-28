@@ -124,11 +124,20 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
       </aside>
 
       <div className="space-y-4">
-        <section className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-[#ead0f4] bg-white/82 p-6 shadow-[0_10px_26px_rgba(126,80,178,0.05)] md:min-h-[15rem]">
-          <SafeImage src="/semoduck-gallery-hero.png" alt="" kind="banner" loading="eager" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-right opacity-90" />
-          <div className="relative max-w-sm">
+        <section className="relative h-[240px] overflow-hidden rounded-2xl border border-[#ead0f4] shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
+          <SafeImage
+            src="/semoduck-gallery-hero.png"
+            alt=""
+            kind="banner"
+            loading="eager"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+
+          <div className="relative z-10 p-6">
             <h1 className="text-2xl font-black text-[#6f4ab4] md:text-3xl">갤러리</h1>
-            <p className="mt-1 text-xs font-bold leading-5 text-[#44385a]">덕질 이야기, 굿즈 정보, 팬심까지 다양한 갤러리를 둘러보세요.</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-[#44385a]">
+              덕질 이야기, 굿즈 정보, 팬심까지 다양한 갤러리를 둘러보세요.
+            </p>
           </div>
         </section>
 

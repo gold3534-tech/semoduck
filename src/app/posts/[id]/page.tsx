@@ -1,7 +1,7 @@
 ﻿import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ExternalLink, MessageCircle, ShoppingCart } from "lucide-react";
+import { ExternalLink, MessageCircle, ShoppingBag, ShoppingCart } from "lucide-react";
 import { CommentActions } from "@/app/posts/[id]/comment-actions";
 import { CommentForm } from "@/app/posts/[id]/comment-form";
 import { PostActions } from "@/app/posts/[id]/post-actions";
@@ -53,6 +53,18 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const { data: relatedProductRows } = productFilters.length
     ? await supabase.from("products").select(productSelect).or(productFilters.join(",")).eq("is_deleted", false).limit(40)
     : { data: [] };
+  const marketFilters = [...new Set(keywords)]
+    .filter(Boolean)
+    .slice(0, 8)
+    .flatMap((term) => [`title.ilike.%${term}%`, `description.ilike.%${term}%`]);
+  const { data: relatedMarketRows } = marketFilters.length
+    ? await supabase
+        .from("market_items")
+        .select("id,title,description,trade_type,price,image_url,galleries(name,slug)")
+        .or(marketFilters.join(","))
+        .in("status", ["active", "reserved"])
+        .limit(30)
+    : { data: [] };
   const localRelatedProducts = sortByRelevance(
     (relatedProductRows ?? []).map(productFromDbRow),
     [...new Set([...keywords, post.title, post.content, gallery?.name, gallery?.slug].filter(Boolean) as string[])],
@@ -60,7 +72,18 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
     (product) => Number(product.isOfficialProduct) * 30 + product.bookmarkCount,
     25
   ).slice(0, 4);
+  const relatedMarketItems = sortByRelevance(
+    (relatedMarketRows ?? []).map((item) => ({ ...item, galleries: Array.isArray(item.galleries) ? item.galleries[0] : item.galleries })),
+    [...new Set([...keywords, post.title, post.content, gallery?.name, gallery?.slug].filter(Boolean) as string[])],
+    (item) => [item.title, item.description, item.galleries?.name, item.galleries?.slug],
+    (item) => Number(item.price ?? 0),
+    25
+  ).slice(0, 3);
   const goods = localRelatedProducts.length ? localRelatedProducts : fallbackRecommendedProducts(keywords, 4);
+  const relatedGoods = [
+    ...relatedMarketItems.map((item) => ({ type: "market" as const, item })),
+    ...goods.map((product) => ({ type: "product" as const, product }))
+  ].slice(0, 5);
   const isOwner = currentUserId === post.user_id;
 
   return (
@@ -111,7 +134,26 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           <h2 className="text-xl font-black text-[#3a285f]">관련 굿즈</h2>
         </div>
         <div className="grid gap-3">
-          {goods.map((product) => {
+          {relatedGoods.map((entry) => {
+            if (entry.type === "market") {
+              const item = entry.item;
+              return (
+                <Card key={`market-${item.id}`} className="grid grid-cols-[5.5rem_1fr] gap-3 p-3">
+                  <div className="relative aspect-square overflow-hidden rounded-xl bg-[#f7f2fb]">
+                    <SafeImage src={item.image_url} alt="" kind="product" className="h-full w-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <Badge tone="mint">유저거래</Badge>
+                    <p className="mt-2 line-clamp-2 text-sm font-black text-[#2f2352]">{item.title}</p>
+                    <p className="mt-2 text-sm font-black text-[#ff5f8d]">{formatPrice(item.price)}</p>
+                    <Link href={`/market/${item.id}`} className="mt-2 inline-flex h-8 items-center gap-1 rounded-full bg-[#3a285f] px-3 text-xs font-black text-white">
+                      <ShoppingBag size={13} /> 보기
+                    </Link>
+                  </div>
+                </Card>
+              );
+            }
+            const product = entry.product;
             const offer = product.offers.find((item) => item.isOfficial) ?? product.offers[0];
             const price = productPrice(product);
             return (

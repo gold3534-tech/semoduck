@@ -236,22 +236,55 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   return (
     <div className="space-y-3 2xl:space-y-4 min-[1800px]:space-y-5">
-      <section className="relative min-h-[13rem] overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] bg-[#fff8fc] p-5 shadow-[0_14px_38px_rgba(126,80,178,0.07)] md:min-h-[14rem] 2xl:p-7 min-[1800px]:min-h-[15rem] min-[1800px]:p-9">
-        <Image src="/semoduck-banner-frame.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 74rem" className="pointer-events-none object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-white/12" />
-        <div className="relative max-w-md 2xl:max-w-xl min-[1800px]:max-w-2xl">
-          <h1 className="banner-title text-3xl font-black leading-tight text-[#4a347e] 2xl:text-4xl min-[1800px]:text-5xl">
-            세상의 모든 덕질,<br />
-            <span className="text-[#ff6f9b]">세모덕</span>에서 한 번에!
-          </h1>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#4f4564] 2xl:text-base 2xl:leading-7">굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를 더 즐겁게 만들어줘요!</p>
-          <div className="mt-4 flex flex-wrap gap-2 2xl:mt-5 2xl:gap-3">
-            <Link href="/goods" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#6f4ab4] ring-1 ring-[#e5c7f1] 2xl:h-10 2xl:px-5 2xl:text-sm"><Search size={16} /> 굿즈 검색</Link>
-            <Link href="/galleries" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#208b89] ring-1 ring-[#bfe8e6] 2xl:h-10 2xl:px-5 2xl:text-sm"><Star size={16} /> 갤러리 둘러보기</Link>
-            <Link href="/market" className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#ff5f8d] ring-1 ring-[#f4c5d7] 2xl:h-10 2xl:px-5 2xl:text-sm"><Heart size={16} /> 유저거래 확인</Link>
+      <section className="relative h-[240px] overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] shadow-[0_14px_38px_rgba(126,80,178,0.07)] md:h-[260px] 2xl:h-[280px] min-[1800px]:h-[300px]">
+        <Image
+          src="/semoduck-banner-frame.png"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 74rem"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/55 to-transparent" />
+
+        <div className="relative z-10 flex h-full items-center p-5 2xl:p-7 min-[1800px]:p-9">
+          <div className="max-w-md 2xl:max-w-xl min-[1800px]:max-w-2xl">
+            <h1 className="banner-title text-3xl font-black leading-tight text-[#4a347e] 2xl:text-4xl min-[1800px]:text-5xl">
+              세상의 모든 덕질,<br />
+              <span className="text-[#ff6f9b]">세모덕</span>에서 한 번에!
+            </h1>
+
+            <p className="mt-3 text-sm font-bold leading-6 text-[#4f4564] 2xl:text-base 2xl:leading-7">
+              굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를 더 즐겁게 만들어줘요!
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2 2xl:mt-5 2xl:gap-3">
+              <Link
+                href="/goods"
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#6f4ab4] ring-1 ring-[#e5c7f1] 2xl:h-10 2xl:px-5 2xl:text-sm"
+              >
+                <Search size={16} /> 굿즈 검색
+              </Link>
+
+              <Link
+                href="/galleries"
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#208b89] ring-1 ring-[#bfe8e6] 2xl:h-10 2xl:px-5 2xl:text-sm"
+              >
+                <Star size={16} /> 갤러리 둘러보기
+              </Link>
+
+              <Link
+                href="/market"
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-xs font-black text-[#ff5f8d] ring-1 ring-[#f4c5d7] 2xl:h-10 2xl:px-5 2xl:text-sm"
+              >
+                <Heart size={16} /> 유저거래 확인
+              </Link>
+            </div>
           </div>
         </div>
       </section>
+
 
       <section className="grid gap-3 md:grid-cols-[1.55fr_0.9fr]">
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">

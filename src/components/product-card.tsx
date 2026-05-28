@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[4/3] overflow-hidden bg-white">
         <SafeImage src={product.image} alt={product.title} kind="product" className="h-full w-full object-contain p-3 transition group-hover:scale-[1.03]" />
         <div className="absolute right-3 top-3 z-20">
-          <ProductLikeButton productId={product.id} initialCount={product.bookmarkCount} compact />
+          <ProductLikeButton productId={product.id} initialCount={product.bookmarkCount} compact product={{ title: product.title, image: product.image, href, price: lowest, mallName: product.offers[0]?.mallName || product.brand || product.category }} />
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-2.5">

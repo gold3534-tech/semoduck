@@ -84,7 +84,7 @@ export async function GET() {
   const followedGalleries = ((followedResult.data ?? []) as Array<{ galleries?: unknown }>).map((row) => row.galleries).filter(Boolean);
 
   return NextResponse.json({
-    profile: profileResult.data ?? fallbackProfile,
+    profile: profileResult.data ? { ...profileResult.data, role: user.email === "gold3534@gmail.com" ? "admin" : profileResult.data.role } : { ...fallbackProfile, role: user.email === "gold3534@gmail.com" ? "admin" : "user" },
     posts: postsResult.data ?? [],
     comments: commentsResult.data ?? [],
     marketItems: marketResult.data ?? [],

@@ -56,7 +56,7 @@ export function SiteHeader() {
     router.push(keyword ? `/search?q=${encodeURIComponent(keyword)}` : "/search");
   }
 
-  const showAdmin = sessionUser?.role === "admin" && isAdminEmail(sessionUser.email);
+  const showAdmin = isAdminEmail(sessionUser?.email);
   const nav = showAdmin ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
 
   if (hideHeader) return null;

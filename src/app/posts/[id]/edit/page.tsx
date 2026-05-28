@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { EditPostForm } from "@/app/posts/[id]/edit/edit-form";
 import { Card } from "@/components/ui/card";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -10,8 +10,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
   const { data } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
   if (!data.user) redirect(`/login?next=/posts/${id}/edit`);
 
-  const admin = createAdminSupabaseClient();
-  const { data: post } = await admin.from("posts").select("id,title,content,user_id").eq("id", id).eq("is_deleted", false).single();
+  const supabase = createDataSupabaseClient();
+  const { data: post } = await supabase.from("posts").select("id,title,content,user_id").eq("id", id).eq("is_deleted", false).single();
   if (!post) notFound();
   if (post.user_id !== data.user.id) redirect(`/posts/${id}`);
 

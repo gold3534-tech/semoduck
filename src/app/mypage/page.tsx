@@ -9,6 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SafeImage } from "@/components/safe-image";
 import { formatDateTime, postTypeLabel, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
 
 type Profile = { email: string; nickname: string; role: "admin" | "user" | "guest" };
@@ -25,6 +26,7 @@ type LinkedPost = {
 type ActivityPost = LinkedPost & { like_count: number; comment_count: number; bookmark_count: number };
 type ActivityMarketItem = { id: string; title: string; trade_type: string; status: string; price: number; created_at: string };
 type FollowedGallery = { id: string; name: string; slug: string; category: string; thumbnail_url?: string | null };
+type LikedGood = { id: string; title?: string; image?: string; href?: string; price?: number; mallName?: string };
 type ActivityResponse = {
   profile: Profile;
   posts: ActivityPost[];
@@ -141,6 +143,24 @@ export default function MyPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const [likedGoods, setLikedGoods] = useState<LikedGood[]>([]);
+
+  function loadLikedGoods() {
+    const goods: LikedGood[] = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (!key?.startsWith("semoduck:liked-product:")) continue;
+      if (window.localStorage.getItem(key) !== "1") continue;
+      const id = key.replace("semoduck:liked-product:", "");
+      const metaText = window.localStorage.getItem(`semoduck:liked-product-meta:${id}`);
+      try {
+        goods.push(metaText ? { id, ...JSON.parse(metaText) } : { id, title: id, href: id.startsWith("external:") ? "/goods" : `/goods/${id}` });
+      } catch {
+        goods.push({ id, title: id, href: id.startsWith("external:") ? "/goods" : `/goods/${id}` });
+      }
+    }
+    setLikedGoods(goods);
+  }
 
   async function load() {
     const response = await fetch("/api/me/activity", { cache: "no-store" });
@@ -166,6 +186,9 @@ export default function MyPage() {
     load()
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "마이페이지 정보를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
+    loadLikedGoods();
+    window.addEventListener("semoduck:liked-products-changed", loadLikedGoods);
+    return () => window.removeEventListener("semoduck:liked-products-changed", loadLikedGoods);
   }, []);
 
   const stats: Array<[string, number, LucideIcon]> = useMemo(
@@ -270,11 +293,12 @@ export default function MyPage() {
               <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#5b506b]">안녕하세요! 세모덕에서 굿즈와 갤러리를 즐기는 {activity.profile.nickname}님이에요.</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge tone="gray">{activity.profile.email}</Badge>
-                {activity.interests.slice(0, 4).map((interest) => (
+                {activity.interests.slice(0, 8).map((interest) => (
                   <Badge key={interest} tone="mint">
-                    {interest}
+                    #{interest}
                   </Badge>
                 ))}
+                {!activity.interests.length ? <Badge tone="gray">관심사 미설정</Badge> : null}
               </div>
             </div>
             <Button variant="secondary" className="min-h-9 rounded-xl px-3 py-1.5 text-xs" onClick={() => setEditing(true)}>
@@ -351,7 +375,7 @@ export default function MyPage() {
           {activeTab === "comments" ? commentList(activity.comments, "아직 댓글 쓴 글이 없습니다.") : null}
           {activeTab === "bookmarks" ? postList(activity.bookmarkedPosts, "아직 스크랩한 글이 없습니다.") : null}
           {activeTab === "likes" ? postList(activity.likedPosts, "아직 좋아요 누른 글이 없습니다.") : null}
-          {activeTab === "goods" ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">찜한 굿즈 기능은 굿즈 찜 저장 API가 연결되면 이 영역에 표시됩니다.</p> : null}
+          {activeTab === "goods" ? <LikedGoodsList items={likedGoods} /> : null}
           {activeTab === "market" ? <MarketList items={activity.marketItems} /> : null}
         </Card>
       </div>
@@ -416,6 +440,26 @@ function MarketList({ items }: { items: ActivityMarketItem[] }) {
         </Link>
       ))}
       {!items.length ? <p className="rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">아직 거래 내역이 없습니다.</p> : null}
+    </div>
+  );
+}
+
+function LikedGoodsList({ items }: { items: LikedGood[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <Link key={item.id} href={item.href ?? (item.id.startsWith("external:") ? "/goods" : `/goods/${item.id}`)} className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-2xl bg-[#fbf4ff] p-3 transition hover:bg-[#fff5fa]">
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-white">
+            <SafeImage src={item.image} alt="" kind="product" className="h-full w-full object-contain p-2" />
+          </div>
+          <div className="min-w-0">
+            <p className="line-clamp-2 text-sm font-black text-[#3a285f]">{item.title ?? item.id}</p>
+            {item.mallName ? <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">{item.mallName}</p> : null}
+            {typeof item.price === "number" ? <p className="mt-2 text-sm font-black text-[#ff5f8d]">{tradeValueLabel("sell", item.price)}</p> : null}
+          </div>
+        </Link>
+      ))}
+      {!items.length ? <p className="col-span-full rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">아직 찜한 굿즈가 없습니다.</p> : null}
     </div>
   );
 }

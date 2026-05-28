@@ -16,19 +16,25 @@ export function EditPostForm({ postId, initialTitle, initialContent }: { postId:
   async function submit() {
     setLoading(true);
     setMessage("");
-    const response = await fetch(`/api/posts/${postId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content })
-    });
-    const data = (await response.json()) as { error?: string };
-    setLoading(false);
-    if (!response.ok) {
-      setMessage(data.error ?? "수정하지 못했습니다.");
-      return;
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content })
+      });
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : {}) as { error?: string };
+      setLoading(false);
+      if (!response.ok) {
+        setMessage(data.error ?? "수정하지 못했습니다.");
+        return;
+      }
+      router.push(`/posts/${postId}`);
+      router.refresh();
+    } catch (error) {
+      setLoading(false);
+      setMessage(error instanceof Error ? error.message : "수정하지 못했습니다.");
     }
-    router.push(`/posts/${postId}`);
-    router.refresh();
   }
 
   return (

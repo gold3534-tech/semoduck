@@ -18,7 +18,7 @@ export async function GET() {
       id: user.id,
       email: user.email ?? null,
       nickname: profile?.nickname ?? user.user_metadata?.name ?? null,
-      role: profile?.role ?? (isAdminEmail(user.email) ? "admin" : "user")
+      role: isAdminEmail(user.email) ? "admin" : (profile?.role ?? "user")
     }
   });
 }

@@ -126,7 +126,14 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
   return (
     <div className="space-y-3">
       <section className="relative min-h-[11.5rem] overflow-hidden rounded-2xl border-2 border-[#cfa9ed] bg-[#fbf4ff] p-4 shadow-[0_10px_26px_rgba(126,80,178,0.05)] md:min-h-[12.5rem] md:p-5">
-        <Image src="/semoduck-goods-hero.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 86rem" className="pointer-events-none object-cover object-center" />
+        <Image
+          src="/semoduck-goods-hero.png"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 86rem"
+          className="pointer-events-none scale-[1.15] object-cover object-[62%_center]"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/70 to-white/16" />
         <div className="relative max-w-xl">
           <h1 className="banner-title text-2xl font-black leading-tight text-[#6f4ab4] md:text-3xl">굿즈 검색</h1>
@@ -172,7 +179,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
                   <SafeImage src={item.image} alt={item.title} kind="product" className="h-full w-full bg-white object-contain p-3 transition group-hover:scale-[1.03]" />
                   <span className="absolute left-3 top-3 z-20 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
                   <div className="absolute right-3 top-3 z-20">
-                    <ProductLikeButton productId={`external:${item.id}`} compact />
+                    <ProductLikeButton productId={`external:${item.id}`} compact product={{ title: item.title, image: item.image, href: externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category }), price: item.price, mallName: item.mallName }} />
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-2.5">

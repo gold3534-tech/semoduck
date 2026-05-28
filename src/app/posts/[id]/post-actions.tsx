@@ -30,39 +30,54 @@ export function PostActions({
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [loading, setLoading] = useState<string | null>(null);
 
+  async function readJson(response: Response) {
+    const text = await response.text();
+    return (text ? JSON.parse(text) : {}) as { active?: boolean; count?: number; error?: string };
+  }
+
   async function toggle(type: "like" | "bookmark") {
     setLoading(type);
-    const response = await fetch(`/api/posts/${postId}/reaction`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type })
-    });
-    const data = (await response.json()) as { active?: boolean; count?: number; error?: string };
-    if (response.ok && typeof data.count === "number") {
-      if (type === "like") {
-        setLikes(data.count);
-        setLiked(Boolean(data.active));
+    try {
+      const response = await fetch(`/api/posts/${postId}/reaction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type })
+      });
+      const data = await readJson(response);
+      if (response.ok && typeof data.count === "number") {
+        if (type === "like") {
+          setLikes(data.count);
+          setLiked(Boolean(data.active));
+        } else {
+          setBookmarks(data.count);
+          setBookmarked(Boolean(data.active));
+        }
+      } else if (response.status === 401) {
+        router.push(`/login?next=/posts/${postId}`);
       } else {
-        setBookmarks(data.count);
-        setBookmarked(Boolean(data.active));
+        alert(data.error ?? "처리하지 못했습니다.");
       }
-    } else if (response.status === 401) {
-      router.push(`/login?next=/posts/${postId}`);
-    } else {
-      alert(data.error ?? "처리하지 못했습니다.");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "처리하지 못했습니다.");
+    } finally {
+      setLoading(null);
+      router.refresh();
     }
-    setLoading(null);
-    router.refresh();
   }
 
   async function deletePost() {
     if (!confirm("게시글을 삭제할까요?")) return;
     setLoading("delete");
-    const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
-    if (response.ok) router.push(isOwner ? "/mypage" : "/");
-    else {
-      const data = (await response.json()) as { error?: string };
-      alert(data.error ?? "삭제하지 못했습니다.");
+    try {
+      const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+      if (response.ok) router.push(isOwner ? "/mypage" : "/");
+      else {
+        const data = await readJson(response);
+        alert(data.error ?? "삭제하지 못했습니다.");
+        setLoading(null);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "삭제하지 못했습니다.");
       setLoading(null);
     }
   }

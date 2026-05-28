@@ -42,7 +42,7 @@ export function HomeProductCarousel({ products }: { products: Product[] }) {
               <div className="relative aspect-square overflow-hidden rounded-xl bg-white">
                 <SafeImage src={product.image} alt="" kind="product" className="h-full w-full object-contain p-2" />
                 <div className="absolute right-3 top-3 z-20">
-                  <ProductLikeButton productId={product.id} initialCount={product.bookmarkCount} compact />
+                  <ProductLikeButton productId={product.id} initialCount={product.bookmarkCount} compact product={{ title: product.title, image: product.image, href: `/goods/${product.id}`, price, mallName: product.offers[0]?.mallName || product.brand || product.category }} />
                 </div>
               </div>
               <p className="mt-2 line-clamp-2 min-h-10 text-sm font-black leading-5 text-[#2f2352] 2xl:text-base 2xl:leading-6">{product.title}</p>

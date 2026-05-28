@@ -22,7 +22,8 @@ export function CommentForm({ postId }: { postId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content })
       });
-      const data = (await response.json()) as { error?: string };
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : { error: "댓글 등록 응답이 비어 있습니다." }) as { error?: string };
       if (!response.ok) {
         setMessage(data.error ?? "댓글 등록에 실패했습니다.");
         setLoading(false);

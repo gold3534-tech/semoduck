@@ -2,9 +2,30 @@
 
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
+import type React from "react";
 
-export function ProductLikeButton({ productId, initialCount = 0, compact = false }: { productId: string; initialCount?: number; compact?: boolean }) {
+type LikedProductMeta = {
+  id: string;
+  title?: string;
+  image?: string;
+  href?: string;
+  price?: number;
+  mallName?: string;
+};
+
+export function ProductLikeButton({
+  productId,
+  initialCount = 0,
+  compact = false,
+  product
+}: {
+  productId: string;
+  initialCount?: number;
+  compact?: boolean;
+  product?: Omit<LikedProductMeta, "id">;
+}) {
   const storageKey = `semoduck:liked-product:${productId}`;
+  const metaKey = `semoduck:liked-product-meta:${productId}`;
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(initialCount);
 
@@ -18,6 +39,12 @@ export function ProductLikeButton({ productId, initialCount = 0, compact = false
     setLiked((current) => {
       const next = !current;
       window.localStorage.setItem(storageKey, next ? "1" : "0");
+      if (next) {
+        window.localStorage.setItem(metaKey, JSON.stringify({ id: productId, ...product }));
+      } else {
+        window.localStorage.removeItem(metaKey);
+      }
+      window.dispatchEvent(new Event("semoduck:liked-products-changed"));
       setCount((value) => Math.max(0, value + (next ? 1 : -1)));
       return next;
     });
