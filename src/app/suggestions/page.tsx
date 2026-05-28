@@ -2,8 +2,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SuggestionForm } from "@/app/suggestions/suggestion-form";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { RelatedSideCard } from "@/components/related-side-card";
-import { getRelatedSideItems } from "@/lib/related-side-items";
 
 export default async function SuggestionsPage() {
   const supabase = await createServerSupabaseClient();
@@ -21,11 +19,11 @@ export default async function SuggestionsPage() {
       <section className="relative h-[155px] overflow-hidden rounded-[1.5rem] border border-[#dfc5ee] bg-[#fff8fb] p-5 shadow-soft md:h-[175px] md:p-6">
         <Image
           src="/semoduck-suggestions-hero.png"
-          alt=""
+          alt="세모덕 제안 히어로"
           fill
           priority
           sizes="(max-width: 768px) 100vw, 768px"
-          className="pointer-events-none scale-[0.92] object-contain object-right"
+          className="pointer-events-none object-cover object-right"
         />
 
         <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/60 to-white/8" />

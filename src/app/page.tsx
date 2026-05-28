@@ -270,9 +270,10 @@ async function getHomeData() {
   const officialProductPool = rawProducts.filter(
     (product) =>
       !product.id.startsWith("fallback-") &&
-      (product.isOfficialProduct ||
-        product.offers.some((offer) => offer.isOfficial)) &&
-      product.offers.length > 0 &&
+      (
+        product.isOfficialProduct ||
+        product.offers.some((offer) => offer.isOfficial)
+      ) &&
       Boolean(product.image) &&
       product.image !== "/placeholder-goods.svg"
   );

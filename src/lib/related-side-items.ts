@@ -485,7 +485,8 @@ export async function getRelatedSideItems({
         return (
         !product.id.startsWith("fallback-") &&
         !product.id.startsWith("naver-") &&
-        product.offers.length > 0
+        Boolean(product.image) &&
+        product.image !== "/placeholder-goods.svg"
         );
     })
     .map((product: Product) => ({
