@@ -2,6 +2,8 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SuggestionForm } from "@/app/suggestions/suggestion-form";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { RelatedSideCard } from "@/components/related-side-card";
+import { getRelatedSideItems } from "@/lib/related-side-items";
 
 export default async function SuggestionsPage() {
   const supabase = await createServerSupabaseClient();
