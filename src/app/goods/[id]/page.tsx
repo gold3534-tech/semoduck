@@ -1,17 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, Heart, Package, ShieldCheck, Star, Truck } from "lucide-react";
+import {
+  ExternalLink,
+  Heart,
+  Package,
+  ShieldCheck,
+  Star,
+  Truck,
+} from "lucide-react";
 import { ProductImageGallery } from "@/components/product-image-gallery";
 import { ProductLikeButton } from "@/components/product-like-button";
-import { RelatedPostList, type RelatedPostItem } from "@/components/related-post-list";
+import { RelatedPostCard } from "@/components/related-post-card";
 import { ReportButton } from "@/components/report-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { extractPostKeywords } from "@/lib/ai";
+import { getRelatedPostsForGoods } from "@/lib/related-post-items";
 import { formatPrice, sourceLabel } from "@/lib/format";
-import { extractRelevantTokens, sortByRelevance } from "@/lib/relevance";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 
 export const dynamic = "force-dynamic";
@@ -24,64 +30,84 @@ type ProductRow = {
   description?: string | null;
   image_url?: string | null;
   is_official_product?: boolean | null;
-  product_offers?: Array<{
-    id: string;
-    source: string;
-    mall_name: string;
-    price: number;
-    shipping_fee: number;
-    is_official: boolean;
-    is_used: boolean;
-    special_benefit?: string | null;
-    url: string;
-  }> | null;
+  product_offers?:
+    | Array<{
+        id: string;
+        source: string;
+        mall_name: string;
+        price: number;
+        shipping_fee: number;
+        is_official: boolean;
+        is_used: boolean;
+        special_benefit?: string | null;
+        url: string;
+      }>
+    | null;
 };
 
 function isPriceCompareOffer(offer: { mall_name: string; url: string }) {
-  return offer.mall_name === "네이버 가격비교" || /search\.shopping\.naver\.com\/catalog/i.test(offer.url);
+  return (
+    offer.mall_name === "네이버 가격비교" ||
+    /search\.shopping\.naver\.com\/catalog/i.test(offer.url)
+  );
 }
 
-function detailTerms(product: ProductRow) {
-  return extractRelevantTokens([product.title, product.brand, product.category, product.description], 10);
+function productTags(product: ProductRow) {
+  return [
+    product.brand,
+    product.category,
+    product.is_official_product ? "공식상품" : null,
+  ].filter(Boolean) as string[];
 }
 
-export default async function GoodsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function GoodsDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const supabase = createDataSupabaseClient();
+
   const { data } = await supabase
     .from("products")
-    .select("id,title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,is_official,is_used,special_benefit,url)")
+    .select(
+      "id,title,brand,category,description,image_url,is_official_product,product_offers(id,source,mall_name,price,shipping_fee,is_official,is_used,special_benefit,url)"
+    )
     .eq("id", id)
     .single();
 
   const product = data as ProductRow | null;
-  if (!product) notFound();
+
+  if (!product) {
+    notFound();
+  }
 
   const offers = (product.product_offers ?? [])
     .filter((offer) => !isPriceCompareOffer(offer))
-    .sort((a, b) => Number(b.is_official) - Number(a.is_official) || Number(a.is_used) - Number(b.is_used) || Number(a.price || Number.MAX_SAFE_INTEGER) - Number(b.price || Number.MAX_SAFE_INTEGER));
+    .sort(
+      (a, b) =>
+        Number(b.is_official) - Number(a.is_official) ||
+        Number(a.is_used) - Number(b.is_used) ||
+        Number(a.price || Number.MAX_SAFE_INTEGER) -
+          Number(b.price || Number.MAX_SAFE_INTEGER)
+    );
+
   const primaryOffer = offers[0];
   const images = [product.image_url].filter(Boolean) as string[];
 
-  const aiPostKeywords = await extractPostKeywords(`${product.title}\n${product.brand ?? ""}\n${product.category ?? ""}\n${product.description ?? ""}`);
-  const relatedTerms = [...new Set([...aiPostKeywords.post_keywords, ...detailTerms(product)])].slice(0, 10);
-  const relatedFilters = relatedTerms.flatMap((term) => [`title.ilike.%${term}%`, `content.ilike.%${term}%`]);
-  const { data: relatedPostRows } = relatedFilters.length
-    ? await supabase
-        .from("posts")
-        .select("id,title,content,post_type,like_count,comment_count,image_url,galleries(name,slug)")
-        .or(relatedFilters.join(","))
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false })
-        .limit(30)
-    : { data: [] };
-  const relatedPosts = sortByRelevance(
-    (relatedPostRows ?? []) as RelatedPostItem[],
-    relatedTerms,
-    (post) => [post.title, post.content, post.galleries?.name, post.galleries?.slug],
-    (post) => Number(post.like_count ?? 0) + Number(post.comment_count ?? 0),
-    25
-  ).slice(0, 6);
+  const relatedPosts = await getRelatedPostsForGoods({
+    supabase,
+    source: {
+      id: product.id,
+      title: product.title,
+      description: product.description,
+      brand: product.brand,
+      category: product.category,
+      tags: productTags(product),
+      gallerySlugs: [],
+      galleryName: null,
+    },
+  });
 
   return (
     <div className="space-y-3">
@@ -98,35 +124,81 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
           <Card className="p-3 md:p-4">
             <div className="relative">
               <ProductImageGallery images={images} title={product.title} />
+
               <div className="absolute left-3 top-3">
-                <Badge tone={product.is_official_product ? "violet" : "pink"}>{product.is_official_product ? "공식" : "상품"}</Badge>
+                <Badge tone={product.is_official_product ? "violet" : "pink"}>
+                  {product.is_official_product ? "공식" : "상품"}
+                </Badge>
               </div>
+
               <div className="absolute right-3 top-3">
-                <ProductLikeButton productId={id} initialCount={312} compact />
+                <ProductLikeButton
+                  productId={id}
+                  initialCount={312}
+                  compact
+                />
               </div>
             </div>
 
             <div className="mt-3 space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
-                {product.category ? <Badge tone="mint">{product.category}</Badge> : null}
+                {product.category ? (
+                  <Badge tone="mint">{product.category}</Badge>
+                ) : null}
+
                 {product.brand ? <Badge>{product.brand}</Badge> : null}
-                {primaryOffer?.is_official ? <Badge tone="pink">공식 판매처</Badge> : null}
+
+                {primaryOffer?.is_official ? (
+                  <Badge tone="pink">공식 판매처</Badge>
+                ) : null}
               </div>
-              <h1 className="text-2xl font-black leading-tight text-[#3a285f] md:text-3xl">{product.title}</h1>
-              <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">{formatPrice(primaryOffer?.price)}</p>
-              <p className="text-sm font-bold leading-7 text-slate-600">{product.description || `${product.title}의 판매 링크와 관련 게시글을 함께 확인해 보세요.`}</p>
+
+              <h1 className="text-2xl font-black leading-tight text-[#3a285f] md:text-3xl">
+                {product.title}
+              </h1>
+
+              <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">
+                {primaryOffer?.price ? formatPrice(primaryOffer.price) : "가격 정보 없음"}
+              </p>
+
+              <p className="text-sm font-bold leading-7 text-slate-600">
+                {product.description ||
+                  `${product.title}의 판매 링크와 관련 게시글을 함께 확인해 보세요.`}
+              </p>
 
               {primaryOffer ? (
                 <div className="rounded-2xl border border-[#efd7e7] bg-[#fbf4ff] p-3">
                   <div className="flex items-center gap-3">
-                    <Image src="/semoduck-profile-duck.png" alt="" width={64} height={64} className="rounded-2xl" />
+                    <Image
+                      src="/semoduck-profile-duck.png"
+                      alt=""
+                      width={64}
+                      height={64}
+                      className="rounded-2xl"
+                    />
+
                     <div className="min-w-0 flex-1">
-                      <p className="font-black text-[#3a285f]">{primaryOffer.mall_name}</p>
-                      <p className="mt-1 text-xs font-bold text-slate-500">{sourceLabel(primaryOffer.source)} · {primaryOffer.is_official ? "공식 판매처" : "외부 판매 링크"}</p>
+                      <p className="font-black text-[#3a285f]">
+                        {primaryOffer.mall_name}
+                      </p>
+
+                      <p className="mt-1 text-xs font-bold text-slate-500">
+                        {sourceLabel(primaryOffer.source as any)} ·{" "}
+                        {primaryOffer.is_official
+                          ? "공식 판매처"
+                          : "외부 판매 링크"}
+                      </p>
                     </div>
                   </div>
-                  <a href={primaryOffer.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#6f4ab4] px-4 text-sm font-black text-white">
-                    구매 사이트로 이동 <ExternalLink size={15} />
+
+                  <a
+                    href={primaryOffer.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#6f4ab4] px-4 text-sm font-black text-white"
+                  >
+                    구매 사이트로 이동
+                    <ExternalLink size={15} />
                   </a>
                 </div>
               ) : null}
@@ -137,34 +209,121 @@ export default async function GoodsDetailPage({ params }: { params: Promise<{ id
 
           <Card className="grid gap-4 p-4 md:grid-cols-2">
             <div>
-              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Star size={18} className="text-[#f8b83e]" /> 상품 정보</h2>
+              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
+                <Star size={18} className="text-[#f8b83e]" />
+                상품 정보
+              </h2>
+
               <dl className="mt-3 grid gap-2 text-sm font-bold text-slate-600">
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">판매처</dt><dd>{primaryOffer?.mall_name ?? "확인 필요"}</dd></div>
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">배송</dt><dd>{primaryOffer?.shipping_fee ? `배송비 ${formatPrice(primaryOffer.shipping_fee)}` : "판매처 확인"}</dd></div>
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">재고 여부</dt><dd className="text-emerald-600">판매처 확인</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">판매처</dt>
+                  <dd>{primaryOffer?.mall_name ?? "확인 필요"}</dd>
+                </div>
+
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">배송</dt>
+                  <dd>
+                    {primaryOffer?.shipping_fee
+                      ? `배송비 ${formatPrice(primaryOffer.shipping_fee)}`
+                      : "판매처 확인"}
+                  </dd>
+                </div>
+
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">재고 여부</dt>
+                  <dd className="text-emerald-600">판매처 확인</dd>
+                </div>
               </dl>
             </div>
+
             <div>
-              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Package size={18} /> 분류</h2>
+              <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
+                <Package size={18} />
+                분류
+              </h2>
+
               <dl className="mt-3 grid gap-2 text-sm font-bold text-slate-600">
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">카테고리</dt><dd>{product.category ?? "미분류"}</dd></div>
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">브랜드</dt><dd>{product.brand || "미분류"}</dd></div>
-                <div className="grid grid-cols-[6rem_1fr]"><dt className="text-[#6f4ab4]">상태</dt><dd>{product.is_official_product ? "공식 상품" : "외부 판매 상품"}</dd></div>
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">카테고리</dt>
+                  <dd>{product.category ?? "미분류"}</dd>
+                </div>
+
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">브랜드</dt>
+                  <dd>{product.brand || "미분류"}</dd>
+                </div>
+
+                <div className="grid grid-cols-[6rem_1fr]">
+                  <dt className="text-[#6f4ab4]">상태</dt>
+                  <dd>
+                    {product.is_official_product
+                      ? "공식 상품"
+                      : "외부 판매 상품"}
+                  </dd>
+                </div>
               </dl>
             </div>
           </Card>
 
           <Card className="p-4">
-            <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]"><Heart size={18} className="text-[#ff6f9b]" /> 상품 소개</h2>
-            <p className="mt-3 text-sm font-bold leading-7 text-slate-600">{product.description || "굿즈 상세 설명은 판매처에서 확인할 수 있습니다. 세모덕에서는 관련 게시글과 판매 링크를 함께 모아 보여줍니다."}</p>
+            <h2 className="flex items-center gap-2 text-lg font-black text-[#3a285f]">
+              <Heart size={18} className="text-[#ff6f9b]" />
+              상품 소개
+            </h2>
+
+            <p className="mt-3 text-sm font-bold leading-7 text-slate-600">
+              {product.description ||
+                "굿즈 상세 설명은 판매처에서 확인할 수 있습니다. 세모덕에서는 관련 게시글과 판매 링크를 함께 모아 보여줍니다."}
+            </p>
+
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs"><ShieldCheck size={14} /> 판매처 확인</Button>
-              <Button variant="secondary" className="min-h-8 rounded-xl px-3 py-1 text-xs"><Truck size={14} /> 배송 확인</Button>
+              <Button
+                variant="secondary"
+                className="min-h-8 rounded-xl px-3 py-1 text-xs"
+              >
+                <ShieldCheck size={14} />
+                판매처 확인
+              </Button>
+
+              <Button
+                variant="secondary"
+                className="min-h-8 rounded-xl px-3 py-1 text-xs"
+              >
+                <Truck size={14} />
+                배송 확인
+              </Button>
             </div>
           </Card>
         </div>
 
-        <RelatedPostList title="이 굿즈 이야기" posts={relatedPosts} />
+        <aside className="space-y-3">
+          <div>
+            <p className="text-sm font-black text-[#ff6f9b]">
+              이 굿즈와 함께 볼 글
+            </p>
+
+            <h2 className="text-xl font-black text-[#3a285f]">
+              관련 게시글
+            </h2>
+
+            <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
+              굿즈의 제목, 브랜드, 카테고리, 설명을 기준으로 관련 갤러리
+              게시글을 추천해요.
+            </p>
+          </div>
+
+          {relatedPosts.length > 0 ? (
+            <div className="grid gap-3">
+              {relatedPosts.map((post) => (
+                <RelatedPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-4 text-sm font-bold text-slate-500">
+              이 굿즈와 관련된 게시글이 아직 없습니다.
+            </Card>
+          )}
+        </aside>
       </div>
     </div>
   );

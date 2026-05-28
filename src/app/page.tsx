@@ -79,7 +79,15 @@ const interestKeywordMap: Record<string, string[]> = {
     "아리",
     "티모",
   ],
-  산리오: ["산리오", "쿠로미", "시나모롤", "헬로키티", "마이멜로디", "폼폼푸린", "포차코"],
+  산리오: [
+    "산리오",
+    "쿠로미",
+    "시나모롤",
+    "헬로키티",
+    "마이멜로디",
+    "폼폼푸린",
+    "포차코",
+  ],
   쿠로미: ["쿠로미", "산리오"],
   원피스: ["원피스", "루피", "조로", "상디"],
   애니: ["원피스", "지브리", "애니", "피규어"],
@@ -143,6 +151,27 @@ function shuffle<T>(items: T[]) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
+function interestItemKey(item: HomeInterestItem) {
+  return item.kind === "official"
+    ? `official-${item.product.id}`
+    : `market-${item.market.id}`;
+}
+
+function uniqueInterestItems(items: HomeInterestItem[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = interestItemKey(item);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 let homeBaseCache:
   | {
       expiresAt: number;
@@ -187,7 +216,7 @@ async function getHomeBaseDataUncached() {
         .in("status", ["active", "reserved"])
         .neq("trade_type", "transfer")
         .order("created_at", { ascending: false })
-        .limit(30),
+        .limit(60),
     ]);
 
   return { productsResult, galleriesResult, postsResult, marketResult };
@@ -286,13 +315,15 @@ async function getHomeData() {
             product.category,
             product.description,
             ...product.tags,
+            ...product.gallerySlugs,
           ],
           interests
         ) +
         product.gallerySlugs.reduce(
-          (sum, slug) => sum + (directSlugs.has(slug) ? 12 : 0),
+          (sum, slug) => sum + (directSlugs.has(slug) ? 18 : 0),
           0
-        ),
+        ) +
+        officialRank(product) * 2,
     }))
     .filter((item) => item.score > 0);
 
@@ -300,21 +331,15 @@ async function getHomeData() {
     ? scoredProductPool
     : officialProductPool.map((product) => ({ product, score: 1 }));
 
-  const highScore = Math.max(0, ...productPool.map((item) => item.score));
-
-  const primaryProductPool = productPool.filter(
-    (item) => item.score >= Math.max(1, highScore - 4)
-  );
-
-  const products = (primaryProductPool.length ? primaryProductPool : productPool)
+  const products = productPool
     .sort(
       (a, b) =>
         b.score - a.score ||
-        b.product.bookmarkCount - a.product.bookmarkCount ||
         officialRank(b.product) - officialRank(a.product) ||
+        b.product.bookmarkCount - a.product.bookmarkCount ||
         productPrice(a.product) - productPrice(b.product)
     )
-    .slice(0, 8)
+    .slice(0, 12)
     .map((item) => item.product);
 
   const recommendedGalleries = rawGalleries
@@ -395,8 +420,9 @@ async function getHomeData() {
           interests
         ) +
         (market.galleries?.slug && directSlugs.has(market.galleries.slug)
-          ? 12
-          : 0),
+          ? 18
+          : 0) +
+        Number(Boolean(market.image_url)) * 2,
     }))
     .filter((item) => item.score > 0);
 
@@ -412,21 +438,45 @@ async function getHomeData() {
           Number(Boolean(a.market.image_url)) ||
         (b.market.price ?? 0) - (a.market.price ?? 0)
     )
-    .slice(0, 8)
+    .slice(0, 12)
     .map((item) => item.market);
 
   const homePreviewMarketItems = marketItems.slice(0, 3);
 
-  const interestItems: HomeInterestItem[] = shuffle([
-    ...products.slice(0, 4).map((product) => ({
+  const officialInterestItems: HomeInterestItem[] = products
+    .slice(0, 5)
+    .map((product) => ({
+      kind: "official" as const,
+      product,
+    }));
+
+  const marketInterestItems: HomeInterestItem[] = marketItems
+    .slice(0, 5)
+    .map((market) => ({
+      kind: "market" as const,
+      market,
+    }));
+
+  const mixedInterestItems = shuffle([
+    ...officialInterestItems,
+    ...marketInterestItems,
+  ]);
+
+  const fallbackInterestItems: HomeInterestItem[] = [
+    ...products.slice(5, 12).map((product) => ({
       kind: "official" as const,
       product,
     })),
-    ...marketItems.slice(0, 4).map((market) => ({
+    ...marketItems.slice(5, 12).map((market) => ({
       kind: "market" as const,
       market,
     })),
-  ]);
+  ];
+
+  const interestItems = uniqueInterestItems([
+    ...mixedInterestItems,
+    ...fallbackInterestItems,
+  ]).slice(0, 9);
 
   return {
     products,
@@ -462,7 +512,6 @@ export default async function HomePage({
     marketItems,
     interestItems,
     interests,
-    isPersonalized,
   } = await getHomeData();
 
   const keywords = [
@@ -475,7 +524,16 @@ export default async function HomePage({
 
   const quickKeywords = keywords.length
     ? keywords
-    : ["BTS", "산리오", "포켓몬", "원피스", "스텔라이브", "하이큐", "쿠로미", "키링"];
+    : [
+        "BTS",
+        "산리오",
+        "포켓몬",
+        "원피스",
+        "스텔라이브",
+        "하이큐",
+        "쿠로미",
+        "키링",
+      ];
 
   const featureCards = [
     {
@@ -523,7 +581,8 @@ export default async function HomePage({
             </h1>
 
             <p className="mt-3 text-sm font-bold leading-6 text-[#4f4564] 2xl:text-base 2xl:leading-7">
-              굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를 더 즐겁게 만들어줘요!
+              굿즈 검색부터 덕질 이야기, 유저거래까지 당신의 덕질 라이프를
+              더 즐겁게 만들어줘요!
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 2xl:mt-5 2xl:gap-3">
@@ -556,7 +615,10 @@ export default async function HomePage({
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black text-[#3a285f]">인기 갤러리</h2>
-            <Link href="/galleries" className="text-xs font-black text-[#6f4ab4]">
+            <Link
+              href="/galleries"
+              className="text-xs font-black text-[#6f4ab4]"
+            >
               더보기
             </Link>
           </div>
@@ -591,7 +653,9 @@ export default async function HomePage({
 
         <Card className="relative p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#3a285f]">오늘의 추천 키워드</h2>
+            <h2 className="text-lg font-black text-[#3a285f]">
+              오늘의 추천 키워드
+            </h2>
             <Link href="/goods" className="text-xs font-black text-[#6f4ab4]">
               더보기
             </Link>
@@ -618,8 +682,13 @@ export default async function HomePage({
 
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#3a285f]">최근 인기 게시글</h2>
-            <Link href="/galleries" className="text-xs font-black text-[#6f4ab4]">
+            <h2 className="text-lg font-black text-[#3a285f]">
+              최근 인기 게시글
+            </h2>
+            <Link
+              href="/galleries"
+              className="text-xs font-black text-[#6f4ab4]"
+            >
               더보기
             </Link>
           </div>
@@ -653,7 +722,9 @@ export default async function HomePage({
 
         <Card className="relative overflow-hidden p-3 2xl:p-4 min-[1800px]:p-5">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#3a285f]">유저거래 핫딜</h2>
+            <h2 className="text-lg font-black text-[#3a285f]">
+              유저거래 핫딜
+            </h2>
             <Link href="/market" className="text-xs font-black text-[#6f4ab4]">
               더보기
             </Link>

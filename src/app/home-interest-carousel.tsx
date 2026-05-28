@@ -42,18 +42,20 @@ export function HomeInterestCarousel({
 
   function scroll(direction: "prev" | "next") {
     scrollerRef.current?.scrollBy({
-      left: direction === "next" ? 260 : -260,
+      left: direction === "next" ? 280 : -280,
       behavior: "smooth",
     });
   }
 
-  const visibleItems = items.filter((item) => {
-    if (item.kind === "official") {
-      return !item.product.id.startsWith("fallback-");
-    }
+  const visibleItems = items
+    .filter((item) => {
+      if (item.kind === "official") {
+        return !item.product.id.startsWith("fallback-");
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .slice(0, 9);
 
   if (!visibleItems.length) {
     return (
@@ -64,14 +66,14 @@ export function HomeInterestCarousel({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
+    <div className="space-y-2">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-black text-[#8d6fc2]">
+          <p className="text-[11px] font-black text-[#8d6fc2]">
             내 관심사 기반
           </p>
 
-          <h2 className="mt-0.5 text-lg font-black leading-6 text-[#2f2352]">
+          <h2 className="mt-0.5 text-xl font-black leading-6 text-[#2f2352]">
             공식 굿즈와 유저거래
           </h2>
 
@@ -119,7 +121,7 @@ export function HomeInterestCarousel({
               key={`market-${item.market.id}`}
               market={item.market}
             />
-          )
+          ),
         )}
       </div>
     </div>
@@ -135,9 +137,9 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
   const mallName = primaryOffer?.mallName || product.brand || product.category;
 
   return (
-    <Card className="relative flex min-w-[8.25rem] max-w-[8.25rem] snap-start flex-col overflow-hidden rounded-[1.15rem] p-0 sm:min-w-[8.75rem] sm:max-w-[8.75rem]">
+    <Card className="relative flex min-w-[6.75rem] max-w-[6.75rem] snap-start flex-col overflow-hidden rounded-[1rem] p-0 sm:min-w-[7.15rem] sm:max-w-[7.15rem]">
       <Link href={href} className="group block">
-        <div className="relative h-[4.75rem] overflow-hidden rounded-t-[1.15rem] bg-slate-100 sm:h-20">
+        <div className="relative h-[3.75rem] overflow-hidden rounded-t-[1rem] bg-slate-100 sm:h-16">
           <SafeImage
             src={product.image}
             alt={product.title}
@@ -146,20 +148,20 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
           />
         </div>
 
-        <div className="flex flex-col gap-1 p-2">
+        <div className="flex flex-col gap-0.5 p-1.5">
           <div className="flex flex-wrap gap-1">
             <Badge tone="pink">공식몰</Badge>
           </div>
 
-          <p className="line-clamp-2 min-h-[2.2rem] text-[11px] font-black leading-[1.1rem] text-[#2f2352]">
+          <p className="line-clamp-2 min-h-[2rem] text-[10.5px] font-black leading-4 text-[#2f2352]">
             {product.title}
           </p>
 
-          <p className="text-[11px] font-black text-[#ff5f8d]">
+          <p className="line-clamp-1 text-[10.5px] font-black text-[#ff5f8d]">
             {price > 0 ? formatPrice(price) : "가격 정보 없음"}
           </p>
 
-          <p className="line-clamp-1 text-[10px] font-bold text-slate-500">
+          <p className="line-clamp-1 text-[9.5px] font-bold text-slate-500">
             {mallName || "공식 굿즈"}
           </p>
         </div>
@@ -172,10 +174,10 @@ function MarketSlide({ market }: { market: MarketPreview }) {
   return (
     <Link
       href={`/market/${market.id}`}
-      className="block min-w-[8.25rem] max-w-[8.25rem] snap-start sm:min-w-[8.75rem] sm:max-w-[8.75rem]"
+      className="block min-w-[6.75rem] max-w-[6.75rem] snap-start sm:min-w-[7.15rem] sm:max-w-[7.15rem]"
     >
-      <Card className="flex h-full flex-col overflow-hidden rounded-[1.15rem] p-0 transition hover:bg-pink-50">
-        <div className="relative h-[4.75rem] overflow-hidden rounded-t-[1.15rem] bg-slate-100 sm:h-20">
+      <Card className="flex h-full flex-col overflow-hidden rounded-[1rem] p-0 transition hover:bg-pink-50">
+        <div className="relative h-[3.75rem] overflow-hidden rounded-t-[1rem] bg-slate-100 sm:h-16">
           <SafeImage
             src={market.image_url}
             alt={market.title}
@@ -184,21 +186,21 @@ function MarketSlide({ market }: { market: MarketPreview }) {
           />
         </div>
 
-        <div className="flex flex-col gap-1 p-2">
+        <div className="flex flex-col gap-0.5 p-1.5">
           <div className="flex flex-wrap gap-1">
             <Badge tone="mint">유저거래</Badge>
             <Badge tone="gray">{tradeTypeLabel(market.trade_type)}</Badge>
           </div>
 
-          <p className="line-clamp-2 min-h-[2.2rem] text-[11px] font-black leading-[1.1rem] text-[#2f2352]">
+          <p className="line-clamp-2 min-h-[2rem] text-[10.5px] font-black leading-4 text-[#2f2352]">
             {market.title}
           </p>
 
-          <p className="text-[11px] font-black text-[#ff5f8d]">
+          <p className="line-clamp-1 text-[10.5px] font-black text-[#ff5f8d]">
             {tradeValueLabel(market.trade_type, market.price)}
           </p>
 
-          <p className="line-clamp-1 text-[10px] font-bold text-slate-500">
+          <p className="line-clamp-1 text-[9.5px] font-bold text-slate-500">
             {market.galleries?.name ?? "갤러리"}
           </p>
         </div>
