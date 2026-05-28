@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef } from "react";
 import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -11,15 +12,24 @@ import type { Product } from "@/types/domain";
 type MarketPreview = {
   id: string;
   title: string;
+  description?: string | null;
   trade_type: string;
   price: number;
   image_url: string | null;
-  galleries?: { name?: string | null } | null;
+  galleries?: { name?: string | null; slug?: string | null } | null;
 };
 
 export type HomeInterestItem =
   | { kind: "official"; product: Product }
   | { kind: "market"; market: MarketPreview };
+
+function getProductPrice(product: Product) {
+  const prices = product.offers
+    .map((offer) => offer.price)
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  return prices.length ? Math.min(...prices) : 0;
+}
 
 export function HomeInterestCarousel({
   items,
@@ -28,12 +38,11 @@ export function HomeInterestCarousel({
   items: HomeInterestItem[];
   interests: string[];
 }) {
-  function scroll(direction: "prev" | "next") {
-    const element = document.getElementById("home-interest-carousel");
-    if (!element) return;
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
-    element.scrollBy({
-      left: direction === "next" ? 360 : -360,
+  function scroll(direction: "prev" | "next") {
+    scrollerRef.current?.scrollBy({
+      left: direction === "next" ? 260 : -260,
       behavior: "smooth",
     });
   }
@@ -48,49 +57,56 @@ export function HomeInterestCarousel({
 
   if (!visibleItems.length) {
     return (
-      <Card className="rounded-2xl border border-[#ead8f4] bg-white/90 p-5 text-sm font-bold text-slate-500">
+      <div className="rounded-2xl border border-[#ead8f4] bg-white/90 p-4 text-xs font-bold text-slate-500">
         관심사와 맞는 공식 굿즈나 유저거래가 아직 없습니다.
-      </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-black">공식 굿즈와 유저거래</h2>
-          <p className="mt-1 text-sm font-bold text-slate-500">
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-black text-[#8d6fc2]">
+            내 관심사 기반
+          </p>
+
+          <h2 className="mt-0.5 text-lg font-black leading-6 text-[#2f2352]">
+            공식 굿즈와 유저거래
+          </h2>
+
+          <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-slate-500">
             {interests.length
-              ? interests.map((interest) => `#${interest}`).join(" ")
-              : "인기 관심사"}{" "}
-            기준으로 보여줍니다.
+              ? `${interests.map((interest) => `#${interest}`).join(" ")} 기준으로 보여줍니다.`
+              : "인기 관심사 기준으로 보여줍니다."}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <button
             type="button"
             onClick={() => scroll("prev")}
-            className="grid h-10 w-10 place-items-center rounded-lg bg-white text-ink shadow-sm ring-1 ring-slate-200"
+            className="grid h-9 w-9 place-items-center rounded-xl bg-white text-[#6f4ab4] shadow-sm ring-1 ring-[#ead8f4] transition hover:bg-[#fff1f7]"
             aria-label="이전 추천 보기"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={17} />
           </button>
 
           <button
             type="button"
             onClick={() => scroll("next")}
-            className="grid h-10 w-10 place-items-center rounded-lg bg-ink text-white shadow-sm"
+            className="grid h-9 w-9 place-items-center rounded-xl bg-[#4c3078] text-white shadow-sm transition hover:bg-[#3f2868]"
             aria-label="다음 추천 보기"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={17} />
           </button>
         </div>
       </div>
 
       <div
+        ref={scrollerRef}
         id="home-interest-carousel"
-        className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+        className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {visibleItems.map((item) =>
           item.kind === "official" ? (
@@ -114,18 +130,14 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
   const primaryOffer =
     product.offers.find((offer) => offer.isOfficial) ?? product.offers[0];
 
-  const prices = product.offers
-    .map((offer) => offer.price)
-    .filter((price) => Number.isFinite(price) && price > 0);
-
-  const price = prices.length ? Math.min(...prices) : 0;
+  const price = getProductPrice(product);
   const href = `/goods/${product.id}`;
   const mallName = primaryOffer?.mallName || product.brand || product.category;
 
   return (
-    <Card className="relative flex min-w-[9.75rem] max-w-[9.75rem] snap-start flex-col overflow-hidden p-0 sm:min-w-[10.5rem] sm:max-w-[10.5rem]">
+    <Card className="relative flex min-w-[8.25rem] max-w-[8.25rem] snap-start flex-col overflow-hidden rounded-[1.15rem] p-0 sm:min-w-[8.75rem] sm:max-w-[8.75rem]">
       <Link href={href} className="group block">
-        <div className="relative aspect-[1.15/1] overflow-hidden rounded-t-lg bg-slate-100">
+        <div className="relative h-[4.75rem] overflow-hidden rounded-t-[1.15rem] bg-slate-100 sm:h-20">
           <SafeImage
             src={product.image}
             alt={product.title}
@@ -134,21 +146,21 @@ function OfficialGoodsSlide({ product }: { product: Product }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+        <div className="flex flex-col gap-1 p-2">
           <div className="flex flex-wrap gap-1">
             <Badge tone="pink">공식몰</Badge>
           </div>
 
-          <p className="line-clamp-2 text-xs font-black leading-5 text-[#2f2352]">
+          <p className="line-clamp-2 min-h-[2.2rem] text-[11px] font-black leading-[1.1rem] text-[#2f2352]">
             {product.title}
           </p>
 
-          <p className="line-clamp-1 text-[11px] font-bold text-slate-500">
-            {mallName || "공식 굿즈"}
+          <p className="text-[11px] font-black text-[#ff5f8d]">
+            {price > 0 ? formatPrice(price) : "가격 정보 없음"}
           </p>
 
-          <p className="text-xs font-black text-[#ff5f8d]">
-            {price > 0 ? formatPrice(price) : "가격 정보 없음"}
+          <p className="line-clamp-1 text-[10px] font-bold text-slate-500">
+            {mallName || "공식 굿즈"}
           </p>
         </div>
       </Link>
@@ -160,10 +172,10 @@ function MarketSlide({ market }: { market: MarketPreview }) {
   return (
     <Link
       href={`/market/${market.id}`}
-      className="block min-w-[9.75rem] max-w-[9.75rem] snap-start sm:min-w-[10.5rem] sm:max-w-[10.5rem]"
+      className="block min-w-[8.25rem] max-w-[8.25rem] snap-start sm:min-w-[8.75rem] sm:max-w-[8.75rem]"
     >
-      <Card className="flex h-full flex-col overflow-hidden p-0 transition hover:bg-pink-50">
-        <div className="relative aspect-[1.15/1] overflow-hidden rounded-t-lg bg-slate-100">
+      <Card className="flex h-full flex-col overflow-hidden rounded-[1.15rem] p-0 transition hover:bg-pink-50">
+        <div className="relative h-[4.75rem] overflow-hidden rounded-t-[1.15rem] bg-slate-100 sm:h-20">
           <SafeImage
             src={market.image_url}
             alt={market.title}
@@ -172,21 +184,21 @@ function MarketSlide({ market }: { market: MarketPreview }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+        <div className="flex flex-col gap-1 p-2">
           <div className="flex flex-wrap gap-1">
             <Badge tone="mint">유저거래</Badge>
             <Badge tone="gray">{tradeTypeLabel(market.trade_type)}</Badge>
           </div>
 
-          <p className="line-clamp-2 text-xs font-black leading-5 text-[#2f2352]">
+          <p className="line-clamp-2 min-h-[2.2rem] text-[11px] font-black leading-[1.1rem] text-[#2f2352]">
             {market.title}
           </p>
 
-          <p className="text-xs font-black text-[#ff5f8d]">
+          <p className="text-[11px] font-black text-[#ff5f8d]">
             {tradeValueLabel(market.trade_type, market.price)}
           </p>
 
-          <p className="line-clamp-1 text-[11px] font-bold text-slate-500">
+          <p className="line-clamp-1 text-[10px] font-bold text-slate-500">
             {market.galleries?.name ?? "갤러리"}
           </p>
         </div>

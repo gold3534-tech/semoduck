@@ -270,10 +270,7 @@ async function getHomeData() {
   const officialProductPool = rawProducts.filter(
     (product) =>
       !product.id.startsWith("fallback-") &&
-      (
-        product.isOfficialProduct ||
-        product.offers.some((offer) => offer.isOfficial)
-      ) &&
+      !product.id.startsWith("naver-") &&
       Boolean(product.image) &&
       product.image !== "/placeholder-goods.svg"
   );
@@ -617,12 +614,6 @@ export default async function HomePage({
       <section className="grid gap-3 md:grid-cols-[minmax(18rem,1fr)_minmax(18rem,1fr)] xl:grid-cols-3">
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">
           <HomeInterestCarousel items={interestItems} interests={interests} />
-
-          {!isPersonalized ? (
-            <p className="mt-3 rounded-xl bg-[#fff8fb] px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-[#f1dbe8]">
-              로그인하지 않았거나 관심사가 없어 인기 관심사 기준으로 추천 중이에요.
-            </p>
-          ) : null}
         </Card>
 
         <Card className="p-3 2xl:p-4 min-[1800px]:p-5">

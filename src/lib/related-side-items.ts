@@ -113,19 +113,38 @@ const galleryBaseKeywords: Record<string, string> = {
   ghibli: "지브리",
 };
 
+const galleryRequiredTerms: Record<string, string[]> = {
+  lol: ["롤", "리그오브레전드", "리그 오브 레전드", "leagueoflegends", "라이엇", "riot"],
+  "eternal-return": ["이터널리턴", "이터널 리턴", "eternalreturn", "이리"],
+  sanrio: ["산리오", "sanrio", "쿠로미", "시나모롤", "헬로키티", "마이멜로디", "폼폼푸린", "포차코"],
+  pokemon: ["포켓몬", "pokemon", "포켓몬스터", "피카츄", "꼬부기", "파이리", "이상해씨"],
+  onepiece: ["원피스", "onepiece", "루피", "조로", "상디"],
+  stellive: ["스텔라이브", "stellive", "fanding"],
+  "webtoon-goods": ["웹툰", "webtoon", "웹툰프렌즈"],
+  bts: ["bts", "방탄소년단", "방탄", "weverse"],
+  ghibli: ["지브리", "ghibli", "스튜디오지브리", "토토로", "키키", "하울"],
+};
+
+const broadGallerySlugs = new Set(["webtoon-goods"]);
+
 const goodsIntentWords = [
-  "굿즈",
+  "포토카드",
+  "포카",
+  "카드 바인더",
+  "포카 바인더",
+  "바인더",
+  "카드파일",
+  "카드 파일",
+  "카드앨범",
+  "카드 앨범",
   "키링",
   "인형",
   "피규어",
-  "포카",
-  "포토카드",
-  "카드",
-  "바인더",
   "앨범",
+  "아크릴스탠드",
+  "아크릴 스탠드",
   "아크릴",
   "스탠드",
-  "아크릴스탠드",
   "파우치",
   "케이스",
   "스티커",
@@ -138,10 +157,14 @@ const goodsIntentWords = [
   "배지",
   "컵",
   "텀블러",
+  "굿즈",
+  "카드",
 ];
 
+const genericIntentWords = new Set(["굿즈", "카드"]);
+
 function normalizeText(value: string) {
-  return value.toLowerCase().replace(/\s+/g, "");
+  return value.toLowerCase().replace(/\s+/g, "").replace(/[^\p{L}\p{N}]/gu, "");
 }
 
 function unique<T>(items: T[]) {
@@ -159,9 +182,96 @@ function getProductPrice(product: Product) {
 function extractIntentKeywords(text: string) {
   const normalized = normalizeText(text);
 
-  return goodsIntentWords.filter((word) =>
+  const found = goodsIntentWords.filter((word) =>
     normalized.includes(normalizeText(word))
   );
+
+  const hasSpecificCardIntent = found.some((word) =>
+    ["포토카드", "포카", "카드 바인더", "포카 바인더", "바인더", "카드파일", "카드 파일", "카드앨범", "카드 앨범"].includes(word)
+  );
+
+  if (hasSpecificCardIntent) {
+    return found.filter((word) => word !== "카드");
+  }
+
+  return found;
+}
+
+function termsForGallery(gallery: GalleryInput) {
+  const fromMap = galleryRequiredTerms[gallery.slug] ?? [];
+  return unique([
+    ...(fromMap.length ? fromMap : []),
+    galleryBaseKeywords[gallery.slug] ?? "",
+    gallery.name ?? "",
+    gallery.slug ?? "",
+  ]).filter(Boolean);
+}
+
+function containsAnyTerm(text: string, terms: string[]) {
+  const normalizedText = normalizeText(text);
+
+  return terms.some((term) => {
+    const normalizedTerm = normalizeText(term);
+    return normalizedTerm && normalizedText.includes(normalizedTerm);
+  });
+}
+
+function candidateSearchText(candidate: CandidateItem) {
+  if (candidate.kind === "market") {
+    return [
+      candidate.title,
+      candidate.description,
+      candidate.galleryName,
+      candidate.gallerySlug,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  if (candidate.kind === "product") {
+    return [
+      candidate.title,
+      candidate.brand,
+      candidate.category,
+      candidate.description,
+      candidate.tags.join(" "),
+      candidate.gallerySlugs.join(" "),
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return [
+    candidate.title,
+    candidate.brand,
+    candidate.category,
+    candidate.mallName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function matchesGallery(candidate: CandidateItem, gallery: GalleryInput) {
+  const requiredTerms = termsForGallery(gallery);
+
+  if (!requiredTerms.length) {
+    return true;
+  }
+
+  if (broadGallerySlugs.has(gallery.slug)) {
+    return true;
+  }
+
+  if (candidate.kind === "market") {
+    if (candidate.gallerySlug === gallery.slug) return true;
+    if (candidate.galleryName === gallery.name) return true;
+  }
+
+  if (candidate.kind === "product") {
+    if (candidate.gallerySlugs.includes(gallery.slug)) return true;
+  }
+
+  return containsAnyTerm(candidateSearchText(candidate), requiredTerms);
 }
 
 function buildSearchContext({
@@ -179,12 +289,18 @@ function buildSearchContext({
   const sourceText = `${post.title} ${post.content} ${tags.join(" ")}`;
   const intentWords = extractIntentKeywords(sourceText);
 
-  const searchQuery = intentWords.length
-    ? `${baseKeyword} ${intentWords[0]}`
-    : `${baseKeyword} 굿즈`;
+  const specificIntentWords = intentWords.filter(
+    (word) => !genericIntentWords.has(word)
+  );
+
+  const searchQuery =
+    specificIntentWords.length > 0
+      ? `${baseKeyword} ${specificIntentWords.slice(0, 2).join(" ")}`
+      : `${baseKeyword} 굿즈`;
 
   const keywords = unique([
     baseKeyword,
+    ...termsForGallery(gallery),
     ...intentWords,
     ...tags,
     post.title,
@@ -289,10 +405,12 @@ ${JSON.stringify(compactCandidates, null, 2)}
 3. 유저거래(kind="market")는 최대 3개까지 고른다.
 4. 내부 DB 굿즈(kind="product")는 최대 3개까지 고른다.
 5. 네이버쇼핑(kind="naver")은 최대 3개까지 고른다.
-6. "롤 갤러리 + 피규어 갖고 싶어요"라면 롤 피규어 관련 후보를 우선한다.
-7. "산리오 갤러리 + 키링"이면 산리오 키링 관련 후보를 우선한다.
-8. 갤러리와 전혀 다른 팬덤 상품은 제외한다.
-9. 출력은 반드시 JSON만 한다. 설명 문장 금지.
+6. 가장 중요한 규칙: 후보는 반드시 갤러리 팬덤과 관련 있어야 한다.
+7. 포켓몬 갤러리라면 포켓몬, Pokemon, 피카츄 등과 관련 없는 후보는 제외한다.
+8. 산리오 갤러리라면 산리오, 쿠로미, 시나모롤 등과 관련 없는 후보는 제외한다.
+9. "카드"라는 단어만 같다고 카드지갑, 교통카드지갑, 동전지갑을 고르면 안 된다.
+10. "포켓몬 카드 바인더"라면 포켓몬 카드/포켓몬 바인더 관련 후보만 고른다.
+11. 출력은 반드시 JSON만 한다. 설명 문장 금지.
 
 출력 형식:
 {
@@ -350,26 +468,18 @@ ${JSON.stringify(compactCandidates, null, 2)}
 function fallbackRuleFilter({
   candidates,
   keywords,
+  gallery,
 }: {
   candidates: CandidateItem[];
   keywords: string[];
+  gallery: GalleryInput;
 }) {
   function score(candidate: CandidateItem) {
-    const text =
-      candidate.kind === "market"
-        ? `${candidate.title} ${candidate.description ?? ""} ${
-            candidate.galleryName ?? ""
-          } ${candidate.gallerySlug ?? ""}`
-        : candidate.kind === "product"
-          ? `${candidate.title} ${candidate.brand ?? ""} ${
-              candidate.category ?? ""
-            } ${candidate.description ?? ""} ${candidate.tags.join(" ")} ${
-              candidate.gallerySlugs.join(" ")
-            }`
-          : `${candidate.title} ${candidate.brand ?? ""} ${
-              candidate.category ?? ""
-            } ${candidate.mallName}`;
+    if (!matchesGallery(candidate, gallery)) {
+      return 0;
+    }
 
+    const text = candidateSearchText(candidate);
     const normalizedText = normalizeText(text);
 
     return keywords.reduce((sum, keyword) => {
@@ -405,7 +515,7 @@ function fallbackRuleFilter({
   ].map((item) => ({
     kind: item.kind,
     id: item.id,
-    reason: "키워드 기반으로 관련성이 있어 선택됨",
+    reason: "갤러리와 키워드 기준으로 관련성이 있어 선택됨",
   }));
 }
 
@@ -427,8 +537,9 @@ export async function getRelatedSideItems({
   });
 
   const marketFilters = buildIlikeFilters(["title", "description"], keywords);
+
   const productFilters = buildIlikeFilters(
-    ["title", "brand", "category"],
+    ["title", "normalized_title", "brand", "category", "description"],
     keywords
   );
 
@@ -452,7 +563,7 @@ export async function getRelatedSideItems({
           .or(productFilters.join(","))
           .order("is_official_product", { ascending: false })
           .order("created_at", { ascending: false })
-          .limit(20)
+          .limit(30)
       : { data: [] },
 
     searchNaverShopping(searchQuery, 12),
@@ -460,48 +571,51 @@ export async function getRelatedSideItems({
 
   const marketCandidates: CandidateItem[] = (
     (marketResult.data ?? []) as MarketPreview[]
-  ).map((market) => {
-    const galleryRow = Array.isArray(market.galleries)
-      ? market.galleries[0]
-      : market.galleries;
+  )
+    .map((market) => {
+      const galleryRow = Array.isArray(market.galleries)
+        ? market.galleries[0]
+        : market.galleries;
 
-    return {
-      kind: "market" as const,
-      id: market.id,
-      title: market.title,
-      description: market.description,
-      galleryName: galleryRow?.name,
-      gallerySlug: galleryRow?.slug,
-      tradeType: market.trade_type,
-      price: market.price ?? 0,
-      image: market.image_url,
-      href: `/market/${market.id}`,
-    };
-  });
+      return {
+        kind: "market" as const,
+        id: market.id,
+        title: market.title,
+        description: market.description,
+        galleryName: galleryRow?.name,
+        gallerySlug: galleryRow?.slug,
+        tradeType: market.trade_type,
+        price: market.price ?? 0,
+        image: market.image_url,
+        href: `/market/${market.id}`,
+      };
+    })
+    .filter((candidate) => matchesGallery(candidate, gallery));
 
   const productCandidates: CandidateItem[] = ((productResult.data ?? []) as any[])
     .map((row): Product => productFromDbRow(row))
     .filter((product: Product) => {
-        return (
+      return (
         !product.id.startsWith("fallback-") &&
         !product.id.startsWith("naver-") &&
         Boolean(product.image) &&
         product.image !== "/placeholder-goods.svg"
-        );
+      );
     })
     .map((product: Product) => ({
-        kind: "product" as const,
-        id: product.id,
-        title: product.title,
-        brand: product.brand,
-        category: product.category,
-        description: product.description,
-        tags: product.tags,
-        gallerySlugs: product.gallerySlugs,
-        price: getProductPrice(product),
-        image: product.image,
-        href: `/goods/${product.id}`,
-    }));
+      kind: "product" as const,
+      id: product.id,
+      title: product.title,
+      brand: product.brand,
+      category: product.category,
+      description: product.description,
+      tags: product.tags,
+      gallerySlugs: product.gallerySlugs,
+      price: getProductPrice(product),
+      image: product.image,
+      href: `/goods/${product.id}`,
+    }))
+    .filter((candidate) => matchesGallery(candidate, gallery));
 
   const naverCandidates: CandidateItem[] = (naverResult.items ?? [])
     .filter((item) => Boolean(item.url))
@@ -515,7 +629,8 @@ export async function getRelatedSideItems({
       price: item.price ?? 0,
       image: item.image ?? null,
       href: item.url,
-    }));
+    }))
+    .filter((candidate) => matchesGallery(candidate, gallery));
 
   const candidates = [
     ...marketCandidates,
@@ -548,12 +663,14 @@ export async function getRelatedSideItems({
       selected = fallbackRuleFilter({
         candidates,
         keywords,
+        gallery,
       });
     }
   } else {
     selected = fallbackRuleFilter({
       candidates,
       keywords,
+      gallery,
     });
   }
 
