@@ -49,7 +49,14 @@ export default async function MarketPage() {
   return (
     <div className="space-y-4">
       <section className="relative min-h-[10rem] overflow-hidden rounded-2xl border border-[#ead0f4] bg-white/82 p-5 shadow-[0_10px_26px_rgba(126,80,178,0.05)] md:min-h-[11.5rem] md:p-6">
-        <Image src="/semoduck-market-hero.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 86rem" className="pointer-events-none scale-[0.9] object-contain object-right" />
+        <Image
+          src="/semoduck-market-hero.png"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 86rem"
+          className="pointer-events-none scale-[1.15] object-cover object-[62%_center]"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-white/94 via-white/78 to-white/30" />
         <div className="relative max-w-xl">
           <p className="text-sm font-black text-[#ff6f9b]">유저거래</p>
