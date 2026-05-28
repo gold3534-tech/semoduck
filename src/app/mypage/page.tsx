@@ -148,7 +148,13 @@ export default function MyPage() {
       router.replace("/login?next=/mypage");
       return;
     }
-    const data = (await response.json()) as ActivityResponse | { error: string };
+    const text = await response.text();
+    let data: ActivityResponse | { error: string };
+    try {
+      data = text ? (JSON.parse(text) as ActivityResponse | { error: string }) : { error: "마이페이지 정보를 불러오지 못했습니다." };
+    } catch {
+      data = { error: "마이페이지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." };
+    }
     if (!response.ok || "error" in data) throw new Error("error" in data ? data.error : "마이페이지 정보를 불러오지 못했습니다.");
     setActivity(data);
     setSelectedInterests(data.interests);

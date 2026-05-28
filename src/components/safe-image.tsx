@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { firstImageUrl } from "@/lib/image-urls";
 
 type SafeImageKind = "product" | "gallery" | "profile" | "banner";
 
@@ -21,7 +22,7 @@ type SafeImageProps = {
 };
 
 function usableSrc(src?: string | null) {
-  const value = src?.trim();
+  const value = firstImageUrl(src);
   return value && value !== "/placeholder-goods.svg" ? value : "";
 }
 

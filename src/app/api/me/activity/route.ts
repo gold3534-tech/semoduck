@@ -11,7 +11,20 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminSupabaseClient();
+  let admin: ReturnType<typeof createAdminSupabaseClient>;
+  try {
+    admin = createAdminSupabaseClient();
+  } catch {
+    return NextResponse.json({ error: "서버 설정을 확인해 주세요. 관리자 키가 누락되었습니다." }, { status: 500 });
+  }
+  const fallbackProfile = {
+    id: user.id,
+    email: user.email ?? null,
+    nickname: user.user_metadata?.name ?? user.email?.split("@")[0] ?? "세모덕 유저",
+    profile_image: user.user_metadata?.avatar_url ?? null
+  };
+  await admin.from("profiles").upsert(fallbackProfile, { onConflict: "id", ignoreDuplicates: true });
+
   const [profileResult, postsResult, commentsResult, marketResult, likedResult, bookmarkedResult, interestsResult, allInterestsResult, followedResult] = await Promise.all([
     admin.from("profiles").select("id,email,nickname,role").eq("id", user.id).single(),
     admin
@@ -49,7 +62,21 @@ export async function GET() {
   ]);
 
   if (profileResult.error) {
-    return NextResponse.json({ error: profileResult.error.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        profile: { ...fallbackProfile, role: "user" },
+        posts: [],
+        comments: [],
+        marketItems: [],
+        likedPosts: [],
+        bookmarkedPosts: [],
+        interests: [],
+        allInterests: (allInterestsResult.data ?? []).map((row) => row.name),
+        followedGalleries: [],
+        counts: { posts: 0, comments: 0, bookmarks: 0, likes: 0, marketItems: 0 }
+      },
+      { status: 200 }
+    );
   }
 
   return NextResponse.json({

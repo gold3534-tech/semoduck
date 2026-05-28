@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { extractPostKeywords } from "@/lib/ai";
 import { isAdminEmail } from "@/lib/auth";
 import { formatDateTime, tradeStatusLabel, tradeTypeLabel, tradeValueLabel } from "@/lib/format";
+import { parseImageUrls } from "@/lib/image-urls";
 import { extractRelevantTokens, sortByRelevance } from "@/lib/relevance";
 import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -68,7 +69,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ i
   const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
   const gallery = Array.isArray(item.galleries) ? item.galleries[0] : item.galleries;
   const normalizedItem = { ...item, galleries: gallery };
-  const imageCandidates = [item.image_url].filter((url): url is string => Boolean(url));
+  const imageCandidates = parseImageUrls(item.image_url);
   const mainImage = imageCandidates[0] ?? null;
   const isOwner = currentUserId === item.seller_id;
 
