@@ -16,7 +16,7 @@ export default async function SignupPage() {
   return (
     <div className="relative left-1/2 min-h-[100dvh] w-screen -translate-x-1/2 overflow-hidden bg-[#fff9ff]">
       <Image src="/semoduck-auth-bg.png" alt="" fill priority sizes="100vw" className="pointer-events-none object-cover object-center" />
-      <div className="absolute inset-0 bg-white/30" />
+      <div className="absolute inset-0 bg-white/18" />
       <Link href="/" className="absolute left-5 top-5 z-20 inline-flex h-10 items-center gap-1 rounded-full bg-white/85 px-4 text-sm font-black text-[#6f4ab4] shadow-sm ring-1 ring-[#ead8f4] backdrop-blur transition hover:bg-white">
         <ChevronLeft size={18} />
         홈으로

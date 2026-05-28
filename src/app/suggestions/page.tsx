@@ -4,7 +4,7 @@ import { SuggestionForm } from "@/app/suggestions/suggestion-form";
 export default function SuggestionsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <section className="relative min-h-[10rem] overflow-hidden rounded-[1.5rem] border border-[#dfc5ee] bg-[#fff8fb] p-5 shadow-soft md:min-h-[12rem] md:p-6">
+      <section className="relative min-h-[12rem] overflow-hidden rounded-[1.5rem] border border-[#dfc5ee] bg-[#fff8fb] p-5 shadow-soft md:min-h-[14rem] md:p-6">
         <Image src="/semoduck-suggestions-hero.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 768px" className="pointer-events-none object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-r from-white/86 via-white/58 to-white/12" />
         <div className="relative max-w-xl">

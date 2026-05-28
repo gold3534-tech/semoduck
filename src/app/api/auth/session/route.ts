@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminEmail } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -10,13 +11,14 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("nickname").eq("id", user.id).maybeSingle();
+  const { data: profile } = await supabase.from("profiles").select("nickname,role").eq("id", user.id).maybeSingle();
 
   return NextResponse.json({
     user: {
       id: user.id,
       email: user.email ?? null,
-      nickname: profile?.nickname ?? user.user_metadata?.name ?? null
+      nickname: profile?.nickname ?? user.user_metadata?.name ?? null,
+      role: profile?.role ?? (isAdminEmail(user.email) ? "admin" : "user")
     }
   });
 }

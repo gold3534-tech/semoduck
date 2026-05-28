@@ -9,7 +9,11 @@ async function requireAdmin() {
   if (!data.user?.email || !isAdminEmail(data.user.email)) {
     return { error: NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 }) };
   }
-  return { admin: createAdminSupabaseClient() };
+  try {
+    return { admin: createAdminSupabaseClient() };
+  } catch {
+    return { error: NextResponse.json({ error: "서버 설정을 확인해 주세요. 관리자 키가 누락되었습니다." }, { status: 500 }) };
+  }
 }
 
 export async function GET() {

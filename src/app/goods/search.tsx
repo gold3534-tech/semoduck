@@ -38,7 +38,7 @@ export type RecommendedGoodsGroup = {
 };
 
 const pageSize = 12;
-const quickTerms = ["쿠로미", "산리오", "포켓몬", "BTS", "원피스", "스파이패밀리"];
+const quickTerms = ["쿠로미 키링", "산리오", "포켓몬", "BTS", "원피스", "스파이패밀리"];
 
 function RecommendedGoodsCarousel({ group }: { group: RecommendedGoodsGroup }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -106,9 +106,10 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
 
     try {
       const response = await fetch(`/api/products/external-search?q=${encodeURIComponent(nextKeyword)}&display=120`);
-      const data = (await response.json()) as ExternalGoodsResponse;
-      setItems(data.items);
-      setNormalizedQuery(data.query);
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : { items: [], query: nextKeyword, error: "검색 응답이 비어 있습니다." }) as ExternalGoodsResponse;
+      setItems(data.items ?? []);
+      setNormalizedQuery(data.query ?? nextKeyword);
       setError(data.error ?? "");
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "상품 검색에 실패했습니다.");
@@ -124,10 +125,11 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
 
   return (
     <div className="space-y-3">
-      <section className="relative overflow-hidden rounded-2xl border-2 border-[#cfa9ed] bg-[#fbf4ff] p-4 shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
-        <Image src="/semoduck-goods-hero.png" alt="" width={320} height={190} priority className="pointer-events-none absolute bottom-0 right-8 hidden h-32 w-auto object-contain lg:block" />
-        <div className="relative max-w-xl pr-0 lg:pr-40">
-          <h1 className="text-2xl font-black leading-tight text-[#6f4ab4] md:text-3xl">굿즈 검색</h1>
+      <section className="relative min-h-[11.5rem] overflow-hidden rounded-2xl border-2 border-[#cfa9ed] bg-[#fbf4ff] p-4 shadow-[0_10px_26px_rgba(126,80,178,0.05)] md:min-h-[12.5rem] md:p-5">
+        <Image src="/semoduck-goods-hero.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 86rem" className="pointer-events-none object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/70 to-white/16" />
+        <div className="relative max-w-xl">
+          <h1 className="banner-title text-2xl font-black leading-tight text-[#6f4ab4] md:text-3xl">굿즈 검색</h1>
           <p className="mt-1 text-xs font-bold leading-5 text-[#44385a]">원하는 굿즈와 판매 링크, 추천 상품을 한눈에 확인하세요.</p>
           <form onSubmit={searchGoods} className="mt-3 flex max-w-lg items-center gap-2 rounded-full border-2 border-[#9b63d6] bg-white px-3 py-2 shadow-[0_10px_22px_rgba(163,108,224,0.1)]">
             <Search size={17} className="text-[#6f4ab4]" />
@@ -167,7 +169,7 @@ export function GoodsSearch({ recommendedGroups, initialQuery = "" }: { recommen
               <Card key={item.id} className="group relative flex h-full flex-col overflow-hidden p-0 transition hover:-translate-y-0.5">
                 <Link href={externalGoodsDetailHref({ title: item.title, image: item.image, mallName: item.mallName, price: item.price, url: item.url, category: item.category })} className="absolute inset-0 z-10" aria-label={`${item.title} 상세 보기`} />
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#f7f2fb]">
-                  <SafeImage src={item.image} alt={item.title} kind="product" className="h-full w-full object-contain bg-white p-3 transition group-hover:scale-[1.03]" />
+                  <SafeImage src={item.image} alt={item.title} kind="product" className="h-full w-full bg-white object-contain p-3 transition group-hover:scale-[1.03]" />
                   <span className="absolute left-3 top-3 z-20 rounded-full bg-[#ff6f9b] px-2.5 py-0.5 text-[11px] font-black text-white">상품</span>
                   <div className="absolute right-3 top-3 z-20">
                     <ProductLikeButton productId={`external:${item.id}`} compact />

@@ -236,10 +236,11 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   return (
     <div className="space-y-3 2xl:space-y-4 min-[1800px]:space-y-5">
-      <section className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] bg-[#fff8fc] p-5 shadow-[0_14px_38px_rgba(126,80,178,0.07)] 2xl:p-7 min-[1800px]:p-9">
-        <Image src="/semoduck-goods-hero.png" alt="" width={420} height={260} priority className="pointer-events-none absolute bottom-0 right-16 hidden h-52 w-auto object-contain lg:block 2xl:right-24 2xl:h-64 min-[1800px]:right-32 min-[1800px]:h-72 min-[2200px]:h-80" />
+      <section className="relative min-h-[13rem] overflow-hidden rounded-[1.5rem] border-2 border-[#e5c7f1] bg-[#fff8fc] p-5 shadow-[0_14px_38px_rgba(126,80,178,0.07)] md:min-h-[14rem] 2xl:p-7 min-[1800px]:min-h-[15rem] min-[1800px]:p-9">
+        <Image src="/semoduck-banner-frame.png" alt="" fill priority sizes="(max-width: 768px) 100vw, 74rem" className="pointer-events-none object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-white/12" />
         <div className="relative max-w-md 2xl:max-w-xl min-[1800px]:max-w-2xl">
-          <h1 className="text-3xl font-black leading-tight text-[#4a347e] 2xl:text-4xl min-[1800px]:text-5xl">
+          <h1 className="banner-title text-3xl font-black leading-tight text-[#4a347e] 2xl:text-4xl min-[1800px]:text-5xl">
             세상의 모든 덕질,<br />
             <span className="text-[#ff6f9b]">세모덕</span>에서 한 번에!
           </h1>

@@ -20,17 +20,18 @@ const defaultNav = [
 export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const [email, setEmail] = useState<string | null>(null);
+  const [sessionUser, setSessionUser] = useState<{ email: string | null; role?: string | null } | null>(null);
   const [query, setQuery] = useState("");
   const hideHeader = pathname === "/login" || pathname === "/signup";
 
   async function loadSession() {
     try {
       const response = await fetch("/api/auth/session", { cache: "no-store" });
-      const data = (await response.json()) as { user: { email: string | null } | null };
-      setEmail(data.user?.email ?? null);
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : { user: null }) as { user: { email: string | null; role?: string | null } | null };
+      setSessionUser(data.user ?? null);
     } catch {
-      setEmail(null);
+      setSessionUser(null);
     }
   }
 
@@ -55,7 +56,8 @@ export function SiteHeader() {
     router.push(keyword ? `/search?q=${encodeURIComponent(keyword)}` : "/search");
   }
 
-  const nav = isAdminEmail(email) ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
+  const showAdmin = sessionUser?.role === "admin" && isAdminEmail(sessionUser.email);
+  const nav = showAdmin ? [...defaultNav, ["관리자", "/admin"]] : defaultNav;
 
   if (hideHeader) return null;
 
