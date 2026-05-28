@@ -1,68 +1,113 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   targetType: z.enum(["post", "market_item", "product"]),
   targetId: z.string().uuid(),
   category: z.string().min(1),
-  detail: z.string().min(5)
+  detail: z.string().min(5),
 });
 
-const tableByType = {
-  post: "posts",
-  market_item: "market_items",
-  product: "products"
-} as const;
-
 export async function POST(request: Request) {
-  const authClient = await createServerSupabaseClient();
-  const { data: userData } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
-  const user = userData.user;
+  try {
+    const supabase = await createServerSupabaseClient();
 
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Supabase 클라이언트를 생성하지 못했습니다." },
+        { status: 500 }
+      );
+    }
 
-  const body = schema.parse(await request.json());
-  const admin = createAdminSupabaseClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  const { data: existing } = await admin
-    .from("reports")
-    .select("id")
-    .eq("reporter_id", user.id)
-    .eq("target_type", body.targetType)
-    .eq("target_id", body.targetId)
-    .maybeSingle();
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
-  if (existing) return NextResponse.json({ error: "이미 신고한 대상입니다." }, { status: 409 });
+    let payload: unknown;
 
-  const reason = `${body.category}: ${body.detail}`;
-  const { error } = await admin.from("reports").insert({
-    reporter_id: user.id,
-    target_type: body.targetType,
-    target_id: body.targetId,
-    category: body.category,
-    detail: body.detail,
-    reason,
-    status: "pending"
-  });
+    try {
+      payload = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "요청 내용을 읽지 못했습니다." },
+        { status: 400 }
+      );
+    }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const parsed = schema.safeParse(payload);
 
-  const { count } = await admin
-    .from("reports")
-    .select("id", { count: "exact", head: true })
-    .eq("target_type", body.targetType)
-    .eq("target_id", body.targetId)
-    .eq("status", "pending");
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error:
+            parsed.error.errors[0]?.message ?? "입력값을 확인해 주세요.",
+        },
+        { status: 400 }
+      );
+    }
 
-  const reportCount = count ?? 1;
-  const table = tableByType[body.targetType];
-  const updatePayload: Record<string, unknown> = { report_count: reportCount, updated_at: new Date().toISOString() };
-  if (body.targetType === "post" && reportCount >= 5) updatePayload.is_deleted = true;
-  if (body.targetType === "market_item" && reportCount >= 5) updatePayload.status = "reported";
-  if (body.targetType === "product" && reportCount >= 5) updatePayload.is_deleted = true;
-  await admin.from(table).update(updatePayload).eq("id", body.targetId);
+    const body = parsed.data;
 
-  return NextResponse.json({ ok: true, reportCount });
+    const { data: existing, error: existingError } = await supabase
+      .from("reports")
+      .select("id")
+      .eq("reporter_id", user.id)
+      .eq("target_type", body.targetType)
+      .eq("target_id", body.targetId)
+      .maybeSingle();
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: existingError.message },
+        { status: 500 }
+      );
+    }
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "이미 신고한 대상입니다." },
+        { status: 409 }
+      );
+    }
+
+    const reason = `${body.category}: ${body.detail}`;
+
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: user.id,
+      target_type: body.targetType,
+      target_id: body.targetId,
+      category: body.category,
+      detail: body.detail,
+      reason,
+      status: "pending",
+    });
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "신고 처리에 실패했습니다.",
+      },
+      { status: 500 }
+    );
+  }
 }
