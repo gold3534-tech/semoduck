@@ -3,15 +3,15 @@ import { SuggestionForm } from "@/app/suggestions/suggestion-form";
 
 export default function SuggestionsPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <section className="relative h-[155px] overflow-hidden rounded-[1.5rem] border border-[#dfc5ee] bg-[#fff8fb] p-5 shadow-soft md:h-[175px] md:p-6">
+    <div className="mx-auto max-w-4xl space-y-4">
+      <section className="relative h-[170px] overflow-hidden rounded-[1.5rem] border border-[#dfc5ee] bg-[#fff8fb] p-5 shadow-soft md:h-[200px] md:p-6">
         <Image
           src="/semoduck-suggestions-hero.png"
           alt=""
           fill
           priority
-          sizes="(max-width: 768px) 100vw, 768px"
-          className="pointer-events-none scale-[0.92] object-contain object-right"
+          sizes="(max-width: 768px) 100vw, 896px"
+          className="pointer-events-none scale-[1.02] object-cover object-center"
         />
 
         <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/60 to-white/8" />

@@ -15,14 +15,14 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#fff9ff]">
+    <div className="fixed inset-0 z-40 h-dvh w-screen overflow-y-auto overflow-x-hidden bg-[#fff9ff]">
       <Image
         src="/semoduck-auth-bg.png"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="pointer-events-none object-cover object-center"
+        className="pointer-events-none object-cover object-center scale-[1.02]"
       />
 
       <div className="absolute inset-0 bg-white/18" />

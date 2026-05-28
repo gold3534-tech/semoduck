@@ -125,6 +125,7 @@ export default function AdminPage() {
   const [thumbnailDrafts, setThumbnailDrafts] = useState<Record<string, string>>({});
   const [officialCandidates, setOfficialCandidates] = useState<OfficialProductCandidate[]>([]);
   const [collectMessage, setCollectMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -134,14 +135,19 @@ export default function AdminPage() {
         return;
       }
       setReady(true);
-      void load();
+      void load().catch((error) => {
+        setLoadError(error instanceof Error ? error.message : "관리자 데이터를 불러오지 못했습니다.");
+      });
     });
   }, [router]);
 
   async function load() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
-    if (!response.ok) throw new Error("관리자 데이터를 불러오지 못했습니다.");
-    setData((await response.json()) as Dashboard);
+    const text = await response.text();
+    const payload = (text ? JSON.parse(text) : {}) as Dashboard | { error?: string };
+    if (!response.ok) throw new Error("error" in payload && payload.error ? payload.error : "관리자 데이터를 불러오지 못했습니다.");
+    setLoadError("");
+    setData(payload as Dashboard);
   }
 
   async function uploadImage(bucket: string, file: File) {
@@ -349,6 +355,10 @@ export default function AdminPage() {
       return;
     }
     await load();
+  }
+
+  if (loadError) {
+    return <Card className="bg-pink-50 text-pink-700"><p className="font-black">{loadError}</p></Card>;
   }
 
   if (!ready || !data) {

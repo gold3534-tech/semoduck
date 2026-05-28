@@ -124,13 +124,13 @@ export function GalleryBrowser({ galleries }: { galleries: Gallery[] }) {
       </aside>
 
       <div className="space-y-4">
-        <section className="relative h-[240px] overflow-hidden rounded-2xl border border-[#ead0f4] shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
+        <section className="relative h-[240px] overflow-hidden rounded-2xl border border-[#ead0f4] bg-[#fbf4ff] shadow-[0_10px_26px_rgba(126,80,178,0.05)]">
           <SafeImage
             src="/semoduck-gallery-hero.png"
             alt=""
             kind="banner"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full scale-[1.08] object-cover object-center"
           />
 
           <div className="relative z-10 p-6">
