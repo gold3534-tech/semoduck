@@ -13,7 +13,8 @@ export function PostActions({
   initialLiked,
   initialBookmarked,
   isOwner,
-  isAdmin = false
+  isAdmin = false,
+  isLoggedIn = false 
 }: {
   postId: string;
   initialLikes: number;
@@ -22,6 +23,8 @@ export function PostActions({
   initialBookmarked: boolean;
   isOwner: boolean;
   isAdmin?: boolean;
+  isLoggedIn?: boolean;
+  
 }) {
   const router = useRouter();
   const [likes, setLikes] = useState(initialLikes);
@@ -147,7 +150,7 @@ export function PostActions({
       ) : null}
 
       {!isOwner ? (
-        <ReportButton targetType="post" targetId={postId} />
+        <ReportButton targetType="post" targetId={postId} isLoggedIn={isLoggedIn} />
       ) : null}
     </div>
   );

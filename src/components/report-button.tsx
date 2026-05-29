@@ -19,11 +19,13 @@ const categories = [
 export function ReportButton({
   targetType,
   targetId,
-  label = "신고"
+  label = "신고",
+  isLoggedIn = false
 }: {
   targetType: "post" | "market_item" | "product";
   targetId: string;
   label?: string;
+  isLoggedIn?: boolean;
 }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -36,6 +38,14 @@ export function ReportButton({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  function handleOpen() {
+    if (!isLoggedIn) {
+      router.push(`/login?next=${location.pathname}`);
+      return;
+    }
+    setOpen(true);
+  }
 
   async function submit() {
     if (!category || !detail.trim()) {
@@ -152,7 +162,7 @@ export function ReportButton({
 
   return (
     <>
-      <Button variant="ghost" onClick={() => setOpen(true)} disabled={reported}>
+      <Button variant="ghost" onClick={handleOpen} disabled={reported}>
         <Flag size={16} />
         {reported ? "신고 완료" : label}
       </Button>

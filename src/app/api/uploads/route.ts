@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const authClient = await createServerSupabaseClient();
-  const { data: userData } = (await authClient?.auth.getUser()) ?? { data: { user: null } };
-  const user = userData.user;
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase 클라이언트 생성 실패" }, { status: 500 });
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
   let formData: FormData;
+
   try {
     formData = await request.formData();
   } catch {
@@ -19,7 +25,9 @@ export async function POST(request: Request) {
   }
 
   const file = formData.get("file");
-  const bucket = String(formData.get("bucket") ?? "market-images");
+
+  // 보안상 클라이언트에서 bucket 받지 말고 서버에서 고정 추천
+  const bucket = "market-images";
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "업로드할 파일을 선택해주세요." }, { status: 400 });
@@ -29,15 +37,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "이미지 파일만 업로드할 수 있습니다." }, { status: 400 });
   }
 
-  const admin = createAdminSupabaseClient();
   const extension = file.name.split(".").pop() || "jpg";
   const path = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
-  const { error } = await admin.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
+
+  const { error } = await supabase.storage.from(bucket).upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data } = admin.storage.from(bucket).getPublicUrl(path);
-  return NextResponse.json({ url: data.publicUrl, path });
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+
+  return NextResponse.json({
+    url: data.publicUrl,
+    path,
+  });
 }
