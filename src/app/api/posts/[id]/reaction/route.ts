@@ -6,6 +6,23 @@ const schema = z.object({
   type: z.enum(["like", "bookmark"]),
 });
 
+type ReactionType = z.infer<typeof schema>["type"];
+
+type PostCountRow = {
+  like_count: number | null;
+  bookmark_count: number | null;
+};
+
+function getBaseCount(post: PostCountRow | null, type: ReactionType) {
+  if (!post) return 0;
+
+  if (type === "like") {
+    return Number(post.like_count ?? 0);
+  }
+
+  return Number(post.bookmark_count ?? 0);
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -41,7 +58,18 @@ export async function POST(
       );
     }
 
-    const parsed = schema.safeParse(await request.json());
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "요청 본문을 읽지 못했습니다." },
+        { status: 400 }
+      );
+    }
+
+    const parsed = schema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -74,7 +102,9 @@ export async function POST(
         .from("post_reactions")
         .delete()
         .eq("id", existing.id)
-        .eq("user_id", user.id);
+        .eq("post_id", id)
+        .eq("user_id", user.id)
+        .eq("type", type);
 
       if (deleteError) {
         return NextResponse.json(
@@ -82,6 +112,8 @@ export async function POST(
           { status: 500 }
         );
       }
+
+      active = false;
     } else {
       const { error: insertError } = await supabase
         .from("post_reactions")
@@ -101,7 +133,20 @@ export async function POST(
       active = true;
     }
 
-    const { count, error: countError } = await supabase
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("like_count, bookmark_count")
+      .eq("id", id)
+      .single<PostCountRow>();
+
+    if (postError) {
+      return NextResponse.json(
+        { error: postError.message },
+        { status: 500 }
+      );
+    }
+
+    const { count: reactionCount, error: countError } = await supabase
       .from("post_reactions")
       .select("*", { count: "exact", head: true })
       .eq("post_id", id)
@@ -114,9 +159,12 @@ export async function POST(
       );
     }
 
+    const baseCount = getBaseCount(post, type);
+    const totalCount = baseCount + (reactionCount ?? 0);
+
     return NextResponse.json({
       active,
-      count: count ?? 0,
+      count: totalCount,
     });
   } catch (error) {
     return NextResponse.json(
