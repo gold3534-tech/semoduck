@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AlertTriangle,
+  Flag,
   Heart,
   MapPin,
   MessageCircle,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { InquiryActions } from "@/app/market/[id]/inquiry-actions";
 import { InquiryForm } from "@/app/market/[id]/inquiry-form";
+import { MarketFavoriteButton } from "@/app/market/[id]/market-favorite-button";
 import { MarketOwnerActions } from "@/app/market/[id]/owner-actions";
 import { RelatedPostCard } from "@/components/related-post-card";
 import { ReportButton } from "@/components/report-button";
@@ -59,6 +61,7 @@ export default async function MarketDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const loginNext = `/market/${id}`;
 
   const supabase = createDataSupabaseClient();
   const authClient = await createServerSupabaseClient();
@@ -67,7 +70,8 @@ export default async function MarketDetailPage({
     data: { user: null },
   };
 
-  const currentUserId = auth.user?.id;
+  const currentUserId = auth.user?.id ?? null;
+  const isLoggedIn = Boolean(currentUserId);
   const isAdmin = isAdminEmail(auth.user?.email);
 
   const [{ data: itemData }, { data: inquiries }] = await Promise.all([
@@ -117,12 +121,9 @@ export default async function MarketDetailPage({
       category: item.trade_type,
       galleryName: gallery?.name ?? null,
       gallerySlugs: gallery?.slug ? [gallery.slug] : [],
-      tags: [
-        gallery?.name,
-        gallery?.slug,
-        item.trade_type,
-        item.region,
-      ].filter(Boolean) as string[],
+      tags: [gallery?.name, gallery?.slug, item.trade_type, item.region].filter(
+        Boolean
+      ) as string[],
     },
   });
 
@@ -242,22 +243,50 @@ export default async function MarketDetailPage({
 
               <div className="flex flex-wrap gap-2">
                 {!isOwner ? (
-                  <Button className="min-h-9 rounded-xl px-4 py-1.5 text-xs">
-                    <Send size={15} />
-                    거래톡 보내기
-                  </Button>
+                  isLoggedIn ? (
+                    <Button className="min-h-9 rounded-xl px-4 py-1.5 text-xs">
+                      <Send size={15} />
+                      거래톡 보내기
+                    </Button>
+                  ) : (
+                    <Link href={`/login?next=${encodeURIComponent(loginNext)}`}>
+                      <Button className="min-h-9 rounded-xl px-4 py-1.5 text-xs">
+                        <Send size={15} />
+                        거래톡 보내기
+                      </Button>
+                    </Link>
+                  )
                 ) : null}
 
-                <Button
-                  variant="secondary"
-                  className="min-h-9 rounded-xl px-4 py-1.5 text-xs"
-                >
-                  <Heart size={15} />
-                  찜하기
-                </Button>
+                {!isOwner ? (
+                  <MarketFavoriteButton
+                    marketItemId={id}
+                    isLoggedIn={isLoggedIn}
+                    loginNext={loginNext}
+                    item={{
+                      title: item.title,
+                      image: mainImage,
+                      price: item.price,
+                      tradeType: item.trade_type,
+                      galleryName: gallery?.name ?? null,
+                    }}
+                  />
+                ) : null}
 
                 {!isOwner ? (
-                  <ReportButton targetType="market_item" targetId={id} />
+                  isLoggedIn ? (
+                    <ReportButton targetType="market_item" targetId={id} />
+                  ) : (
+                    <Link href={`/login?next=${encodeURIComponent(loginNext)}`}>
+                      <Button
+                        variant="ghost"
+                        className="min-h-9 rounded-xl px-4 py-1.5 text-xs"
+                      >
+                        <Flag size={15} />
+                        신고
+                      </Button>
+                    </Link>
+                  )
                 ) : null}
 
                 {isOwner || isAdmin ? (
@@ -331,12 +360,21 @@ export default async function MarketDetailPage({
                 </div>
               </div>
 
-              <Link
-                href="/market"
-                className="mt-4 inline-flex min-h-8 w-full items-center justify-center rounded-xl bg-white text-xs font-black text-[#6f4ab4] ring-1 ring-[#ead8f4]"
-              >
-                판매자의 다른 상품 보기
-              </Link>
+              {item.seller_id ? (
+                <Link
+                  href={`/market/seller/${item.seller_id}`}
+                  className="mt-4 inline-flex min-h-8 w-full items-center justify-center rounded-xl bg-white text-xs font-black text-[#6f4ab4] ring-1 ring-[#ead8f4] transition hover:bg-[#fbf4ff]"
+                >
+                  판매자의 다른 상품 보기
+                </Link>
+              ) : (
+                <Link
+                  href="/market"
+                  className="mt-4 inline-flex min-h-8 w-full items-center justify-center rounded-xl bg-white text-xs font-black text-[#6f4ab4] ring-1 ring-[#ead8f4] transition hover:bg-[#fbf4ff]"
+                >
+                  유저거래 둘러보기
+                </Link>
+              )}
             </Card>
           </div>
 

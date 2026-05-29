@@ -40,7 +40,25 @@ type ActivityResponse = {
   counts: { posts: number; comments: number; bookmarks: number; likes: number; marketItems: number };
 };
 
-type TabKey = "profile" | "posts" | "comments" | "bookmarks" | "likes" | "goods" | "market";
+type FavoriteMarket = {
+  id: string;
+  title?: string;
+  image?: string | null;
+  href?: string;
+  price?: number;
+  tradeType?: string;
+  galleryName?: string | null;
+};
+
+type TabKey =
+  | "profile"
+  | "posts"
+  | "comments"
+  | "bookmarks"
+  | "likes"
+  | "goods"
+  | "favoriteMarket"
+  | "market";
 
 const tabs: Array<[TabKey, string, LucideIcon]> = [
   ["profile", "프로필", UserRound],
@@ -49,6 +67,7 @@ const tabs: Array<[TabKey, string, LucideIcon]> = [
   ["bookmarks", "스크랩한 글", Bookmark],
   ["likes", "좋아요 누른 글", Heart],
   ["goods", "찜한 굿즈", Star],
+  ["favoriteMarket", "찜한 거래", HeartHandshake],
   ["market", "거래 내역", HeartHandshake]
 ];
 
@@ -59,6 +78,7 @@ const tabTitles: Record<TabKey, string> = {
   bookmarks: "스크랩한 글",
   likes: "좋아요 누른 글",
   goods: "찜한 굿즈",
+  favoriteMarket: "찜한 거래",
   market: "거래 내역"
 };
 
@@ -144,6 +164,7 @@ export default function MyPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
   const [likedGoods, setLikedGoods] = useState<LikedGood[]>([]);
+  const [favoriteMarkets, setFavoriteMarkets] = useState<FavoriteMarket[]>([]);
 
   function loadLikedGoods() {
     const goods: LikedGood[] = [];
@@ -161,7 +182,43 @@ export default function MyPage() {
     }
     setLikedGoods(goods);
   }
+  function loadFavoriteMarkets() {
+    const markets: FavoriteMarket[] = [];
 
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+
+      if (!key?.startsWith("semoduck:favorite-market:")) continue;
+      if (window.localStorage.getItem(key) !== "1") continue;
+
+      const id = key.replace("semoduck:favorite-market:", "");
+      const metaText = window.localStorage.getItem(
+        `semoduck:favorite-market-meta:${id}`
+      );
+
+      try {
+        const meta = metaText ? JSON.parse(metaText) : null;
+
+        markets.push({
+          id,
+          title: meta?.title ?? id,
+          image: meta?.image ?? null,
+          href: meta?.href ?? `/market/${id}`,
+          price: meta?.price,
+          tradeType: meta?.tradeType,
+          galleryName: meta?.galleryName ?? null
+        });
+      } catch {
+        markets.push({
+          id,
+          title: id,
+          href: `/market/${id}`
+        });
+      }
+    }
+
+    setFavoriteMarkets(markets);
+  }
   async function load() {
     const response = await fetch("/api/me/activity", { cache: "no-store" });
     if (response.status === 401) {
@@ -187,8 +244,15 @@ export default function MyPage() {
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "마이페이지 정보를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
     loadLikedGoods();
+    loadFavoriteMarkets();
+
     window.addEventListener("semoduck:liked-products-changed", loadLikedGoods);
-    return () => window.removeEventListener("semoduck:liked-products-changed", loadLikedGoods);
+    window.addEventListener("semoduck:favorite-market-changed", loadFavoriteMarkets);
+
+    return () => {
+      window.removeEventListener("semoduck:liked-products-changed", loadLikedGoods);
+      window.removeEventListener("semoduck:favorite-market-changed", loadFavoriteMarkets);
+    };
   }, []);
 
   const stats: Array<[string, number, LucideIcon]> = useMemo(
@@ -376,6 +440,9 @@ export default function MyPage() {
           {activeTab === "bookmarks" ? postList(activity.bookmarkedPosts, "아직 스크랩한 글이 없습니다.") : null}
           {activeTab === "likes" ? postList(activity.likedPosts, "아직 좋아요 누른 글이 없습니다.") : null}
           {activeTab === "goods" ? <LikedGoodsList items={likedGoods} /> : null}
+          {activeTab === "favoriteMarket" ? (
+            <FavoriteMarketList items={favoriteMarkets} />
+          ) : null}
           {activeTab === "market" ? <MarketList items={activity.marketItems} /> : null}
         </Card>
       </div>
@@ -460,6 +527,59 @@ function LikedGoodsList({ items }: { items: LikedGood[] }) {
         </Link>
       ))}
       {!items.length ? <p className="col-span-full rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">아직 찜한 굿즈가 없습니다.</p> : null}
+    </div>
+  );
+}
+
+function FavoriteMarketList({ items }: { items: FavoriteMarket[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <Link
+          key={item.id}
+          href={item.href ?? `/market/${item.id}`}
+          className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-2xl bg-[#fbf4ff] p-3 transition hover:bg-[#fff5fa]"
+        >
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-white">
+            <SafeImage
+              src={item.image}
+              alt=""
+              kind="product"
+              className="h-full w-full object-contain p-2"
+            />
+          </div>
+
+          <div className="min-w-0">
+            <p className="line-clamp-2 text-sm font-black text-[#3a285f]">
+              {item.title ?? item.id}
+            </p>
+
+            {item.galleryName ? (
+              <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">
+                {item.galleryName}
+              </p>
+            ) : null}
+
+            {item.tradeType ? (
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                {tradeTypeLabel(item.tradeType)}
+              </p>
+            ) : null}
+
+            {typeof item.price === "number" ? (
+              <p className="mt-2 text-sm font-black text-[#ff5f8d]">
+                {tradeValueLabel("sell", item.price)}
+              </p>
+            ) : null}
+          </div>
+        </Link>
+      ))}
+
+      {!items.length ? (
+        <p className="col-span-full rounded-xl bg-cloud p-4 text-sm font-bold text-slate-500">
+          아직 찜한 유저거래가 없습니다.
+        </p>
+      ) : null}
     </div>
   );
 }

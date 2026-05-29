@@ -21,7 +21,9 @@ import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Gallery, Post, Product } from "@/types/domain";
 
-export const dynamic = "force-dynamic";
+const HOME_CACHE_SECONDS = 60 * 60;
+
+export const revalidate = HOME_CACHE_SECONDS;
 
 type MarketPreview = {
   id: string;
@@ -35,22 +37,19 @@ type MarketPreview = {
 
 const directInterestSlugs: Record<string, string[]> = {
   bts: ["bts"],
+  방탄소년단: ["bts"],
   포켓몬: ["pokemon"],
+  pokemon: ["pokemon"],
   스텔라이브: ["stellive"],
+  버튜버: ["stellive"],
   롤: ["lol"],
+  리그오브레전드: ["lol"],
   산리오: ["sanrio"],
+  쿠로미: ["sanrio"],
   원피스: ["onepiece"],
   지브리: ["ghibli"],
+  스튜디오지브리: ["ghibli"],
 };
-
-const broadInterestCategories = new Set([
-  "게임",
-  "애니",
-  "웹툰",
-  "캐릭터",
-  "아이돌",
-  "버튜버",
-]);
 
 const ignoredRecommendationInterests = new Set(["굿즈", "덕", "돌"]);
 
@@ -65,68 +64,85 @@ const defaultInterests = [
   "원피스",
 ];
 
-const interestKeywordMap: Record<string, string[]> = {
-  BTS: ["BTS", "방탄소년단", "Weverse"],
-  포켓몬: ["포켓몬", "Pokemon", "피카츄"],
-  스텔라이브: ["스텔라이브", "Fanding"],
-  지브리: ["지브리", "스튜디오 지브리", "도토리숲", "토토로", "키키", "하울"],
-  롤: [
-    "라이엇 스토어",
-    "리그 오브 레전드",
-    "League of Legends",
-    "TFT",
-    "요네",
-    "아리",
-    "티모",
-  ],
-  산리오: [
-    "산리오",
-    "쿠로미",
-    "시나모롤",
-    "헬로키티",
-    "마이멜로디",
-    "폼폼푸린",
-    "포차코",
-  ],
-  쿠로미: ["쿠로미", "산리오"],
-  원피스: ["원피스", "루피", "조로", "상디"],
-  애니: ["원피스", "지브리", "애니", "피규어"],
-  웹툰: ["웹툰프렌즈", "웹툰"],
-  아이돌: ["BTS", "아이돌"],
-  게임: ["라이엇 스토어", "리그 오브 레전드", "포켓몬", "이터널 리턴"],
-  캐릭터: ["산리오", "포켓몬", "캐릭터"],
-  피규어: ["피규어", "원피스", "라이엇 스토어"],
-  버튜버: ["스텔라이브"],
+const interestAliasMap: Record<string, string[]> = {
+  bts: ["bts", "방탄소년단"],
+  방탄소년단: ["bts", "방탄소년단"],
+  포켓몬: ["포켓몬", "pokemon"],
+  pokemon: ["포켓몬", "pokemon"],
+  스텔라이브: ["스텔라이브", "버튜버", "stellive"],
+  버튜버: ["버튜버", "스텔라이브", "stellive"],
+  지브리: ["지브리", "스튜디오지브리", "ghibli"],
+  스튜디오지브리: ["지브리", "스튜디오지브리", "ghibli"],
+  롤: ["롤", "리그오브레전드", "lol"],
+  리그오브레전드: ["롤", "리그오브레전드", "lol"],
+  산리오: ["산리오", "sanrio"],
+  쿠로미: ["쿠로미", "산리오", "sanrio"],
+  원피스: ["원피스", "onepiece"],
 };
 
-function keywordsForInterests(interests: string[]) {
-  const targets = interests.filter(
-    (interest) => !ignoredRecommendationInterests.has(interest)
-  );
-
-  const keywords = targets.flatMap((interest) => [
-    interest,
-    ...(interestKeywordMap[interest] ?? []),
-  ]);
-
-  return [...new Set(keywords.filter(Boolean))];
+function normalizeTag(value?: string | null) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/^#/g, "")
+    .replace(/갤러리$/g, "");
 }
 
-function scoreByInterests(
-  textParts: Array<string | null | undefined>,
-  interests: string[]
-) {
-  const text = textParts.filter(Boolean).join(" ").toLowerCase();
-  let score = 0;
+function buildInterestTags(interests: string[]) {
+  const result = new Set<string>();
 
-  for (const interest of keywordsForInterests(interests)) {
-    const normalized = interest.toLowerCase();
-
-    if (!normalized) continue;
+  for (const interest of interests) {
     if (ignoredRecommendationInterests.has(interest)) continue;
 
-    if (text.includes(normalized)) {
-      score += broadInterestCategories.has(interest) ? 1 : 10;
+    const normalized = normalizeTag(interest);
+    if (!normalized) continue;
+
+    result.add(normalized);
+
+    for (const alias of interestAliasMap[normalized] ?? []) {
+      result.add(normalizeTag(alias));
+    }
+  }
+
+  return result;
+}
+
+function buildDirectSlugs(interests: string[]) {
+  const result = new Set<string>();
+
+  for (const interest of interests) {
+    const normalized = normalizeTag(interest);
+
+    for (const slug of directInterestSlugs[normalized] ?? []) {
+      result.add(slug);
+    }
+  }
+
+  return result;
+}
+
+function scoreByStrictTags(
+  itemTags: Array<string | null | undefined>,
+  interests: string[],
+  directSlugs = new Set<string>()
+) {
+  const interestTags = buildInterestTags(interests);
+  const normalizedItemTags = itemTags.map(normalizeTag).filter(Boolean);
+
+  if (!interestTags.size && !directSlugs.size) {
+    return 0;
+  }
+
+  let score = 0;
+
+  for (const tag of normalizedItemTags) {
+    if (interestTags.has(tag)) {
+      score += 20;
+    }
+
+    if (directSlugs.has(tag)) {
+      score += 40;
     }
   }
 
@@ -170,6 +186,22 @@ function uniqueInterestItems(items: HomeInterestItem[]) {
     seen.add(key);
     return true;
   });
+}
+
+function officialProductTags(product: Product) {
+  return [
+    ...product.tags,
+    ...product.gallerySlugs,
+    product.category,
+    product.brand,
+  ].filter(Boolean);
+}
+
+function marketItemTags(market: MarketPreview) {
+  return [
+    market.galleries?.name,
+    market.galleries?.slug,
+  ].filter(Boolean);
 }
 
 let homeBaseCache:
@@ -219,7 +251,12 @@ async function getHomeBaseDataUncached() {
         .limit(60),
     ]);
 
-  return { productsResult, galleriesResult, postsResult, marketResult };
+  return {
+    productsResult,
+    galleriesResult,
+    postsResult,
+    marketResult,
+  };
 }
 
 async function getHomeBaseData() {
@@ -233,7 +270,7 @@ async function getHomeBaseData() {
 
   homeBaseCache = {
     data,
-    expiresAt: now + 60_000,
+    expiresAt: now + HOME_CACHE_SECONDS * 1000,
   };
 
   return data;
@@ -268,6 +305,8 @@ async function getHomeData() {
     ? userInterests
     : shuffle(defaultInterests).slice(0, 3);
 
+  const directSlugs = buildDirectSlugs(interests);
+
   const { productsResult, galleriesResult, postsResult, marketResult } =
     await getHomeBaseData();
 
@@ -283,17 +322,8 @@ async function getHomeData() {
       thumbnail: gallery.thumbnail_url ?? "/semoduck-icon.png",
       followerCount: gallery.follower_count ?? 0,
       postCount: gallery.post_count ?? 0,
-      tags: [gallery.category].filter(Boolean),
+      tags: [gallery.category, gallery.slug, gallery.name].filter(Boolean),
     })
-  );
-
-  const directSlugs = new Set(
-    interests.flatMap(
-      (interest) =>
-        directInterestSlugs[interest.toLowerCase()] ??
-        directInterestSlugs[interest] ??
-        []
-    )
   );
 
   const officialProductPool = rawProducts.filter(
@@ -308,30 +338,15 @@ async function getHomeData() {
     .map((product) => ({
       product,
       score:
-        scoreByInterests(
-          [
-            product.title,
-            product.brand,
-            product.category,
-            product.description,
-            ...product.tags,
-            ...product.gallerySlugs,
-          ],
-          interests
-        ) +
-        product.gallerySlugs.reduce(
-          (sum, slug) => sum + (directSlugs.has(slug) ? 18 : 0),
-          0
-        ) +
-        officialRank(product) * 2,
+        scoreByStrictTags(
+          officialProductTags(product),
+          interests,
+          directSlugs
+        ) + officialRank(product) * 2,
     }))
     .filter((item) => item.score > 0);
 
-  const productPool = scoredProductPool.length
-    ? scoredProductPool
-    : officialProductPool.map((product) => ({ product, score: 1 }));
-
-  const products = productPool
+  const products = scoredProductPool
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -345,17 +360,16 @@ async function getHomeData() {
   const recommendedGalleries = rawGalleries
     .map((gallery) => ({
       gallery,
-      score:
-        scoreByInterests(
-          [
-            gallery.name,
-            gallery.category,
-            gallery.description,
-            gallery.slug,
-            ...gallery.tags,
-          ],
-          interests
-        ) + (directSlugs.has(gallery.slug) ? 20 : 0),
+      score: scoreByStrictTags(
+        [
+          gallery.name,
+          gallery.category,
+          gallery.slug,
+          ...gallery.tags,
+        ],
+        interests,
+        directSlugs
+      ),
     }))
     .filter((item) => item.score > 0)
     .sort(
@@ -410,27 +424,15 @@ async function getHomeData() {
     .map((market) => ({
       market,
       score:
-        scoreByInterests(
-          [
-            market.title,
-            market.description,
-            market.galleries?.name,
-            market.galleries?.slug,
-          ],
-          interests
-        ) +
-        (market.galleries?.slug && directSlugs.has(market.galleries.slug)
-          ? 18
-          : 0) +
-        Number(Boolean(market.image_url)) * 2,
+        scoreByStrictTags(
+          marketItemTags(market),
+          interests,
+          directSlugs
+        ) + Number(Boolean(market.image_url)) * 2,
     }))
     .filter((item) => item.score > 0);
 
-  const marketPool = scoredMarketItems.length
-    ? scoredMarketItems
-    : rawMarketItems.map((market) => ({ market, score: 1 }));
-
-  const marketItems = marketPool
+  const recommendedMarketItems = scoredMarketItems
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -441,7 +443,7 @@ async function getHomeData() {
     .slice(0, 12)
     .map((item) => item.market);
 
-  const homePreviewMarketItems = marketItems.slice(0, 3);
+  const homePreviewMarketItems = rawMarketItems.slice(0, 3);
 
   const officialInterestItems: HomeInterestItem[] = products
     .slice(0, 5)
@@ -450,33 +452,16 @@ async function getHomeData() {
       product,
     }));
 
-  const marketInterestItems: HomeInterestItem[] = marketItems
+  const marketInterestItems: HomeInterestItem[] = recommendedMarketItems
     .slice(0, 5)
     .map((market) => ({
       kind: "market" as const,
       market,
     }));
 
-  const mixedInterestItems = shuffle([
-    ...officialInterestItems,
-    ...marketInterestItems,
-  ]);
-
-  const fallbackInterestItems: HomeInterestItem[] = [
-    ...products.slice(5, 12).map((product) => ({
-      kind: "official" as const,
-      product,
-    })),
-    ...marketItems.slice(5, 12).map((market) => ({
-      kind: "market" as const,
-      market,
-    })),
-  ];
-
-  const interestItems = uniqueInterestItems([
-    ...mixedInterestItems,
-    ...fallbackInterestItems,
-  ]).slice(0, 9);
+  const interestItems = uniqueInterestItems(
+    shuffle([...officialInterestItems, ...marketInterestItems])
+  ).slice(0, 9);
 
   return {
     products,

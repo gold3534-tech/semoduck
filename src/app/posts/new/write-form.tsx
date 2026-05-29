@@ -174,10 +174,10 @@ export function WriteForm({ galleries, recommendations }: { galleries: GalleryOp
           <input value={tagText} onChange={(event) => setTagText(event.target.value)} className="min-h-10 rounded-2xl border border-[#ead8f4] px-3 text-sm outline-none focus:border-[#b984e7]" placeholder="쿠로미, 키링, 후기처럼 쉼표로 구분" />
         </label>
         <div className="flex justify-end">
-          <Button type="button" variant="secondary" onClick={suggestTags} disabled={loading !== null || (!title && !content)} className="min-h-9 rounded-xl px-3 py-1.5 text-xs">
+          {/* <Button type="button" variant="secondary" onClick={suggestTags} disabled={loading !== null || (!title && !content)} className="min-h-9 rounded-xl px-3 py-1.5 text-xs">
             {loading === "ai" ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-            AI 태그 추천
-          </Button>
+            AI 태그 추천 하하 죽어라 개같은 코드
+          </Button> */}
         </div>
         <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#b984e7] bg-[#fbf4ff] p-4 text-center text-sm font-bold text-slate-500 hover:border-[#ff6f9b]">
           {loading === "image" ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
