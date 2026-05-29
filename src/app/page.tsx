@@ -21,9 +21,9 @@ import { createDataSupabaseClient } from "@/lib/supabase/data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Gallery, Post, Product } from "@/types/domain";
 
-const HOME_CACHE_SECONDS = 60 * 60;
+export const revalidate = 3600;
 
-export const revalidate = HOME_CACHE_SECONDS;
+const HOME_CACHE_SECONDS = 3600;
 
 type MarketPreview = {
   id: string;
