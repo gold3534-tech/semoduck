@@ -144,9 +144,11 @@ export function PostActions({
           )}
           삭제
         </Button>
-      ) : (
+      ) : null}
+
+      {!isOwner ? (
         <ReportButton targetType="post" targetId={postId} />
-      )}
+      ) : null}
     </div>
   );
 }
