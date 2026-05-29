@@ -3,25 +3,13 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
-  type: z.enum(["like", "bookmark"]),
+  type: z.enum(["like", "bookmark"])
 });
 
-type ReactionType = z.infer<typeof schema>["type"];
-
-type PostCountRow = {
-  like_count: number | null;
-  bookmark_count: number | null;
+type TogglePostReactionResult = {
+  is_active: boolean;
+  new_count: number;
 };
-
-function getBaseCount(post: PostCountRow | null, type: ReactionType) {
-  if (!post) return 0;
-
-  if (type === "like") {
-    return Number(post.like_count ?? 0);
-  }
-
-  return Number(post.bookmark_count ?? 0);
-}
 
 export async function POST(
   request: Request,
@@ -48,7 +36,7 @@ export async function POST(
 
     const {
       data: { user },
-      error: userError,
+      error: userError
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -58,10 +46,10 @@ export async function POST(
       );
     }
 
-    let body: unknown;
+    let json: unknown;
 
     try {
-      body = await request.json();
+      json = await request.json();
     } catch {
       return NextResponse.json(
         { error: "요청 본문을 읽지 못했습니다." },
@@ -69,7 +57,7 @@ export async function POST(
       );
     }
 
-    const parsed = schema.safeParse(body);
+    const parsed = schema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -80,91 +68,25 @@ export async function POST(
 
     const { type } = parsed.data;
 
-    const { data: existing, error: existingError } = await supabase
-      .from("post_reactions")
-      .select("id")
-      .eq("post_id", id)
-      .eq("user_id", user.id)
-      .eq("type", type)
-      .maybeSingle();
+    const { data, error } = await supabase
+      .rpc("toggle_post_reaction", {
+        target_post_id: id,
+        reaction_type: type
+      })
+      .single();
 
-    if (existingError) {
+    if (error) {
       return NextResponse.json(
-        { error: existingError.message },
+        { error: error.message },
         { status: 500 }
       );
     }
 
-    let active = false;
-
-    if (existing) {
-      const { error: deleteError } = await supabase
-        .from("post_reactions")
-        .delete()
-        .eq("id", existing.id)
-        .eq("post_id", id)
-        .eq("user_id", user.id)
-        .eq("type", type);
-
-      if (deleteError) {
-        return NextResponse.json(
-          { error: deleteError.message },
-          { status: 500 }
-        );
-      }
-
-      active = false;
-    } else {
-      const { error: insertError } = await supabase
-        .from("post_reactions")
-        .insert({
-          post_id: id,
-          user_id: user.id,
-          type,
-        });
-
-      if (insertError) {
-        return NextResponse.json(
-          { error: insertError.message },
-          { status: 500 }
-        );
-      }
-
-      active = true;
-    }
-
-    const { data: post, error: postError } = await supabase
-      .from("posts")
-      .select("like_count, bookmark_count")
-      .eq("id", id)
-      .single<PostCountRow>();
-
-    if (postError) {
-      return NextResponse.json(
-        { error: postError.message },
-        { status: 500 }
-      );
-    }
-
-    const { count: reactionCount, error: countError } = await supabase
-      .from("post_reactions")
-      .select("*", { count: "exact", head: true })
-      .eq("post_id", id)
-      .eq("type", type);
-
-    if (countError) {
-      return NextResponse.json(
-        { error: countError.message },
-        { status: 500 }
-      );
-    }
-
-    const baseCount = getBaseCount(post, type);
-    const totalCount = baseCount + (reactionCount ?? 0);
+    const result = data as TogglePostReactionResult | null;
 
     return NextResponse.json({
-      active,
-      count: totalCount,
+      active: Boolean(result?.is_active),
+      count: Number(result?.new_count ?? 0)
     });
   } catch (error) {
     return NextResponse.json(
@@ -172,7 +94,7 @@ export async function POST(
         error:
           error instanceof Error
             ? error.message
-            : "처리하지 못했습니다.",
+            : "처리하지 못했습니다."
       },
       { status: 500 }
     );

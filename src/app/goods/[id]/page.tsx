@@ -136,6 +136,13 @@ export default async function GoodsDetailPage({
                   productId={id}
                   initialCount={312}
                   compact
+                  product={{
+                    title: product.title,
+                    image: product.image_url ?? undefined,
+                    href: `/goods/${product.id}`,
+                    price: primaryOffer?.price ?? undefined,
+                    mallName: primaryOffer?.mall_name ?? undefined,
+                  }}
                 />
               </div>
             </div>
@@ -158,7 +165,9 @@ export default async function GoodsDetailPage({
               </h1>
 
               <p className="text-xl font-black text-[#ff5f8d] md:text-2xl">
-                {primaryOffer?.price ? formatPrice(primaryOffer.price) : "가격 정보 없음"}
+                {primaryOffer?.price
+                  ? formatPrice(primaryOffer.price)
+                  : "가격 정보 없음"}
               </p>
 
               <p className="text-sm font-bold leading-7 text-slate-600">

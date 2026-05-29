@@ -1,156 +1,107 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { isAdminEmail } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   targetType: z.enum(["post", "market_item", "product"]),
   targetId: z.string().min(1),
-  action: z.enum(["dismiss", "delete"])
+  category: z.string().trim().min(1),
+  detail: z.string().trim().min(1)
 });
 
-async function requireAdmin() {
-  const supabase = await createServerSupabaseClient();
+const targetTableMap = {
+  post: "posts",
+  market_item: "market_items",
+  product: "products"
+} as const;
 
-  if (!supabase) {
-    return {
-      error: NextResponse.json(
+export async function POST(request: Request) {
+  try {
+    const supabase = await createServerSupabaseClient();
+
+    if (!supabase) {
+      return NextResponse.json(
         { error: "Supabase 클라이언트를 생성하지 못했습니다." },
         { status: 500 }
-      )
-    };
-  }
+      );
+    }
 
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    return {
-      error: NextResponse.json(
+    if (userError || !user) {
+      return NextResponse.json(
         { error: "로그인이 필요합니다." },
         { status: 401 }
-      )
-    };
-  }
-
-  if (!isAdminEmail(user.email)) {
-    return {
-      error: NextResponse.json(
-        { error: "관리자 권한이 필요합니다." },
-        { status: 403 }
-      )
-    };
-  }
-
-  return {
-    supabase,
-    userId: user.id
-  };
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const session = await requireAdmin();
-
-    if ("error" in session) {
-      return session.error;
+      );
     }
 
     const parsed = schema.safeParse(await request.json());
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "잘못된 요청입니다." },
+        { error: "신고 내용을 다시 확인해 주세요." },
         { status: 400 }
       );
     }
 
-    const { targetType, targetId, action } = parsed.data;
-    const now = new Date().toISOString();
-    const reportStatus = action === "dismiss" ? "dismissed" : "accepted";
+    const { targetType, targetId, category, detail } = parsed.data;
 
-    const { error: reportError } = await session.supabase
+    const reason = `${category}: ${detail}`;
+
+    const { data: report, error: insertError } = await supabase
       .from("reports")
-      .update({
-        status: reportStatus,
-        resolved_by: session.userId,
-        resolved_at: now
+      .insert({
+        reporter_id: user.id,
+        target_type: targetType,
+        target_id: targetId,
+        reason,
+        status: "pending"
       })
-      .eq("target_type", targetType)
-      .eq("target_id", targetId)
-      .eq("status", "pending");
+      .select("id")
+      .single();
 
-    if (reportError) {
+    if (insertError) {
       return NextResponse.json(
-        { error: reportError.message },
+        { error: insertError.message },
         { status: 500 }
       );
     }
 
-    if (targetType === "post") {
-      const { error: postError } = await session.supabase
-        .from("posts")
+    // 신고 수 증가는 실패해도 신고 접수 자체는 성공 처리
+    const tableName = targetTableMap[targetType];
+
+    try {
+      const { data: target } = await supabase
+        .from(tableName)
+        .select("report_count")
+        .eq("id", targetId)
+        .single();
+
+      await supabase
+        .from(tableName)
         .update({
-          is_deleted: action === "delete",
-          report_count: 0,
-          updated_at: now
+          report_count: Number(target?.report_count ?? 0) + 1,
+          updated_at: new Date().toISOString()
         })
         .eq("id", targetId);
-
-      if (postError) {
-        return NextResponse.json(
-          { error: postError.message },
-          { status: 500 }
-        );
-      }
+    } catch {
+      // report_count 컬럼이나 RLS 문제로 실패해도 무시
     }
 
-    if (targetType === "market_item") {
-      const { error: marketError } = await session.supabase
-        .from("market_items")
-        .update({
-          is_deleted: action === "delete",
-          report_count: 0,
-          updated_at: now
-        })
-        .eq("id", targetId);
-
-      if (marketError) {
-        return NextResponse.json(
-          { error: marketError.message },
-          { status: 500 }
-        );
-      }
-    }
-
-    if (targetType === "product") {
-      const { error: productError } = await session.supabase
-        .from("products")
-        .update({
-          is_deleted: action === "delete",
-          report_count: 0,
-          updated_at: now
-        })
-        .eq("id", targetId);
-
-      if (productError) {
-        return NextResponse.json(
-          { error: productError.message },
-          { status: 500 }
-        );
-      }
-    }
-
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      reportId: report.id
+    });
   } catch (error) {
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "신고 처리에 실패했습니다."
+            : "신고 접수에 실패했습니다."
       },
       { status: 500 }
     );

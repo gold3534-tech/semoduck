@@ -23,7 +23,7 @@ export default async function SuggestionsPage() {
           fill
           priority
           sizes="(max-width: 768px) 100vw, 768px"
-          className="pointer-events-none object-cover object-right"
+          className="pointer-events-none scale-115 object-center"
         />
 
         <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/60 to-white/8" />
