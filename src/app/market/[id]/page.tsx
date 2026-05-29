@@ -149,10 +149,6 @@ export default async function MarketDetailPage({
                   loading="eager"
                   className="h-full w-full object-contain"
                 />
-
-                <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#ff6f9b] ring-1 ring-[#f4dbe7]">
-                  <Heart size={18} />
-                </span>
               </div>
 
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">

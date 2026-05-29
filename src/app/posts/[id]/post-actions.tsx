@@ -135,7 +135,7 @@ export function PostActions({
         </Button>
       ) : null}
 
-      {!isOwner ? (
+      {isOwner || isAdmin ? (
         <Button variant="danger" onClick={deletePost} disabled={loading !== null}>
           {loading === "delete" ? (
             <Loader2 size={16} className="animate-spin" />
